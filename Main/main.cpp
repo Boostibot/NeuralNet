@@ -555,6 +555,18 @@ class NeuralNet
 
 //**********************************************************************************************
 
+#include "GClasses/Common/Log.h"
+#include "GClasses/Common/LogTests.h"
+#include "GClasses/Common/Tester.h"
+
+G_TEST_CASE("Test test-case")
+{
+    std::vector<int> a(3);
+    G_ASSERT(a.size() == 3);
+}
+
+
+
 
 
 int main(int argc, char *argv[])
@@ -562,8 +574,14 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
 
     {
+        Logger log;
 
-        TestLogger();
+
+
+        TestCase0 ts;
+        ts.Execute();
+        std::cout << STRINGIFY(G_UNIQUE_NAME(TestCase)) << std::endl;
+        //TestLogger();
     }
 
     {
@@ -599,7 +617,6 @@ int main(int argc, char *argv[])
             ann.PrintLayers();
         }
     }
-
     MainWindow w;
     w.show();
     return a.exec();

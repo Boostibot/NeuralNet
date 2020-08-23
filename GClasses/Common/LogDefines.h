@@ -51,6 +51,9 @@
 #define CONCAT_HELPER(a, b) a##b
 #define CONCAT(a, b) CONCAT_HELPER(a, b)
 
+#define STRINGIFY_HELPER(...) #__VA_ARGS__
+#define STRINGIFY(...) STRINGIFY_HELPER(__VA_ARGS__)
+
 //Puts the given arguments if the given condition is met
 #define DO_IF_OPTION_true(...) __VA_ARGS__
 #define DO_IF_OPTION_false(...)

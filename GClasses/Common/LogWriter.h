@@ -19,8 +19,8 @@
 //--3.Put the final messages on to the logs
 //
 //--All LogWriters must inherit from LogWriterInterface and override the specified functions
-//--All LogWriters must be either EmptyLogWriters - used to switch logging off (generaly do nothing)
-//-- or NonemptyLogWriters used to normally do all of the explained above responsabilities
+//--All LogWriters must be either PassiveLogWriters - used to switch logging off (generaly do nothing)
+//-- or OperativeLogWriters used to normally do all of the explained above responsabilities
 
 class LogWriterInterface
 {
@@ -47,8 +47,8 @@ class LogWriterInterface
         ///Ends the logging by parts process; Always should be accompanied by LogByPartsStart()
         virtual void LogByPartsFinish() = 0;
 
-        ///Returns if this LogWriter is an empty logger (empty logger = doesnt write log with any given input)
-        virtual bool IsEmptyLogger() = 0;
+        ///Returns if this LogWriter is an passive logger (passive logger = doesnt write log with any given input)
+        virtual bool IsPassiveLogger() = 0;
 
     public:
         ///Logs a custom message; The functionSpecifier shoudl be filled with the implementaton specific enum values
@@ -80,7 +80,7 @@ class LogWriterInterface
 };
 
 //The default loggers
-class DefaultEmptyLogWriter : public LogWriterInterface
+class DefaultPassiveLogWriter : public LogWriterInterface
 {
     public:
         virtual void LogMsg(const u32, const std::string_view) {}
@@ -95,19 +95,19 @@ class DefaultEmptyLogWriter : public LogWriterInterface
         virtual void LogByPartsVar(const std::string_view, const std::string_view) {}
         virtual void LogByPartsFinish() {}
 
-        virtual bool IsEmptyLogger() {return true;}
+        virtual bool IsPassiveLogger() {return true;}
 
         virtual bool IsOutputStreamOpen() {return false;}
         virtual void OpenOutputStream(const std::string_view, const i32) {}
         virtual void CloseOutputStream() {}
         virtual void FlushOutputStream() {}
-        virtual ~DefaultEmptyLogWriter() {}
+        virtual ~DefaultPassiveLogWriter() {}
 };
 
-class DefaulNonemptytLogWriter : public LogWriterInterface
+class DefaulOperativetLogWriter : public LogWriterInterface
 {
     public:
-        using ThisType = DefaulNonemptytLogWriter;
+        using ThisType = DefaulOperativetLogWriter;
 
     public:
         enum CustomLogFunctions
@@ -163,16 +163,16 @@ class DefaulNonemptytLogWriter : public LogWriterInterface
 
 
     public:
-        DefaulNonemptytLogWriter() {this->SetUp();}
-        DefaulNonemptytLogWriter(const u32 collectioStringSize,
+        DefaulOperativetLogWriter() {this->SetUp();}
+        DefaulOperativetLogWriter(const u32 collectioStringSize,
                                   const u32 tempStringSize,
                                   const u32 entryIndex,
                                   const u32 partStringSize)
         {
             this->SetUp(collectioStringSize, tempStringSize, partStringSize, entryIndex);
         }
-        //DefaulNonemptytLogWriter(const DefaulNonemptytLogWriter PASS_REF) = default;
-        DefaulNonemptytLogWriter(DefaulNonemptytLogWriter PASS_RVALUE_REF) = default;
+        //DefaulOperativetLogWriter(const DefaulOperativetLogWriter PASS_REF) = default;
+        DefaulOperativetLogWriter(DefaulOperativetLogWriter PASS_RVALUE_REF) = default;
 
 
     public:
@@ -340,7 +340,7 @@ class DefaulNonemptytLogWriter : public LogWriterInterface
             this->LogByPartsFinish();
         }
 
-        virtual bool IsEmptyLogger() {return false;}
+        virtual bool IsPassiveLogger() {return false;}
         virtual bool IsOutputStreamOpen()
         {
             return  this->File.is_open();
@@ -357,7 +357,7 @@ class DefaulNonemptytLogWriter : public LogWriterInterface
         {
             this->File.flush();
         }
-        virtual ~DefaulNonemptytLogWriter() {this->TearDown();}
+        virtual ~DefaulOperativetLogWriter() {this->TearDown();}
 
 
     private:

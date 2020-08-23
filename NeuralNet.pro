@@ -26,6 +26,7 @@ HEADERS += \
     GClasses/Common/LogDefines.h \
     GClasses/Common/LogTests.h \
     GClasses/Common/LogWriter.h \
+    GClasses/Common/Tester.h \
     Main/mainwindow.h
 
 FORMS += \

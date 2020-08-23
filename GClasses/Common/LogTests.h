@@ -4,6 +4,8 @@
 #include <vector>
 #include "Log.h"
 
+
+/*
 class LogTestWriter : public LogWriterInterface
 {
     public:
@@ -56,6 +58,7 @@ class LogTestWriter : public LogWriterInterface
         virtual ~LogTestWriter() {}
 
 };
+*/
 
 
 bool TestLoggerSetting()
@@ -120,7 +123,6 @@ bool TestLoggingStandard()
 
     i32 int1 = 1;
     i32 int2 = 2;
-    i32 int3 = 3;
 
     log.LogVar(0, "int1", int1);
     log.LogVar(3, "int2", int2);

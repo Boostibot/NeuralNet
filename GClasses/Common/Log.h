@@ -19,14 +19,14 @@ class Logger
         static constexpr u32 LevelArraySize = 16; //This should be equal to the max number of levels suported
         static constexpr u32 InitialConcatenationStringSize = 256;
 
-    public:
+    private:
         LogWriterInterface POINTER LevelPointerArray[LevelArraySize];
         bool LevelStatusArray [LevelArraySize];
         bool LoggingStatus;
         std::string ConcatenationString;
 
-        std::unique_ptr<LogWriterInterface> NonemptyLogWriter;
-        std::unique_ptr<LogWriterInterface> EmptyLogWriter;
+        std::unique_ptr<LogWriterInterface> OperativeLogWriter;
+        std::unique_ptr<LogWriterInterface> PassiveLogWriter;
 
     public:
         DataInterpretInterfaceType Interpret;
@@ -39,17 +39,18 @@ class Logger
             this->SetUp();
         }
         ///Initialises the LogWriters to the provided LogWriters
-        Logger(std::unique_ptr<LogWriterInterface> PASS_REF nonemptyLogWriter,
-               std::unique_ptr<LogWriterInterface> PASS_REF emptyLogWriter,
+        Logger(std::unique_ptr<LogWriterInterface> PASS_REF operativeLogWriter,
+               std::unique_ptr<LogWriterInterface> PASS_REF passiveLogWriter,
                const u32 concatenationStringSize = InitialConcatenationStringSize)
             : Interpret()
         {
-            this->SetUp(nonemptyLogWriter, emptyLogWriter, concatenationStringSize);
+            this->SetUp(operativeLogWriter, passiveLogWriter, concatenationStringSize);
         }
 
         ~Logger() = default;
 
     public:
+        //TODO - refactor all
         //Nontemplated level argument
         ///Logs by appending all given arguments together
         template<typename...ArgumentTypes>
@@ -192,17 +193,17 @@ class Logger
         {
             this->LevelStatusArray[level] = onOff;
             if(onOff)
-                this->LevelPointerArray[level] = this->GetNonemptyLogWriter();
+                this->LevelPointerArray[level] = this->GetOperativeLogWriter();
             else
-                this->LevelPointerArray[level] = this->GetEmptyLogWriter();
+                this->LevelPointerArray[level] = this->GetPassiveLogWriter();
         }
         inline void DoLoggingLevel(const u32 level, const bool onOff)
         {
             this->LevelStatusArray[level] = onOff;
             if(onOff)
-                this->LevelPointerArray[level] = this->GetNonemptyLogWriter();
+                this->LevelPointerArray[level] = this->GetOperativeLogWriter();
             else
-                this->LevelPointerArray[level] = this->GetEmptyLogWriter();
+                this->LevelPointerArray[level] = this->GetPassiveLogWriter();
         }
 
         ///Returns if logging is disabled
@@ -215,29 +216,29 @@ class Logger
 
 
         ///Changes the LogWriters for a pair of new ones; The old LogWriters will be destroyed
-        void ChangeLoggers(std::unique_ptr<LogWriterInterface> PASS_REF nonemptyLogWriter,
-                          std::unique_ptr<LogWriterInterface> PASS_REF emptyLogWriter)
+        void ChangeLoggers(std::unique_ptr<LogWriterInterface> PASS_REF operativeLogWriter,
+                          std::unique_ptr<LogWriterInterface> PASS_REF passiveLogWriter)
         {
-            ChangeNonemptyLogger(nonemptyLogWriter);
-            ChangeEmptyLogger(emptyLogWriter);
+            ChangeOperativeLogger(operativeLogWriter);
+            ChangePassiveLogger(passiveLogWriter);
         }
-        ///Changes the nonempty logger core
-        inline void ChangeNonemptyLogger(std::unique_ptr<LogWriterInterface> PASS_REF nonemptyLogWriter)
+        ///Changes the operative logger core
+        inline void ChangeOperativeLogger(std::unique_ptr<LogWriterInterface> PASS_REF operativeLogWriter)
         {
-            this->ChangeUsedLogger(nonemptyLogWriter, this->NonemptyLogWriter);
+            this->ChangeUsedLogger(operativeLogWriter, this->OperativeLogWriter);
         }
-        ///Changes the empty logger core
-        inline void ChangeEmptyLogger(std::unique_ptr<LogWriterInterface> PASS_REF emptyLogWriter)
+        ///Changes the passive logger core
+        inline void ChangePassiveLogger(std::unique_ptr<LogWriterInterface> PASS_REF passiveLogWriter)
         {
-            this->ChangeUsedLogger(emptyLogWriter, this->EmptyLogWriter);
+            this->ChangeUsedLogger(passiveLogWriter, this->PassiveLogWriter);
         }
-        ///Changes to the default loggers (DefaulNonemptytLogWriterType, DefaultEmptyLogWriterType)
+        ///Changes to the default loggers (DefaulOperativetLogWriterType, DefaultPassiveLogWriterType)
         void ChangeToDefaultLoggers()
         {
-            std::unique_ptr<LogWriterInterface> nonemptyLogger(std::make_unique<DefaulNonemptytLogWriter>());
-            std::unique_ptr<LogWriterInterface> emptyLogger(std::make_unique<DefaultEmptyLogWriter>());
+            std::unique_ptr<LogWriterInterface> operativeLogger = GetNewDefaultOperativeLogger();
+            std::unique_ptr<LogWriterInterface> passiveLogger = GetNewDefaultOperativeLogger();
 
-            ChangeLoggers(nonemptyLogger, emptyLogger);
+            ChangeLoggers(operativeLogger, passiveLogger);
         }
 
     public:
@@ -248,7 +249,7 @@ class Logger
         }
 
     private:
-        void ExchangeLoggers(std::unique_ptr<LogWriterInterface> PASS_REF newLogger, std::unique_ptr<LogWriterInterface> PASS_REF oldLogger) const
+        inline void ExchangeLoggers(std::unique_ptr<LogWriterInterface> PASS_REF newLogger, std::unique_ptr<LogWriterInterface> PASS_REF oldLogger) const
         {
             oldLogger = std::move(newLogger);
         }
@@ -259,24 +260,33 @@ class Logger
             RebuildLevelPointerArray();
         }
 
+        inline std::unique_ptr<LogWriterInterface> GetNewDefaultOperativeLogger() const
+        {
+            return std::make_unique<DefaulOperativetLogWriter>();
+        }
+        inline std::unique_ptr<LogWriterInterface> GetNewDefaultPassiveLogger() const
+        {
+            return  std::make_unique<DefaultPassiveLogWriter>();
+        }
+
         void RebuildLevelPointerArray()
         {
             //cycles through all of the level logging pointers and sets each of them according to the LevelStatusArray
             for(u32 i = 0; i < ThisType::LevelArraySize; i++)
             {
                 if(IsLoggingLevelEnabled(i))
-                    this->LevelPointerArray[i] = this->GetNonemptyLogWriter();
+                    this->LevelPointerArray[i] = this->GetOperativeLogWriter();
                 else
-                    this->LevelPointerArray[i] = this->GetEmptyLogWriter();
+                    this->LevelPointerArray[i] = this->GetPassiveLogWriter();
             }
         }
 
         void ResetLevelPointerArray(const bool doLog = true)
         {
             if(doLog)
-                SetPointerArray(this->LevelPointerArray, ThisType::LevelArraySize, this->GetNonemptyLogWriter());
+                SetPointerArray(this->LevelPointerArray, ThisType::LevelArraySize, this->GetOperativeLogWriter());
             else
-                SetPointerArray(this->LevelPointerArray, ThisType::LevelArraySize, this->GetEmptyLogWriter());
+                SetPointerArray(this->LevelPointerArray, ThisType::LevelArraySize, this->GetPassiveLogWriter());
         }
         inline void SetPointerArray(LogWriterInterface POINTER ptrArray[], const u32 arraySize, LogWriterInterface POINTER value) const
         {
@@ -315,21 +325,21 @@ class Logger
             this->ConcatenationString.append(string);
         }
 
-        void SetUp(std::unique_ptr<LogWriterInterface> PASS_REF nonemptyLogWriter,
-                   std::unique_ptr<LogWriterInterface> PASS_REF emptyLogWriter,
+        void SetUp(std::unique_ptr<LogWriterInterface> PASS_REF operativeLogWriter,
+                   std::unique_ptr<LogWriterInterface> PASS_REF passiveLogWriter,
                    const u32 concatenationStringSize = InitialConcatenationStringSize)
         {
-            this->ChangeLoggers(nonemptyLogWriter, emptyLogWriter);
+            this->ChangeLoggers(operativeLogWriter, passiveLogWriter);
             this->ResetLevelArrays();
             this->ReserveConcatenationString(concatenationStringSize);
             this->ResetConcatenationString();
         }
         inline void SetUp()
         {
-            std::unique_ptr<LogWriterInterface> nonemptyLogger(std::make_unique<DefaulNonemptytLogWriter>());
-            std::unique_ptr<LogWriterInterface> emptyLogger(std::make_unique<DefaultEmptyLogWriter>());
+            std::unique_ptr<LogWriterInterface> operativeLogger = GetNewDefaultOperativeLogger();
+            std::unique_ptr<LogWriterInterface> passiveLogger = GetNewDefaultOperativeLogger();
 
-            this->SetUp(nonemptyLogger, emptyLogger, InitialConcatenationStringSize);
+            this->SetUp(operativeLogger, passiveLogger, InitialConcatenationStringSize);
         }
 
         //unravel
@@ -366,7 +376,7 @@ class Logger
         inline void UnravelAndSendVariables(const FirstStringArgument firstString, const FirstValueArgument firstValue,
                                             const StringArgumentTypes ... stringArgs, const ValueArgumentTypes ... valueArgs)
         {
-            this->NonemptyLogWriter->LogByPartsVar(firstString, this->Interpret.InetrpretArg(firstValue));
+            this->OperativeLogWriter->LogByPartsVar(firstString, this->Interpret.InetrpretArg(firstValue));
             this->UnravelAndSendVariables(stringArgs..., valueArgs...);
         }
         inline void UnravelAndSendVariables() {}
@@ -379,9 +389,9 @@ class Logger
 
     public:
         ///Returns the First (currently in use) logger core
-        inline LogWriterInterface POINTER GetNonemptyLogWriter() const {return NonemptyLogWriter.get();}
+        inline LogWriterInterface POINTER GetOperativeLogWriter() const {return OperativeLogWriter.get();}
         ///Returns the Second (currently not in use) logger core
-        inline LogWriterInterface POINTER GetEmptyLogWriter() const {return EmptyLogWriter.get();}
+        inline LogWriterInterface POINTER GetPassiveLogWriter() const {return PassiveLogWriter.get();}
         template <u32 level>
         inline LogWriterInterface POINTER GetLevelPointer() const
         {
