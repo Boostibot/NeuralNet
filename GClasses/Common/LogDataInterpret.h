@@ -3,6 +3,21 @@
 
 #include "LogWriter.h"
 
+/*
+void * operator new(size_t size)
+{
+    std::cout<< "Overloading new operator with size: " << size << std::endl;
+
+    return malloc(size);
+}
+
+void operator delete(void * p)
+{
+    std::cout<< "Overloading delete operator " << std::endl;
+    free(p);
+}
+*/
+
 //DataInterpret is a class supposed to convert non string values values to string
 //It has to be done statically since templates (which are convinient) cannot be inside virtual classes
 //Logger interprets must publically inherit from this class with the template argument of the class itself (ie. myClass :  DataInterpretInterface<myClass, myClassDataPackage>)
@@ -12,15 +27,15 @@ class DataInterpretInterface : public DerivedDataPackage
         //The following functions are obligatory to be overloaded
     public:
         template <typename Type>
-        inline std::string InetrpretArg(Type arg)
+        inline void InetrpretArg(Type arg, std::string PASS_REF outputString)
         {
-            return static_cast<Derived POINTER>(this)->InetrpretArg(arg);
+            reinterpret_cast<Derived POINTER>(this)->InetrpretArg(arg, outputString);
         }
 
 };
 
 //The default logger interpret
-struct DefaultDataInterpretDataPackage
+struct OStreamDataInterpretDataPackage
 {
     public:
         using OStream = std::basic_ostringstream<char>;
@@ -28,6 +43,23 @@ struct DefaultDataInterpretDataPackage
     public:
         OStream Stream;
 };
+class OStreamDataInterpret : public DataInterpretInterface<OStreamDataInterpret, OStreamDataInterpretDataPackage>
+{
+    public:
+        using ThisPackageType = OStreamDataInterpretDataPackage;
+
+        //The obligatory function overloads
+    public:
+        template <typename Type>
+        inline void InetrpretArg(Type arg, std::string PASS_REF outputString)
+        {
+            Stream << arg;
+            outputString = Stream.str();
+            Stream.str("");
+        }
+};
+
+struct DefaultDataInterpretDataPackage {};
 class DefaultDataInterpret : public DataInterpretInterface<DefaultDataInterpret, DefaultDataInterpretDataPackage>
 {
     public:
@@ -35,48 +67,24 @@ class DefaultDataInterpret : public DataInterpretInterface<DefaultDataInterpret,
 
         //The obligatory function overloads
     public:
-        template <typename Type>
-        inline std::string InetrpretArg(Type arg)
-        {
-            Stream << arg;
-            std::string temp = Stream.str();
-            Stream.str("");
 
-            return temp;
-        }
-};
-class CustomConversionDataInterpret : public DataInterpretInterface<DefaultDataInterpret, DefaultDataInterpretDataPackage>
-{
-    public:
-        using ThisPackageType = DefaultDataInterpretDataPackage;
+        inline void InetrpretArg (int val, std::string PASS_REF outputString)                  {outputString = std::to_string(val);}
+        inline void InetrpretArg (long val, std::string PASS_REF outputString)                 {outputString = std::to_string(val);}
+        inline void InetrpretArg (long long val, std::string PASS_REF outputString)            {outputString = std::to_string(val);}
+        inline void InetrpretArg (unsigned val, std::string PASS_REF outputString)             {outputString = std::to_string(val);}
+        inline void InetrpretArg (unsigned long val, std::string PASS_REF outputString)        {outputString = std::to_string(val);}
+        inline void InetrpretArg (unsigned long long val, std::string PASS_REF outputString)   {outputString = std::to_string(val);}
+        inline void InetrpretArg (float val, std::string PASS_REF outputString)                {outputString = std::to_string(val);}
+        inline void InetrpretArg (double val, std::string PASS_REF outputString)               {outputString = std::to_string(val);}
+        inline void InetrpretArg (long double val, std::string PASS_REF outputString)          {outputString = std::to_string(val);}
 
-        //The obligatory function overloads
-    public:
-
-        inline void InetrpretArg (int val, std::string PASS_REF outputString)                  {outputString += std::to_string(val);}
-        inline void InetrpretArg (long val, std::string PASS_REF outputString)                 {outputString += std::to_string(val);}
-        inline void InetrpretArg (long long val, std::string PASS_REF outputString)            {outputString += std::to_string(val);}
-        inline void InetrpretArg (unsigned val, std::string PASS_REF outputString)             {outputString += std::to_string(val);}
-        inline void InetrpretArg (unsigned long val, std::string PASS_REF outputString)        {outputString += std::to_string(val);}
-        inline void InetrpretArg (unsigned long long val, std::string PASS_REF outputString)   {outputString += std::to_string(val);}
-        inline void InetrpretArg (float val, std::string PASS_REF outputString)                {outputString += std::to_string(val);}
-        inline void InetrpretArg (double val, std::string PASS_REF outputString)               {outputString += std::to_string(val);}
-        inline void InetrpretArg (long double val, std::string PASS_REF outputString)          {outputString += std::to_string(val);}
-
-        inline void InetrpretArg (void POINTER val, std::string PASS_REF outputString)         {outputString += std::to_string(reinterpret_cast<unsigned long long>(val));}
+        inline void InetrpretArg (void POINTER val, std::string PASS_REF outputString)         {outputString = std::to_string(reinterpret_cast<unsigned long long>(val));}
         inline void InetrpretArg (bool val, std::string PASS_REF outputString)
         {
             if(val)
-                outputString += "true";
+                outputString = "true";
             else
-                outputString += "false";
-        }
-
-    private:
-        //TODO - implement templated pointer
-        static inline void ConvertAsNumToString(const void POINTER ptr, const std::size_t size, std::string PASS_REF outputString)
-        {
-
+                outputString = "false";
         }
 };
 /*

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GtaTestDurations xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Executable>G:\Work\Neural Net\NeuralNet\GTests\x64\Release\GTests.exe</Executable>
+  <TestDurations>
+    <TestDuration Test="Logger.Logginglevels" Duration="1" />
+    <TestDuration Test="Logger.EnableLog" Duration="1" />
+    <TestDuration Test="Logger.Construction" Duration="1" />
+    <TestDuration Test="Logger.StaticFunctions" Duration="1" />
+    <TestDuration Test="Logger.PointerGettingSetting" Duration="6" />
+  </TestDurations>
+</GtaTestDurations>

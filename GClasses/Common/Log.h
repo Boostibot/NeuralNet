@@ -5,6 +5,7 @@
 #include "LogWriter.h"
 #include "LogDataInterpret.h"
 
+
 //
 template <typename DataInterpretType = DefaultDataInterpret>
 class Logger
@@ -14,16 +15,21 @@ class Logger
         using ThisType = Logger<DataInterpretType>;
         using DataInterpretPackageType = typename DataInterpretType::ThisPackageType;
         using DataInterpretInterfaceType = DataInterpretInterface<DataInterpretType, DataInterpretPackageType>;
+        using DefaultOperativeLogWriterType = DefaultOperativeLogWriter;
+        using DefaultPassiveLogWriterType = DefaultPassiveLogWriter;
 
     public:
         static constexpr u32 LevelArraySize = 16; //This should be equal to the max number of levels suported
-        static constexpr u32 InitialConcatenationStringSize = 256;
+        static constexpr u32 InitialStringBufferSize = 256;
+        static constexpr u32 InitialTempStringSize = 128;
 
     private:
         LogWriterInterface POINTER LevelPointerArray[LevelArraySize];
         bool LevelStatusArray [LevelArraySize];
         bool LoggingStatus;
-        std::string ConcatenationString;
+
+        std::string StringBuffer;
+        std::string TempString;
 
         std::unique_ptr<LogWriterInterface> OperativeLogWriter;
         std::unique_ptr<LogWriterInterface> PassiveLogWriter;
@@ -32,53 +38,51 @@ class Logger
         DataInterpretInterfaceType Interpret;
 
     public:
-        ///Initialises the LogWriters to the default LogWriters
-        Logger()
-            : Interpret()
+        Logger() : Interpret()
         {
             this->SetUp();
         }
         ///Initialises the LogWriters to the provided LogWriters
-        Logger(std::unique_ptr<LogWriterInterface> PASS_REF operativeLogWriter,
-               std::unique_ptr<LogWriterInterface> PASS_REF passiveLogWriter,
-               const u32 concatenationStringSize = InitialConcatenationStringSize)
+        Logger(std::unique_ptr<LogWriterInterface> operativeLogWriter,
+               std::unique_ptr<LogWriterInterface> passiveLogWriter,
+               const u32 StringBufferSize = InitialStringBufferSize,
+               const u32 TempStringSize = InitialTempStringSize)
             : Interpret()
         {
-            this->SetUp(operativeLogWriter, passiveLogWriter, concatenationStringSize);
+            this->SetUp(operativeLogWriter, passiveLogWriter, StringBufferSize, TempStringSize);
         }
-
+        Logger(ThisType PASS_RVALUE_REF other) = default;
         ~Logger() = default;
 
     public:
-        //TODO - refactor all
         //Nontemplated level argument
         ///Logs by appending all given arguments together
         template<typename...ArgumentTypes>
         inline void LogMsg(const u32 level, const ArgumentTypes ... args)
         {
-            this->ResetConcatenationString();
-            this->UnravelAndConcatenateArguments(args...);
-            this->GetLevelPointer(level)->LogMsg(level, this->ConcatenationString);
+            this->LogMsgInternal(this->GetLevelPointer(level),
+                                 level, args...);
         }
         ///Logs by appending all given arguments together and adding source of the LOG command
         template<typename...ArgumentTypes>
         inline void LogMsgSource(const u32 level, const std::string_view fileName ,const u32 lineNum, const ArgumentTypes ... args)
         {
-            this->ResetConcatenationString();
-            this->UnravelAndConcatenateArguments(args...);
-            this->GetLevelPointer(level)->LogMsgSource(level, fileName, lineNum, this->ConcatenationString);
+            this->LogMsgSourceInternal(this->GetLevelPointer(level),
+                                       level, fileName, lineNum, args...);
         }
         ///Logs a pair of a variable name and its value
         template<typename VarType>
         inline void LogVar(const u32 level, const std::string_view varName, const VarType varValue)
         {
-            this->GetLevelPointer(level)->LogVar(level, varName, this->Interpret.InetrpretArg(varValue));
+            this->LogVarInternal(this->GetLevelPointer(level),
+                                       level, varName, varValue);
         }
         ///Logs a pair of a variable name and its value and source of the LOG command
         template<typename VarType>
         inline void LogVarSource(const u32 level, const std::string_view fileName ,const u32 lineNum, const std::string_view varName, const VarType varValue)
-        {           
-            this->GetLevelPointer(level)->LogVarSource(level, fileName, lineNum, varName, this->Interpret.InetrpretArg(varValue));
+        {
+            this->LogVarSourceInternal(this->GetLevelPointer(level),
+                                       level, fileName, lineNum, varName, varValue);
         }
         
         //Templated level argument
@@ -86,29 +90,29 @@ class Logger
         template<u32 level, typename...ArgumentTypes>
         inline void LogMsg(const ArgumentTypes ... args)
         {
-            this->ResetConcatenationString();
-            this->UnravelAndConcatenateArguments(args...);
-            this->GetLevelPointer<level>()->LogMsg(level, this->ConcatenationString);
+            this->LogMsgInternal(this->GetLevelPointer<level>(),
+                                 level, args...);
         }
         ///Logs by appending all given arguments together and adding source of the LOG command
         template<u32 level, typename...ArgumentTypes>
         inline void LogMsgSource(const std::string_view fileName, const u32 lineNum, const ArgumentTypes ... args)
         {
-            this->ResetConcatenationString();
-            this->UnravelAndConcatenateArguments(args...);
-            this->GetLevelPointer<level>()->LogMsgSource(level, fileName, lineNum, this->ConcatenationString);
+            this->LogMsgSourceInternal(this->GetLevelPointer<level>(),
+                                       level, fileName, lineNum, args...);
         }
         ///Logs a pair of a variable name and its value
         template<u32 level, typename VarType>
         inline void LogVar(const std::string_view varName, const VarType varValue)
         {
-            this->GetLevelPointer<level>()->LogVar(level, varName, this->Interpret.InetrpretArg(varValue));
+            this->LogVarSourceInternal(this->GetLevelPointer<level>(),
+                                       level, varName, varValue);
         }
         ///Logs a pair of a variable name and its value and source of the LOG command
         template<u32 level, typename VarType>
         inline void LogVarSource(const std::string_view fileName ,const u32 lineNum, const std::string_view varName, const VarType varValue)
         {
-            this->GetLevelPointer<level>()->LogVarSource(level, fileName, lineNum, varName, this->Interpret.InetrpretArg(varValue));
+            this->LogVarSourceInternal(this->GetLevelPointer<level>(),
+                                       level, fileName, lineNum, varName, varValue);
         }
 
         template<typename ... StringTypes, typename ... ValueTypes>
@@ -141,6 +145,30 @@ class Logger
 
 
     private:
+        template<typename VarType>
+        inline void LogVarInternal(LogWriterInterface POINTER logger, const u32 level, const std::string_view varName, const VarType varValue)
+        {
+            logger->LogVar(level, varName, this->InterpretSingleArgument(varValue));
+        }
+
+        template<typename VarType>
+        inline void LogVarSourceInternal(LogWriterInterface POINTER logger, const u32 level, const std::string_view fileName ,const u32 lineNum, const std::string_view varName, const VarType varValue)
+        {
+            logger->LogVarSource(level, fileName, lineNum, varName, this->InterpretSingleArgument(varValue));
+        }
+
+        template<typename...ArgumentTypes>
+        inline void LogMsgInternal(LogWriterInterface POINTER logger, const u32 level, const ArgumentTypes ... args)
+        {
+            logger->LogMsg(level, this->InterpretConcatenateArguments(args...));
+        }
+
+        template<typename...ArgumentTypes>
+        inline void LogMsgSourceInternal(LogWriterInterface POINTER logger, const u32 level, const std::string_view fileName, const u32 lineNum, const ArgumentTypes ... args)
+        {
+            logger->LogMsgSource(level, fileName, lineNum, this->InterpretConcatenateArguments(args...));
+        }
+
         template<typename ... StringTypes, typename ... ValueTypes>
         inline void LogVarsInternal(LogWriterInterface POINTER logger, const u32 level, const StringTypes ... stringArgs,  const ValueTypes ... valueArgs)
         {
@@ -165,7 +193,7 @@ class Logger
         void DoLog(const bool onOff)
         {
             this->LoggingStatus = onOff;
-            this->UpdateLevelPointerArray();
+            this->RebuildLevelPointerArray();
         }
         inline void DisableLog()
         {
@@ -191,6 +219,9 @@ class Logger
         template <u32 level>
         inline void DoLoggingLevel(const bool onOff)
         {
+            constexpr bool dummy = AssertIfIndexIsOutOfRange<level>();
+            (void)dummy; //Dummy is to force the function to be evaluated at compile time
+
             this->LevelStatusArray[level] = onOff;
             if(onOff)
                 this->LevelPointerArray[level] = this->GetOperativeLogWriter();
@@ -199,6 +230,8 @@ class Logger
         }
         inline void DoLoggingLevel(const u32 level, const bool onOff)
         {
+            ThrowIfIndexIsOutOfRange(level);
+
             this->LevelStatusArray[level] = onOff;
             if(onOff)
                 this->LevelPointerArray[level] = this->GetOperativeLogWriter();
@@ -209,65 +242,101 @@ class Logger
         ///Returns if logging is disabled
         inline bool IsLoggingEnabled() const {return this->LoggingStatus;}
         ///Returns if logging is for a concrete level disabled
-        inline bool IsLoggingLevelEnabled(const u32 level) const {return this->LevelStatusArray[level];}
+        inline bool IsLoggingLevelEnabled(const u32 level) const
+        {
+            ThrowIfIndexIsOutOfRange(level);
+
+            return this->LevelStatusArray[level];
+        }
         ///Returns if logging is for a concrete level disabled
         template <u32 level>
-        inline bool IsLoggingLevelEnabled() const {return this->LevelStatusArray[level];}
+        inline bool IsLoggingLevelEnabled() const
+        {
+            constexpr bool dummy = AssertIfIndexIsOutOfRange<level>();
+            (void)dummy; //Dummy is to force the function to be evaluated at compile time
+
+            return this->LevelStatusArray[level];
+        }
 
 
         ///Changes the LogWriters for a pair of new ones; The old LogWriters will be destroyed
-        void ChangeLoggers(std::unique_ptr<LogWriterInterface> PASS_REF operativeLogWriter,
-                          std::unique_ptr<LogWriterInterface> PASS_REF passiveLogWriter)
+        void ChangeWriters(std::unique_ptr<LogWriterInterface> operativeLogWriter,
+                          std::unique_ptr<LogWriterInterface> passiveLogWriter)
         {
-            ChangeOperativeLogger(operativeLogWriter);
-            ChangePassiveLogger(passiveLogWriter);
+            ChangeOperativeWriter(std::move(operativeLogWriter));
+            ChangePassiveWriter(std::move(passiveLogWriter));
         }
-        ///Changes the operative logger core
-        inline void ChangeOperativeLogger(std::unique_ptr<LogWriterInterface> PASS_REF operativeLogWriter)
+        template <typename OperativeLogWriterType,  //OperativeLogWriterType must be a derived class from LogWriterInterface
+                  typename PassiveLogWriterType,    //PassiveLogWriterType must be a derived clas from LogWriterInterface
+                  std::enable_if_t<std::is_base_of<LogWriterInterface, OperativeLogWriterType>::value &&
+                                   std::is_base_of<LogWriterInterface, PassiveLogWriterType>::value, int> = 0>
+        void ChangeWriters()
         {
-            this->ChangeUsedLogger(operativeLogWriter, this->OperativeLogWriter);
+            ChangeOperativeWriter<OperativeLogWriterType>();
+            ChangePassiveWriter<PassiveLogWriterType>();
         }
-        ///Changes the passive logger core
-        inline void ChangePassiveLogger(std::unique_ptr<LogWriterInterface> PASS_REF passiveLogWriter)
-        {
-            this->ChangeUsedLogger(passiveLogWriter, this->PassiveLogWriter);
-        }
-        ///Changes to the default loggers (DefaulOperativetLogWriterType, DefaultPassiveLogWriterType)
-        void ChangeToDefaultLoggers()
-        {
-            std::unique_ptr<LogWriterInterface> operativeLogger = GetNewDefaultOperativeLogger();
-            std::unique_ptr<LogWriterInterface> passiveLogger = GetNewDefaultOperativeLogger();
 
-            ChangeLoggers(operativeLogger, passiveLogger);
+        ///Changes the operative logger core
+        void ChangeOperativeWriter(std::unique_ptr<LogWriterInterface> operativeLogWriter)
+        {
+            this->ChangeUsedWriter(std::move(operativeLogWriter), this->OperativeLogWriter);
+        }       
+        template <typename LogWriterType, //LogWriterType must be a derived class from LogWriterInterface
+                  std::enable_if_t<std::is_base_of<LogWriterInterface, LogWriterType>::value, int> = 0>
+        inline void ChangeOperativeWriter()
+        {
+            this->ChangeOperativeWriter(ThisType::GetNewLogWritter<LogWriterType>());
+        }
+
+        ///Changes the passive logger core
+        void ChangePassiveWriter(std::unique_ptr<LogWriterInterface> passiveLogWriter)
+        {
+            this->ChangeUsedWriter(std::move(passiveLogWriter), this->PassiveLogWriter);
+        }
+        template <typename LogWriterType, //LogWriterType must be a derived class from LogWriterInterface
+                  std::enable_if_t<std::is_base_of<LogWriterInterface, LogWriterType>::value, int> = 0>
+        inline void ChangePassiveWriter()
+        {
+            this->ChangePassiveWriter(ThisType::GetNewLogWritter<LogWriterType>());
+        }
+
+        ///Changes to the default loggers (DefaulOperativetLogWriterType, DefaultPassiveLogWriterType)
+        void ChangeToDefaultWriters()
+        {
+            this->ChangeWriters(ThisType::GetNewDefaultOperativeWriter(), ThisType::GetNewDefaultPassiveWriter());
         }
 
     public:
-        template <typename LoggerType>
-        static void SetLogger(std::unique_ptr<LogWriterInterface> PASS_REF logger)
+        template <typename LogWriterType, //LogWriterType must be a derived class from LogWriterInterface
+                  std::enable_if_t<std::is_base_of<LogWriterInterface, LogWriterType>::value, int> = 0>
+        static inline std::unique_ptr<LogWriterInterface> GetNewLogWritter()
         {
-            logger = std::move(std::make_unique<LoggerType>());
+            return std::make_unique<LogWriterType>();
+        }
+        static inline std::unique_ptr<LogWriterInterface> GetNewDefaultOperativeWriter()
+        {
+            return ThisType::GetNewLogWritter<DefaultOperativeLogWriterType>();
+        }
+        static inline std::unique_ptr<LogWriterInterface> GetNewDefaultPassiveWriter()
+        {
+            return ThisType::GetNewLogWritter<DefaultPassiveLogWriterType>();
         }
 
     private:
-        inline void ExchangeLoggers(std::unique_ptr<LogWriterInterface> PASS_REF newLogger, std::unique_ptr<LogWriterInterface> PASS_REF oldLogger) const
+        inline void ExchangeWriters(std::unique_ptr<LogWriterInterface> newWriter, std::unique_ptr<LogWriterInterface> PASS_REF oldWriter) const
         {
-            oldLogger = std::move(newLogger);
+            oldWriter = std::move(newWriter);
         }
 
-        void ChangeUsedLogger(std::unique_ptr<LogWriterInterface> PASS_REF newLogger, std::unique_ptr<LogWriterInterface> PASS_REF oldLogger)
+        //IS NOT CONST! - Rebuilds the level pointer array
+        void ChangeUsedWriter(std::unique_ptr<LogWriterInterface> newWriter, std::unique_ptr<LogWriterInterface> PASS_REF oldWriter)
         {
-            ExchangeLoggers(newLogger, oldLogger);
+            ExchangeWriters(std::move(newWriter), oldWriter);
             RebuildLevelPointerArray();
         }
 
-        inline std::unique_ptr<LogWriterInterface> GetNewDefaultOperativeLogger() const
-        {
-            return std::make_unique<DefaulOperativetLogWriter>();
-        }
-        inline std::unique_ptr<LogWriterInterface> GetNewDefaultPassiveLogger() const
-        {
-            return  std::make_unique<DefaultPassiveLogWriter>();
-        }
+
+
 
         void RebuildLevelPointerArray()
         {
@@ -310,103 +379,152 @@ class Logger
             this->ResetLevelPointerArray(doLog);
         }
 
-        inline void ReserveConcatenationString(const u32 size = InitialConcatenationStringSize)
+        inline void ReserveStringBuffer(const u32 size = InitialStringBufferSize)
         {
-            this->ConcatenationString.reserve(size);
+            this->StringBuffer.reserve(size);
+        }
+        inline void ReserveTempString(const u32 size = InitialTempStringSize)
+        {
+            this->TempString.reserve(size);
         }
 
-        inline void ResetConcatenationString()
+        inline void ResetStringBuffer()
         {
-            this->ConcatenationString.clear();
+            this->StringBuffer.clear();
+        }       
+        inline void ResetTempString()
+        {
+            this->TempString.clear();
         }
 
-        inline void AppendToConcatenationString(const std::string_view string)
+        inline void AppendToStringBuffer(const std::string REF str)
         {
-            this->ConcatenationString.append(string);
+            this->StringBuffer.append(str);
         }
 
-        void SetUp(std::unique_ptr<LogWriterInterface> PASS_REF operativeLogWriter,
-                   std::unique_ptr<LogWriterInterface> PASS_REF passiveLogWriter,
-                   const u32 concatenationStringSize = InitialConcatenationStringSize)
+        void SetUp(std::unique_ptr<LogWriterInterface> operativeLogWriter,
+                   std::unique_ptr<LogWriterInterface> passiveLogWriter,
+                   const u32 StringBufferSize = InitialStringBufferSize,
+                   const u32 TempStringSize = InitialTempStringSize)
         {
-            this->ChangeLoggers(operativeLogWriter, passiveLogWriter);
+            this->ChangeWriters(std::move(operativeLogWriter), std::move(passiveLogWriter));
             this->ResetLevelArrays();
-            this->ReserveConcatenationString(concatenationStringSize);
-            this->ResetConcatenationString();
+            this->ReserveStringBuffer(StringBufferSize);
+            this->ReserveTempString(TempStringSize);
+            this->ResetStringBuffer();
+            this->ResetTempString();
         }
+
         inline void SetUp()
         {
-            std::unique_ptr<LogWriterInterface> operativeLogger = GetNewDefaultOperativeLogger();
-            std::unique_ptr<LogWriterInterface> passiveLogger = GetNewDefaultOperativeLogger();
+            this->SetUp(ThisType::GetNewDefaultOperativeWriter(), ThisType::GetNewDefaultPassiveWriter(),
+                        ThisType::InitialStringBufferSize, ThisType::InitialTempStringSize);
+        }
 
-            this->SetUp(operativeLogger, passiveLogger, InitialConcatenationStringSize);
+
+        template<typename ArgumentType>
+        inline std::string REF InterpretSingleArgument(const ArgumentType argument)
+        {
+            this->Interpret.InetrpretArg(argument, this->StringBuffer);
+            return this->StringBuffer;
+        }
+        template<typename...ArgumentTypes>
+        inline std::string REF InterpretConcatenateArguments(const ArgumentTypes... args)
+        {
+            this->ResetTempString();
+            this->UnravelAndConcatenateArguments(args...);
+            return this->StringBuffer;
         }
 
         //unravel
         template<typename FirstArgument, typename...ArgumentTypes>
         inline void UnravelAndConcatenateArguments(const FirstArgument firstArg, const ArgumentTypes... args)
         {
-            this->AppendToConcatenationString(this->Interpret.InetrpretArg(firstArg));
+            this->Interpret.InetrpretArg(firstArg, this->TempString);
+            this->AppendToStringBuffer(this->TempString);
             this->UnravelAndConcatenateArguments(args...);
         }
         inline void UnravelAndConcatenateArguments() {}
 
-
-        template<bool idnetifier, u32 firstLevel, u32 ... levels>
-        void UnravelAndSetLoggingLevel(const bool onOff)
-        {
-            this->DoLoggingLevel<firstLevel>(onOff);
-            UnravelAndSetLoggingLevel<idnetifier, levels...>(onOff);
-        }
-        template<bool idnetifier>
-        void UnravelAndSetLoggingLevel(const bool) {}
-
-
-        template<typename FirstLevelType, typename ... LevelTypes>
-        void UnravelAndSetLoggingLevel(const bool onOff, const FirstLevelType firstLevel, const LevelTypes ... levels)
-        {
-            this->DoLoggingLevel(firstLevel, onOff);
-            UnravelAndSetLoggingLevel(onOff, levels...);
-        }
-        void UnravelAndSetLoggingLevel(const bool) {}
-
-
+        
         template<typename FirstStringArgument, typename FirstValueArgument,
                  typename ... StringArgumentTypes, typename ... ValueArgumentTypes>
         inline void UnravelAndSendVariables(const FirstStringArgument firstString, const FirstValueArgument firstValue,
                                             const StringArgumentTypes ... stringArgs, const ValueArgumentTypes ... valueArgs)
         {
-            this->OperativeLogWriter->LogByPartsVar(firstString, this->Interpret.InetrpretArg(firstValue));
+            this->ResetStringBuffer();
+            this->Interpret.InetrpretArg(firstValue, this->StringBuffer);
+            this->OperativeLogWriter->LogByPartsVar(firstString, this->StringBuffer);
             this->UnravelAndSendVariables(stringArgs..., valueArgs...);
         }
         inline void UnravelAndSendVariables() {}
 
-    private:
+
+        template<bool idnetifier, u32 firstLevel, u32 ... levels>
+        inline void UnravelAndSetLoggingLevel(const bool onOff)
+        {           
+            constexpr bool dummy = AssertIfIndexIsOutOfRange<firstLevel>();
+            (void)dummy; //Dummy is to force the function to be evaluated at compile time
+
+            this->DoLoggingLevel<firstLevel>(onOff);
+            UnravelAndSetLoggingLevel<idnetifier, levels...>(onOff);
+        }
+        template<bool idnetifier>
+        inline void UnravelAndSetLoggingLevel(const bool) {}
+
+
+        template<typename FirstLevelType, typename ... LevelTypes>
+        inline void UnravelAndSetLoggingLevel(const bool onOff, const FirstLevelType firstLevel, const LevelTypes ... levels)
+        {
+            ThrowIfIndexIsOutOfRange(firstLevel);
+
+            this->DoLoggingLevel(firstLevel, onOff);
+            UnravelAndSetLoggingLevel(onOff, levels...);
+        }
+        inline void UnravelAndSetLoggingLevel(const bool) {}
+
+    public:
         static constexpr bool IsIndexInLevelArrayRange(const u32 num)
         {
             return (num < ThisType::LevelArraySize);
         }
-
-    public:
         ///Returns the First (currently in use) logger core
         inline LogWriterInterface POINTER GetOperativeLogWriter() const {return OperativeLogWriter.get();}
         ///Returns the Second (currently not in use) logger core
         inline LogWriterInterface POINTER GetPassiveLogWriter() const {return PassiveLogWriter.get();}
+        #include <stdexcept>
         template <u32 level>
         inline LogWriterInterface POINTER GetLevelPointer() const
         {
-            if(ThisType::IsIndexInLevelArrayRange(level))
-                return LevelPointerArray[level];
-            else
-                return LevelPointerArray[0]; //TODO throw exeption
+            //Makes the level checking evaluate at compile time
+            constexpr bool dummy = AssertIfIndexIsOutOfRange<level>();
+            (void)dummy; //Surpresses unused variable warning
+            return GetLevelPointerInternal(level);
         }
         inline LogWriterInterface POINTER GetLevelPointer(const u32 level) const
         {
-            if(ThisType::IsIndexInLevelArrayRange(level))
-                return LevelPointerArray[level];
-            else
-                return LevelPointerArray[0]; //TODO throw exeption
+            ThrowIfIndexIsOutOfRange(level);
+            return GetLevelPointerInternal(level);
         }
+
+    private:
+        static constexpr bool ThrowIfIndexIsOutOfRange(const u32 num)
+        {
+            if(num < ThisType::LevelArraySize)
+                return true;
+            else
+            {
+                throw std::runtime_error("Logger : The given log level is out of array Range: " + std::to_string(ThisType::LevelArraySize));
+                return false;
+            }
+        }
+        template<u32 index>
+        static constexpr bool AssertIfIndexIsOutOfRange()
+        {
+            static_assert(index < ThisType::LevelArraySize);
+            return (index < ThisType::LevelArraySize); //return is for dummy constexpr variables
+        }
+        inline LogWriterInterface POINTER GetLevelPointerInternal(const u32 level) const {return LevelPointerArray[level];}
 };
 
 #include "LogDefines.h"

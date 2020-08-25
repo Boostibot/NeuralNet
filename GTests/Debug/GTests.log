@@ -1,0 +1,23 @@
+﻿  test.cpp
+G:\Work\Neural Net\NeuralNet\GClasses\Common\Log.h(255,34): error C2131: expression did not evaluate to a constant
+G:\Work\Neural Net\NeuralNet\GClasses\Common\Log.h(517,17): message : failure was caused by evaluating a throw sub-expression
+G:\Work\Neural Net\NeuralNet\GTests\test.cpp(26): message : see reference to function template instantiation 'bool Logger<DefaultDataInterpret>::IsLoggingLevelEnabled<17>(void) const' being compiled
+G:\Work\Neural Net\NeuralNet\GTests\test.cpp(26): message : see reference to function template instantiation 'bool Logger<DefaultDataInterpret>::IsLoggingLevelEnabled<17>(void) const' being compiled
+G:\Work\Neural Net\NeuralNet\GClasses\Common\Log.h(222,34): error C2131: expression did not evaluate to a constant
+G:\Work\Neural Net\NeuralNet\GClasses\Common\Log.h(517,17): message : failure was caused by evaluating a throw sub-expression
+G:\Work\Neural Net\NeuralNet\GTests\test.cpp(50): message : see reference to function template instantiation 'void Logger<DefaultDataInterpret>::DoLoggingLevel<17>(const bool)' being compiled
+G:\Work\Neural Net\NeuralNet\GTests\test.cpp(50): message : see reference to function template instantiation 'void Logger<DefaultDataInterpret>::DoLoggingLevel<17>(const bool)' being compiled
+G:\Work\Neural Net\NeuralNet\GClasses\Common\Log.h(500,34): error C2131: expression did not evaluate to a constant
+G:\Work\Neural Net\NeuralNet\GClasses\Common\Log.h(517,17): message : failure was caused by evaluating a throw sub-expression
+G:\Work\Neural Net\NeuralNet\GTests\test.cpp(149): message : see reference to function template instantiation 'LogWriterInterface *Logger<DefaultDataInterpret>::GetLevelPointer<17>(void) const' being compiled
+G:\Work\Neural Net\NeuralNet\GTests\test.cpp(149): message : see reference to function template instantiation 'LogWriterInterface *Logger<DefaultDataInterpret>::GetLevelPointer<17>(void) const' being compiled
+G:\Work\Neural Net\NeuralNet\GClasses\Common\Log.h(300,1): error C2664: 'void Logger<DefaultDataInterpret>::ChangePassiveWriter(std::unique_ptr<LogWriterInterface,std::default_delete<LogWriterInterface>>)': cannot convert argument 1 from 'std::unique_ptr<LogWriterInterface,std::default_delete<LogWriterInterface>> (__cdecl *)(void)' to 'std::unique_ptr<LogWriterInterface,std::default_delete<LogWriterInterface>>'
+G:\Work\Neural Net\NeuralNet\GClasses\Common\Log.h(300,1): message : No constructor could take the source type, or constructor overload resolution was ambiguous
+G:\Work\Neural Net\NeuralNet\GClasses\Common\Log.h(292,14): message : see declaration of 'Logger<DefaultDataInterpret>::ChangePassiveWriter'
+G:\Work\Neural Net\NeuralNet\GTests\test.cpp(227): message : see reference to function template instantiation 'void Logger<DefaultDataInterpret>::ChangePassiveWriter<DefaultOperativeLogWriter,0>(void)' being compiled
+G:\Work\Neural Net\NeuralNet\GTests\test.cpp(227): message : see reference to function template instantiation 'void Logger<DefaultDataInterpret>::ChangePassiveWriter<DefaultOperativeLogWriter,0>(void)' being compiled
+G:\Work\Neural Net\NeuralNet\GClasses\Common\Log.h(288,1): error C2664: 'void Logger<DefaultDataInterpret>::ChangeOperativeWriter(std::unique_ptr<LogWriterInterface,std::default_delete<LogWriterInterface>>)': cannot convert argument 1 from 'std::unique_ptr<LogWriterInterface,std::default_delete<LogWriterInterface>> (__cdecl *)(void)' to 'std::unique_ptr<LogWriterInterface,std::default_delete<LogWriterInterface>>'
+G:\Work\Neural Net\NeuralNet\GClasses\Common\Log.h(288,1): message : No constructor could take the source type, or constructor overload resolution was ambiguous
+G:\Work\Neural Net\NeuralNet\GClasses\Common\Log.h(280,14): message : see declaration of 'Logger<DefaultDataInterpret>::ChangeOperativeWriter'
+G:\Work\Neural Net\NeuralNet\GTests\test.cpp(235): message : see reference to function template instantiation 'void Logger<DefaultDataInterpret>::ChangeOperativeWriter<DefaultOperativeLogWriter,0>(void)' being compiled
+G:\Work\Neural Net\NeuralNet\GTests\test.cpp(235): message : see reference to function template instantiation 'void Logger<DefaultDataInterpret>::ChangeOperativeWriter<DefaultOperativeLogWriter,0>(void)' being compiled

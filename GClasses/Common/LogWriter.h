@@ -104,10 +104,10 @@ class DefaultPassiveLogWriter : public LogWriterInterface
         virtual ~DefaultPassiveLogWriter() {}
 };
 
-class DefaulOperativetLogWriter : public LogWriterInterface
+class DefaultOperativeLogWriter : public LogWriterInterface
 {
     public:
-        using ThisType = DefaulOperativetLogWriter;
+        using ThisType = DefaultOperativeLogWriter;
 
     public:
         enum CustomLogFunctions
@@ -163,16 +163,16 @@ class DefaulOperativetLogWriter : public LogWriterInterface
 
 
     public:
-        DefaulOperativetLogWriter() {this->SetUp();}
-        DefaulOperativetLogWriter(const u32 collectioStringSize,
+        DefaultOperativeLogWriter() {this->SetUp();}
+        DefaultOperativeLogWriter(const u32 collectioStringSize,
                                   const u32 tempStringSize,
                                   const u32 entryIndex,
                                   const u32 partStringSize)
         {
             this->SetUp(collectioStringSize, tempStringSize, partStringSize, entryIndex);
         }
-        //DefaulOperativetLogWriter(const DefaulOperativetLogWriter PASS_REF) = default;
-        DefaulOperativetLogWriter(DefaulOperativetLogWriter PASS_RVALUE_REF) = default;
+        //DefaultOperativeLogWriter(const DefaultOperativeLogWriter PASS_REF) = default;
+        DefaultOperativeLogWriter(DefaultOperativeLogWriter PASS_RVALUE_REF) = default;
 
 
     public:
@@ -262,7 +262,7 @@ class DefaulOperativetLogWriter : public LogWriterInterface
                 AddFormatedIterationCount(this->EntryIndex, this->TempString, this->CollectionString);
                 AddSeparator(this->CollectionString);
 
-                //Time
+                //Time--ALLOCATES!
                 this->ResetTempString();
                 AddFormatedDate(this->TempString, this->CollectionString);
                 AddSeparator(this->CollectionString);
@@ -357,7 +357,7 @@ class DefaulOperativetLogWriter : public LogWriterInterface
         {
             this->File.flush();
         }
-        virtual ~DefaulOperativetLogWriter() {this->TearDown();}
+        virtual ~DefaultOperativeLogWriter() {this->TearDown();}
 
 
     private:
@@ -366,9 +366,14 @@ class DefaulOperativetLogWriter : public LogWriterInterface
         {
             time_t rawTime;
             time(&rawTime);
-            temp += ctime(&rawTime);
+
+            char str[26];
+            ctime_s(str, sizeof str, &rawTime);
+
+            temp.append(str);
             output += '[';
-            output += temp.substr(0, temp.size() - 1);
+            temp.pop_back();
+            output += temp;
             output += " - ";
             this->ResetString(temp);
             this->PutNumIntocharcterField(clock(), this->LogIterationFieldSize, temp, output);
@@ -479,5 +484,8 @@ class DefaulOperativetLogWriter : public LogWriterInterface
             std::cout << string << std::endl;
         }
 };
+
+
+
 
 #endif // LOGWRITER_H

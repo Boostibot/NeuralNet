@@ -32,7 +32,13 @@ HEADERS += \
 FORMS += \
     Main/mainwindow.ui
 
+#LIBS += -L"$$_PRO_FILE_PWD_/Libraries/" -lfmt
+win32:LIBS += $$_PRO_FILE_PWD_/Libraries/fmt.lib
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+#DISTFILES += \
+#    Libraries/fmt.lib

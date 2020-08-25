@@ -5,159 +5,185 @@
 #include "Log.h"
 
 
-/*
-class LogTestWriter : public LogWriterInterface
+template<typename Type>
+class ConstructionViewer : public Type
 {
     public:
-        std::vector<std::string> Results;
-
-        ///Logs the given msg on the given level
-        virtual void LogMsg(const u32 level, const std::string_view msg)
+        ConstructionViewer() : Type()
         {
-
+            std::cout << "Default Constructed" << std::endl;
         }
-        ///Logs the given varName alongside its value on the given level
-        virtual void LogVar(const u32 level, const std::string_view varName, const std::string_view varValue)
+        ConstructionViewer(const ConstructionViewer PASS_REF viewer) : Type(reinterpret_cast<Type>(viewer))
         {
-
+            std::cout << "Copy Constructed" << std::endl;
         }
-        ///Logs the given msg on the given leveland the initial LOG command origin file and line on the given level
-        virtual void LogMsgSource(const u32 level, const std::string_view file, const u32 lineNum, const std::string_view msg)
+        ConstructionViewer(ConstructionViewer PASS_RVALUE_REF viewer) : Type(std::move(reinterpret_cast<Type>(viewer)))
         {
-
+            std::cout << "Move Constructed" << std::endl;
         }
-
-        ///Logs the given varName alongside its value and the initial LOG command origin file and line on the given level
-        virtual void LogVarSource(const u32 level, const std::string_view file, const u32 lineNum, const std::string_view varName, const std::string_view varValue)
-        {
-
-        }
-
-        ///Starts the logging by parts process; Always should be accompanied by LogByPartsFinish()
-        virtual void LogByPartsStart() = 0;
-        ///Adds a level (level) part to the LogByParts process
-        virtual void LogByPartsLvl(const u32 level) = 0;
-        ///Adds a source (file, line) part to the LogByParts process
-        virtual void LogByPartsSource(const std::string_view file, const u32 lineNum) = 0;
-        ///Adds a message (msg) part to the LogByParts process
-        virtual void LogByPartsMsg(const std::string_view msg) = 0;
-        ///Adds a variable (varName, varValue) part to the LogByParts process
-        virtual void LogByPartsVar(const std::string_view varName, const std::string_view varValue) = 0;
-        ///Ends the logging by parts process; Always should be accompanied by LogByPartsStart()
-        virtual void LogByPartsFinish() = 0;
-
-        ///Returns if this LogWriter is an empty logger (empty logger = doesnt write log with any given input)
-        virtual bool IsEmptyLogger() = 0;
-
-    public:
-        ///Logs a custom message; The functionSpecifier shoudl be filled with the implementaton specific enum values
-        virtual void LogCustom(const i32 functionSpecifier, const u32 level, void POINTER pointer = nullptr) {(void)functionSpecifier; (void)level; (void)pointer;}
-        ///Sets a custom log state; The functionSpecifier shoudl be filled with the implementaton specific enum values
-        virtual void SetCustomLogState(const i32 stateSpecifier, void POINTER pointer = nullptr) {(void)stateSpecifier; (void)pointer;}
-
-        virtual ~LogTestWriter() {}
-
+        ~ConstructionViewer() {std::cout << "Destructed" << std::endl;}
 };
-*/
 
-
-bool TestLoggerSetting()
+template<typename Type>
+class ConstructionViewer2
 {
-    Logger log;
+    public:
+        Type Viewed;
+        ConstructionViewer2() : Viewed()
+        {
+            std::cout << "Default Constructed" << std::endl;
+        }
+        ConstructionViewer2(const ConstructionViewer2 PASS_REF viewer) : Viewed(viewer.Viewed)
+        {
+            std::cout << "Copy Constructed" << std::endl;
+        }
+        ConstructionViewer2(ConstructionViewer2 PASS_RVALUE_REF viewer) : Viewed(std::move(viewer.Viewed))
+        {
+            std::cout << "Move Constructed" << std::endl;
+        }
+        ~ConstructionViewer2() {std::cout << "Destructed" << std::endl;}
+};
 
-    //Checking of the allocation state
-    if(NOT(log.GetEmptyLogWriter()->IsEmptyLogger()))
+class SpeedTestBase
+{
+    public:
+        virtual void Function5(const int i1, const int i2, const int i3, const int i4, const int i5) = 0;
+        virtual void Function4(const int i1, const int i2, const int i3, const int i4) = 0;
+        virtual void Function3(const int i1, const int i2, const int i3) = 0;
+        virtual void Function2(const int i1, const int i2) = 0;
+        virtual void Function1(const int i1) = 0;
+};
+
+class SpeedTestOperative : public SpeedTestBase
+{
+    public:
+        int iR = 0;
+
+    public:
+        virtual void Function5(const int i1, const int i2, const int i3, const int i4, const int i5) {iR += i1 + i2 + i3 + i4 + i5;}
+        virtual void Function4(const int i1, const int i2, const int i3, const int i4) {iR += i1 + i2 + i3 + i4;}
+        virtual void Function3(const int i1, const int i2, const int i3) {iR += i1 + i2 + i3;}
+        virtual void Function2(const int i1, const int i2) {iR += i1 + i2;}
+        virtual void Function1(const int i1) {iR += i1;}
+};
+
+class SpeedTestPassive : public SpeedTestBase
+{
+    public:
+        virtual void Function5(const int, const int, const int, const int, const int) {}
+        virtual void Function4(const int, const int, const int, const int) {}
+        virtual void Function3(const int, const int, const int) {}
+        virtual void Function2(const int, const int) {}
+        virtual void Function1(const int) {}
+};
+
+class SpeedTestSimple
+{
+    public:
+        bool Disabled = true;
+
+    public:
+        int iR = 0;
+
+    public:
+        void Function5(const int i1, const int i2, const int i3, const int i4, const int i5) {if(Disabled) iR += i1 + i2 + i3 + i4 + i5;}
+        void Function4(const int i1, const int i2, const int i3, const int i4) {if(Disabled) iR += i1 + i2 + i3 + i4;}
+        void Function3(const int i1, const int i2, const int i3) {if(Disabled) iR += i1 + i2 + i3;}
+        void Function2(const int i1, const int i2) {if(Disabled) iR += i1 + i2;}
+        void Function1(const int i1) {if(Disabled) iR += i1;}
+};
+
+
+struct Durations
+{
+        using MicrosecondsChronoDurations = std::chrono::duration<double, std::ratio<1, 1000>>;
+    public:
+        MicrosecondsChronoDurations VirtualOnDuration;
+        MicrosecondsChronoDurations VirtualOffDuration;
+
+        MicrosecondsChronoDurations SimplePtrOnDuration;
+        MicrosecondsChronoDurations SimplePtrOffDuration;
+
+        MicrosecondsChronoDurations SimpleOnDuration;
+        MicrosecondsChronoDurations SimpleOffDuration;
+};
+
+#define TestFuncSpeed(functionNum, nameAndAccess, durationName, ...) \
+    TempTimePoint = std::chrono::high_resolution_clock::now(); \
+    for(u32 i = 0; i < iterations; i++) \
+        nameAndAccess CONCAT(Function, functionNum)(__VA_ARGS__); \
+    durations.at(functionNum - 1).durationName = std::chrono::high_resolution_clock::now() - TempTimePoint;
+
+
+
+void SpeedTest()
+{
+    std::unique_ptr<SpeedTestBase> virtualOn = std::make_unique<SpeedTestOperative>();
+    std::unique_ptr<SpeedTestBase> virtualOff = std::make_unique<SpeedTestPassive>();
+    std::unique_ptr<SpeedTestSimple> SimplePtr = std::make_unique<SpeedTestSimple>();
+    SpeedTestSimple Simple;
+    std::vector<Durations> durations(5);
+    std::chrono::time_point<std::chrono::high_resolution_clock> TempTimePoint;
+
+    constexpr u32 iterations = 100000000;
+
+    TestFuncSpeed(1, virtualOn->, VirtualOnDuration, 1);
+    TestFuncSpeed(2, virtualOn->, VirtualOnDuration, 1, 1);
+    TestFuncSpeed(3, virtualOn->, VirtualOnDuration, 1, 1, 1);
+    TestFuncSpeed(4, virtualOn->, VirtualOnDuration, 1, 1, 1, 1);
+    TestFuncSpeed(5, virtualOn->, VirtualOnDuration, 1, 1, 1, 1, 1);
+
+    TestFuncSpeed(1, virtualOff->, VirtualOffDuration, 1);
+    TestFuncSpeed(2, virtualOff->, VirtualOffDuration, 1, 1);
+    TestFuncSpeed(3, virtualOff->, VirtualOffDuration, 1, 1, 1);
+    TestFuncSpeed(4, virtualOff->, VirtualOffDuration, 1, 1, 1, 1);
+    TestFuncSpeed(5, virtualOff->, VirtualOffDuration, 1, 1, 1, 1, 1);
+
+    SimplePtr->Disabled = false;
+    TestFuncSpeed(1, SimplePtr->, SimplePtrOnDuration, 1);
+    TestFuncSpeed(2, SimplePtr->, SimplePtrOnDuration, 1, 1);
+    TestFuncSpeed(3, SimplePtr->, SimplePtrOnDuration, 1, 1, 1);
+    TestFuncSpeed(4, SimplePtr->, SimplePtrOnDuration, 1, 1, 1, 1);
+    TestFuncSpeed(5, SimplePtr->, SimplePtrOnDuration, 1, 1, 1, 1, 1);
+
+    SimplePtr->Disabled = true;
+    TestFuncSpeed(1, SimplePtr->, SimplePtrOffDuration, 1);
+    TestFuncSpeed(2, SimplePtr->, SimplePtrOffDuration, 1, 1);
+    TestFuncSpeed(3, SimplePtr->, SimplePtrOffDuration, 1, 1, 1);
+    TestFuncSpeed(4, SimplePtr->, SimplePtrOffDuration, 1, 1, 1, 1);
+    TestFuncSpeed(5, SimplePtr->, SimplePtrOffDuration, 1, 1, 1, 1, 1);
+
+    Simple.Disabled = false;
+    TestFuncSpeed(1, Simple., SimpleOnDuration, 1);
+    TestFuncSpeed(2, Simple., SimpleOnDuration, 1, 1);
+    TestFuncSpeed(3, Simple., SimpleOnDuration, 1, 1, 1);
+    TestFuncSpeed(4, Simple., SimpleOnDuration, 1, 1, 1, 1);
+    TestFuncSpeed(5, Simple., SimpleOnDuration, 1, 1, 1, 1, 1);
+
+    Simple.Disabled = true;
+    TestFuncSpeed(1, Simple., SimpleOffDuration, 1);
+    TestFuncSpeed(2, Simple., SimpleOffDuration, 1, 1);
+    TestFuncSpeed(3, Simple., SimpleOffDuration, 1, 1, 1);
+    TestFuncSpeed(4, Simple., SimpleOffDuration, 1, 1, 1, 1);
+    TestFuncSpeed(5, Simple., SimpleOffDuration, 1, 1, 1, 1, 1);
+
+
+    Simple.Disabled = false;
+    for(u32 i = 0; i < iterations; i++)
+        Simple.Function1(1);
+
+    for(int i = 0; i < 5; i++)
     {
-        std::cout << "After creation Empty logger core is not empty" << std::endl;
-        return false;
+        std::cout << std::endl;
+        std::cout << "Durations for function with " << i + 1 << " arguments:" << std::endl;
+        std::cout << "Virtual On:     " << durations[i].VirtualOnDuration.count() << " mikro s" << std::endl;
+        std::cout << "Simple Ptr On:  " << durations[i].SimplePtrOnDuration.count() << " mikro s" << std::endl;
+        std::cout << "Simple On:      " << durations[i].SimpleOnDuration.count() << " mikro s" << std::endl;
+
+        std::cout << "Virtual Off:    " << durations[i].VirtualOffDuration.count() << " mikro s" << std::endl;
+        std::cout << "Simple Ptr Off: " << durations[i].SimplePtrOffDuration.count() << " mikro s" << std::endl;
+        std::cout << "Simple Off:     " << durations[i].SimpleOffDuration.count() << " mikro s" << std::endl;
     }
-
-    if(log.GetNonemptyLogWriter()->IsEmptyLogger())
-    {
-        std::cout << "After creation Nonempty logger core is empty" << std::endl;
-        return false;
-    }
-
-    if(NOT(log.LoggingStatus))
-    {
-        std::cout << "After creation Logging status is off" << std::endl;
-        return false;
-    }
-
-    return true;
 }
 
-bool TestLoggingStandard()
-{
-    Logger log;
-
-    log.GetNonemptyLogWriter()->OpenOutputStream("Test logger.txt", 1);
-
-    LOG(0, log, "MSG");
-
-    //Testing logging msgs
-    std::cout << "Check output below if they match" << std::endl;
-    std::cout << "<prefixes> <0> : msg = Hello" << std::endl;
-    std::cout << "<prefixes> <0> : msg = Hello World" << std::endl;
-    std::cout << "<prefixes> <1> : msg = Hello World" << std::endl;
-    std::cout << "<prefixes> <0> : msg = var1" << std::endl;
-    std::cout << "<prefixes> <0> : msg = var1 true" << std::endl;
-    std::cout << "File [58] <prefixes> <0> : msg = Logging with source" << std::endl;
-    std::cout << "Output below:" << std::endl;
-    log.LogMsg(0, "Hello");
-    log.LogMsg(0, "Hello", " World");
-    log.LogMsg(1, "Hello", " World");
-    log.LogMsg(0, "var", 1);
-    log.LogMsg(0, "var", 1, " ", true);
-    log.LogMsgSource(0, "File", 58, "Logging with source");
-
-    std::cout<<std::endl;
-
-    //Testing logging vars
-    std::cout << "Check output below if they match" << std::endl;
-    std::cout << "<prefixes> <0> : int1 = 1" << std::endl;
-    std::cout << "<prefixes> <3> : int2 = 2" << std::endl;
-    std::cout << "File [58] <prefixes> <0> : int1 = 1" << std::endl;
-    std::cout << "File [58] <prefixes> <0> : int2 = 2" << std::endl;
-    std::cout << "Output below:" << std::endl;
-
-    i32 int1 = 1;
-    i32 int2 = 2;
-
-    log.LogVar(0, "int1", int1);
-    log.LogVar(3, "int2", int2);
-    log.LogVarSource(0, "File", 58, "int1", int1);
-    log.LogVarSource(0, "File", 58, "int2", int2);
-
-    std::cout<<std::endl;
-
-
-    return true;
-}
-
-bool TestLoggingTemplated()
-{
-
-    return true;
-}
-
-bool TestLoggerInfo()
-{
-
-    return true;
-}
-
-
-bool TestLogger()
-{
-    Logger errorLog;
-
-    if(NOT(TestLoggerSetting()))    {std::cout << "TestLoggerSetting fail" << std::endl;}
-    if(NOT(TestLoggingStandard()))  {std::cout << "TestLoggingStandard fail" << std::endl;}
-    if(NOT(TestLoggingTemplated())) {std::cout << "TestLoggingTemplated fail" << std::endl;}
-    if(NOT(TestLoggerInfo()))       {std::cout << "TestLoggerInfo fail" << std::endl;}
-
-    return true;
-}
-
-#endif // LOGTESTS_H
+#endif
