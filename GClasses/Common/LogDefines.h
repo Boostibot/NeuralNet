@@ -126,7 +126,8 @@
 #define LOG(level, logger, ...)         GLOG_INTERNAL_LOG_MSG(level, logger, __VA_ARGS__)
 
 //Custom logging support
-#define DO_IF_LOG_LOGIC(level, ...) GLOG_INTERNAL_LOG_LOGIC_NO_SOURCE(level, __VA_ARGS__)
+#define DO_IF_LOG(...)              DO_IF(DO_LOG, __VA_ARGS__)
+#define DO_IF_LOG_LEVEL(level, ...) GLOG_INTERNAL_LOG_LOGIC_NO_SOURCE(level, __VA_ARGS__)
 
 
 #endif // LOGDEFINES_H

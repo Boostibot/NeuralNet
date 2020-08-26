@@ -33,9 +33,13 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
+    <ClInclude Include="DynamicLog.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="StaticLog.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DynamicLog.cpp" />
+    <ClCompile Include="StaticLog.cpp" />
     <ClCompile Include="test.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

@@ -6,6 +6,42 @@
     <TestDuration Test="Logger.EnableLog" Duration="1" />
     <TestDuration Test="Logger.Construction" Duration="1" />
     <TestDuration Test="Logger.StaticFunctions" Duration="1" />
-    <TestDuration Test="Logger.PointerGettingSetting" Duration="6" />
+    <TestDuration Test="Logger.PointerGettingSetting" Duration="17" />
+    <TestDuration Test="Logger.DoLog" Duration="1" />
+    <TestDuration Test="Logger.DoLogginglevels" Duration="1" />
+    <TestDuration Test="LogWriterBase.CrtpOverloading" Duration="1" />
+    <TestDuration Test="LogWriterBase.FunctionCalling" Duration="1" />
+    <TestDuration Test="LogWriterBase.WriteMsgs" Duration="1" />
+    <TestDuration Test="LogWriterBase.WriteVars" Duration="1" />
+    <TestDuration Test="LogWriterBase.AppendSource" Duration="1" />
+    <TestDuration Test="LogWriterBase.AppendTags" Duration="1" />
+    <TestDuration Test="LogWriterBase.OpenStream" Duration="1" />
+    <TestDuration Test="LogWriterBase.CloseStream" Duration="1" />
+    <TestDuration Test="LogWriterBase.IsStreamOpen" Duration="1" />
+    <TestDuration Test="LogWriterBase.FlushStream" Duration="1" />
+    <TestDuration Test="LogWriterBase.OnConstruction" Duration="1" />
+    <TestDuration Test="LogWriterBase.OnDestruction" Duration="1" />
+    <TestDuration Test="LogWriterBase.WriteCustom" Duration="1" />
+    <TestDuration Test="LogWriterBase.WriteCustomNoArgs" Duration="1" />
+    <TestDuration Test="LogWriterBase.AppendCustom" Duration="1" />
+    <TestDuration Test="LogWriterBase.AppendCustomNoArgs" Duration="1" />
+    <TestDuration Test="LogWriterBase.DoCustomWriteCustom" Duration="1" />
+    <TestDuration Test="LogWriterBase.DoCustomNoArgs" Duration="1" />
+    <TestDuration Test="Logger.CrtpOverloading" Duration="1" />
+    <TestDuration Test="Logger.WriteMsgs" Duration="1" />
+    <TestDuration Test="Logger.WriteVars" Duration="1" />
+    <TestDuration Test="Logger.AppendSource" Duration="1" />
+    <TestDuration Test="Logger.AppendTags" Duration="1" />
+    <TestDuration Test="Logger.OpenStream" Duration="1" />
+    <TestDuration Test="Logger.CloseStream" Duration="1" />
+    <TestDuration Test="Logger.IsStreamOpen" Duration="1" />
+    <TestDuration Test="Logger.FlushStream" Duration="1" />
+    <TestDuration Test="Logger.OnConstruction" Duration="1" />
+    <TestDuration Test="Logger.OnDestruction" Duration="1" />
+    <TestDuration Test="Logger.IsLevelInRange" Duration="1" />
+    <TestDuration Test="Logger.IsLogEnabled" Duration="1" />
+    <TestDuration Test="Logger.DisableLog" Duration="1" />
+    <TestDuration Test="Logger.LogLevels_LevelArgument" Duration="1" />
+    <TestDuration Test="Logger.LogLevels_LevelTemplate" Duration="1" />
   </TestDurations>
 </GtaTestDurations>

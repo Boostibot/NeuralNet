@@ -26,14 +26,12 @@ HEADERS += \
     GClasses/Common/LogDefines.h \
     GClasses/Common/LogTests.h \
     GClasses/Common/LogWriter.h \
+    GClasses/Common/StaticLog.h \
     GClasses/Common/Tester.h \
     Main/mainwindow.h
 
 FORMS += \
     Main/mainwindow.ui
-
-#LIBS += -L"$$_PRO_FILE_PWD_/Libraries/" -lfmt
-win32:LIBS += $$_PRO_FILE_PWD_/Libraries/fmt.lib
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

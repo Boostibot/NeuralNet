@@ -29,7 +29,7 @@ class DataInterpretInterface : public DerivedDataPackage
         template <typename Type>
         inline void InetrpretArg(Type arg, std::string PASS_REF outputString)
         {
-            reinterpret_cast<Derived POINTER>(this)->InetrpretArg(arg, outputString);
+            static_cast<Derived POINTER>(this)->InetrpretArg(arg, outputString);
         }
 
 };
@@ -87,30 +87,5 @@ class DefaultDataInterpret : public DataInterpretInterface<DefaultDataInterpret,
                 outputString = "false";
         }
 };
-/*
- *
- *
- * ostream& operator<< (bool val);
-ostream& operator<< (short val);
-ostream& operator<< (unsigned short val);
-ostream& operator<< (int val);
-ostream& operator<< (unsigned int val);
-ostream& operator<< (long val);
-ostream& operator<< (unsigned long val);
-ostream& operator<< (float val);
-ostream& operator<< (double val);
-ostream& operator<< (long double val);
-ostream& operator<< (void* val);
-
-string to_string (int val);
-string to_string (long val);
-string to_string (long long val);
-string to_string (unsigned val);
-string to_string (unsigned long val);
-string to_string (unsigned long long val);
-string to_string (float val);
-string to_string (double val);
-string to_string (long double val);
-*/
 
 #endif // LOGDATAINTERPRET_H

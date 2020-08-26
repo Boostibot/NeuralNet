@@ -52,7 +52,6 @@ class Logger
             this->SetUp(operativeLogWriter, passiveLogWriter, StringBufferSize, TempStringSize);
         }
         Logger(ThisType PASS_RVALUE_REF other) = default;
-        ~Logger() = default;
 
     public:
         //Nontemplated level argument
@@ -408,6 +407,7 @@ class Logger
                    const u32 TempStringSize = InitialTempStringSize)
         {
             this->ChangeWriters(std::move(operativeLogWriter), std::move(passiveLogWriter));
+            this->DoLog(true);
             this->ResetLevelArrays();
             this->ReserveStringBuffer(StringBufferSize);
             this->ReserveTempString(TempStringSize);
@@ -462,10 +462,7 @@ class Logger
 
         template<bool idnetifier, u32 firstLevel, u32 ... levels>
         inline void UnravelAndSetLoggingLevel(const bool onOff)
-        {           
-            constexpr bool dummy = AssertIfIndexIsOutOfRange<firstLevel>();
-            (void)dummy; //Dummy is to force the function to be evaluated at compile time
-
+        {
             this->DoLoggingLevel<firstLevel>(onOff);
             UnravelAndSetLoggingLevel<idnetifier, levels...>(onOff);
         }
@@ -476,8 +473,6 @@ class Logger
         template<typename FirstLevelType, typename ... LevelTypes>
         inline void UnravelAndSetLoggingLevel(const bool onOff, const FirstLevelType firstLevel, const LevelTypes ... levels)
         {
-            ThrowIfIndexIsOutOfRange(firstLevel);
-
             this->DoLoggingLevel(firstLevel, onOff);
             UnravelAndSetLoggingLevel(onOff, levels...);
         }

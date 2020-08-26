@@ -114,8 +114,6 @@ struct Durations
         nameAndAccess CONCAT(Function, functionNum)(__VA_ARGS__); \
     durations.at(functionNum - 1).durationName = std::chrono::high_resolution_clock::now() - TempTimePoint;
 
-
-
 void SpeedTest()
 {
     std::unique_ptr<SpeedTestBase> virtualOn = std::make_unique<SpeedTestOperative>();
@@ -184,6 +182,12 @@ void SpeedTest()
         std::cout << "Simple Ptr Off: " << durations[i].SimplePtrOffDuration.count() << " mikro s" << std::endl;
         std::cout << "Simple Off:     " << durations[i].SimpleOffDuration.count() << " mikro s" << std::endl;
     }
+
+
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << std::endl;
+
 }
 
 #endif

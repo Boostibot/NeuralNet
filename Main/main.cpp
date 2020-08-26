@@ -559,6 +559,7 @@ class NeuralNet
 #include "GClasses/Common/Log.h"
 #include "GClasses/Common/LogTests.h"
 #include "GClasses/Common/Tester.h"
+#include "GClasses/Common/StaticLog.h"
 
 G_TEST_CASE("Test test-case")
 {
@@ -566,28 +567,26 @@ G_TEST_CASE("Test test-case")
     G_ASSERT(a.size() == 3);
 }
 
-std::unique_ptr<int> Get()
-{
-    return std::make_unique<int>();
-}
-
-void Use(std::unique_ptr<int> myPtr) {}
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
     {
+        StaticLogger::Logger<StaticLogger::StaticLogTesting::TestingLogger1> log;
 
-        std::unique_ptr<int> myPtr = Get();
-        Use(Get());
+        try {
 
-        SpeedTest();
+            log.DoLoggingLevels(false, 1, 2, 17, 4);
+        }
+        catch (...)
+        {
+            int a = 3;
+        }
 
         std::string in;
         std::cin >> in;
 
-        Logger log;
     }
 
     {
