@@ -1,0 +1,22 @@
+[
+  {
+    "directory": "G:\\Work\\Neural Net\\NeuralNet\\GTests",
+    "command": "\"C:\\Windows\\system32\\CL.exe\" \/c \/I\"G:\\Work\\Neural Net\\NeuralNet\\GTests\\packages\\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-static.1.8.1.3\\build\\native\\include\" \/Zi \/nologo \/W3 \/WX- \/diagnostics:column \/O2 \/D X64 \/D NDEBUG \/D _CONSOLE \/D CODE_ANALYSIS \/D _UNICODE \/D UNICODE \/EHsc \/MT \/GS \/fp:precise \/std:c++17 \/Fo\"x64\\Release\\\\\" \/Gd \/TP   \"G:\\Work\\Neural Net\\NeuralNet\\GTests\\DynamicLog.cpp\"",
+    "file": "G:\\Work\\Neural Net\\NeuralNet\\GTests\\DynamicLog.cpp"
+  },
+  {
+    "directory": "G:\\Work\\Neural Net\\NeuralNet\\GTests",
+    "command": "\"C:\\Windows\\system32\\CL.exe\" \/c \/I\"G:\\Work\\Neural Net\\NeuralNet\\GTests\\packages\\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-static.1.8.1.3\\build\\native\\include\" \/Zi \/nologo \/W3 \/WX- \/diagnostics:column \/O2 \/D X64 \/D NDEBUG \/D _CONSOLE \/D CODE_ANALYSIS \/D _UNICODE \/D UNICODE \/EHsc \/MT \/GS \/fp:precise \/std:c++17 \/Fo\"x64\\Release\\\\\" \/Gd \/TP   \"G:\\Work\\Neural Net\\NeuralNet\\GTests\\StaticLog.cpp\"",
+    "file": "G:\\Work\\Neural Net\\NeuralNet\\GTests\\StaticLog.cpp"
+  },
+  {
+    "directory": "G:\\Work\\Neural Net\\NeuralNet\\GTests",
+    "command": "\"C:\\Windows\\system32\\CL.exe\" \/c \/I\"G:\\Work\\Neural Net\\NeuralNet\\GTests\\packages\\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-static.1.8.1.3\\build\\native\\include\" \/Zi \/nologo \/W3 \/WX- \/diagnostics:column \/O2 \/D X64 \/D NDEBUG \/D _CONSOLE \/D CODE_ANALYSIS \/D _UNICODE \/D UNICODE \/EHsc \/MT \/GS \/fp:precise \/std:c++17 \/Fo\"x64\\Release\\\\\" \/Gd \/TP   \"G:\\Work\\Neural Net\\NeuralNet\\GTests\\test.cpp\"",
+    "file": "G:\\Work\\Neural Net\\NeuralNet\\GTests\\test.cpp"
+  },
+  {
+    "directory": "G:\\Work\\Neural Net\\NeuralNet\\GTests",
+    "command": "\"C:\\Windows\\system32\\CL.exe\" \/c \/I\"G:\\Work\\Neural Net\\NeuralNet\\GTests\\packages\\Microsoft.googletest.v140.windesktop.msvcstl.static.rt-static.1.8.1.3\\build\\native\\include\" \/Zi \/nologo \/W3 \/WX- \/diagnostics:column \/O2 \/D X64 \/D NDEBUG \/D _CONSOLE \/D CODE_ANALYSIS \/D _UNICODE \/D UNICODE \/EHsc \/MT \/GS \/fp:precise \/std:c++17 \/Fo\"x64\\Release\\\\\" \/Gd \/TP   \"G:\\Work\\Neural Net\\NeuralNet\\GTests\\pch.cpp\"",
+    "file": "G:\\Work\\Neural Net\\NeuralNet\\GTests\\pch.cpp"
+  }
+]

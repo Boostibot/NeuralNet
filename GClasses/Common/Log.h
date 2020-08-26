@@ -38,7 +38,7 @@ class Logger
         DataInterpretInterfaceType Interpret;
 
     public:
-        Logger() : Interpret()
+        Logger() : Interpret() noexcept
         {
             this->SetUp();
         }
@@ -239,7 +239,7 @@ class Logger
         }
 
         ///Returns if logging is disabled
-        inline bool IsLoggingEnabled() const {return this->LoggingStatus;}
+        inline bool IsLoggingEnabled() const {return this->LoggingStatus;} noexcept
         ///Returns if logging is for a concrete level disabled
         inline bool IsLoggingLevelEnabled(const u32 level) const
         {
@@ -356,7 +356,7 @@ class Logger
             else
                 SetPointerArray(this->LevelPointerArray, ThisType::LevelArraySize, this->GetPassiveLogWriter());
         }
-        inline void SetPointerArray(LogWriterInterface POINTER ptrArray[], const u32 arraySize, LogWriterInterface POINTER value) const
+        inline void SetPointerArray(LogWriterInterface POINTER ptrArray[], const u32 arraySize, LogWriterInterface POINTER value) const noexcept
         {
             for(u32 i = 0; i < arraySize; i++)
                 ptrArray[i] = value;
@@ -467,7 +467,7 @@ class Logger
             UnravelAndSetLoggingLevel<idnetifier, levels...>(onOff);
         }
         template<bool idnetifier>
-        inline void UnravelAndSetLoggingLevel(const bool) {}
+        inline void UnravelAndSetLoggingLevel(const bool) {} noexcept
 
 
         template<typename FirstLevelType, typename ... LevelTypes>
@@ -476,7 +476,7 @@ class Logger
             this->DoLoggingLevel(firstLevel, onOff);
             UnravelAndSetLoggingLevel(onOff, levels...);
         }
-        inline void UnravelAndSetLoggingLevel(const bool) {}
+        inline void UnravelAndSetLoggingLevel(const bool) noexcept {}
 
     public:
         static constexpr bool IsIndexInLevelArrayRange(const u32 num)
@@ -484,9 +484,9 @@ class Logger
             return (num < ThisType::LevelArraySize);
         }
         ///Returns the First (currently in use) logger core
-        inline LogWriterInterface POINTER GetOperativeLogWriter() const {return OperativeLogWriter.get();}
+        inline LogWriterInterface POINTER GetOperativeLogWriter() const noexcept {return OperativeLogWriter.get();}
         ///Returns the Second (currently not in use) logger core
-        inline LogWriterInterface POINTER GetPassiveLogWriter() const {return PassiveLogWriter.get();}
+        inline LogWriterInterface POINTER GetPassiveLogWriter() const noexcept  {return PassiveLogWriter.get();}
         #include <stdexcept>
         template <u32 level>
         inline LogWriterInterface POINTER GetLevelPointer() const

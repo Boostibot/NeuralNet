@@ -2,3 +2,5 @@ G:\Work\Neural Net\NeuralNet\GTests\x64\Release\GTests.vcxproj.CopyComplete
 G:\Work\Neural Net\NeuralNet\GTests\x64\Release\GTests.exe
 G:\Work\Neural Net\NeuralNet\GTests\x64\Release\gtest.pdb
 G:\Work\Neural Net\NeuralNet\GTests\x64\Release\gtest_main.pdb
+G:\Work\Neural Net\NeuralNet\GTests\x64\Release\GTests.exe.lastcodeanalysissucceeded
+G:\Work\Neural Net\NeuralNet\GTests\x64\Release\NativeCodeAnalysis.read.1.tlog

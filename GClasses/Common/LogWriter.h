@@ -52,19 +52,19 @@ class LogWriterInterface
 
     public:
         ///Logs a custom message; The functionSpecifier shoudl be filled with the implementaton specific enum values
-        virtual void LogCustom(const i32 functionSpecifier, const u32 level, void POINTER pointer = nullptr) {(void)functionSpecifier; (void)level; (void)pointer;}
+        virtual void LogCustom(const i32 functionSpecifier, const u32 level, void POINTER pointer = nullptr) noexcept {(void)functionSpecifier; (void)level; (void)pointer;}
         ///Sets a custom log state; The functionSpecifier shoudl be filled with the implementaton specific enum values
-        virtual void SetCustomLogState(const i32 stateSpecifier, void POINTER pointer = nullptr) {(void)stateSpecifier; (void)pointer;}
+        virtual void SetCustomLogState(const i32 stateSpecifier, void POINTER pointer = nullptr) noexcept {(void)stateSpecifier; (void)pointer;}
 
         ///Returns if the output stream is open; This can mean the file, buffer or anything else is ready for writing log
-        virtual bool IsOutputStreamOpen() {return false;}
+        virtual bool IsOutputStreamOpen() noexcept {return false;}
         ///Opens the output stream
-        virtual void OpenOutputStream(const std::string_view path, const i32 flag) {(void)path; (void)flag;}
+        virtual void OpenOutputStream(const std::string_view path, const i32 flag) noexcept {(void)path; (void)flag;}
         ///Closes the output stream
-        virtual void CloseOutputStream() {}
+        virtual void CloseOutputStream() noexcept {}
         ///Flushes the output stream (if flushing is used)
-        virtual void FlushOutputStream() {}
-        virtual ~LogWriterInterface() {}
+        virtual void FlushOutputStream() noexcept {}
+        virtual ~LogWriterInterface() noexcept {}
 
     public:
         ///Returns the hash code of this logger
@@ -83,25 +83,25 @@ class LogWriterInterface
 class DefaultPassiveLogWriter : public LogWriterInterface
 {
     public:
-        virtual void LogMsg(const u32, const std::string_view) {}
-        virtual void LogVar(const u32, const std::string_view, const std::string_view) {}
-        virtual void LogMsgSource(const u32, const std::string_view, const u32, const std::string_view) {}
-        virtual void LogVarSource(const u32, const std::string_view, const u32, const std::string_view, const std::string_view) {}
+        virtual void LogMsg(const u32, const std::string_view) noexcept override {}
+        virtual void LogVar(const u32, const std::string_view, const std::string_view) noexcept override {}
+        virtual void LogMsgSource(const u32, const std::string_view, const u32, const std::string_view) noexcept override {}
+        virtual void LogVarSource(const u32, const std::string_view, const u32, const std::string_view, const std::string_view) noexcept override {}
 
-        virtual void LogByPartsStart() {}
-        virtual void LogByPartsLvl(const u32) {}
-        virtual void LogByPartsSource(const std::string_view, const u32) {}
-        virtual void LogByPartsMsg(const std::string_view) {}
-        virtual void LogByPartsVar(const std::string_view, const std::string_view) {}
-        virtual void LogByPartsFinish() {}
+        virtual void LogByPartsStart() noexcept override {}
+        virtual void LogByPartsLvl(const u32) noexcept override {}
+        virtual void LogByPartsSource(const std::string_view, const u32) noexcept override {}
+        virtual void LogByPartsMsg(const std::string_view) noexcept override {}
+        virtual void LogByPartsVar(const std::string_view, const std::string_view) noexcept override {}
+        virtual void LogByPartsFinish() noexcept override {}
 
-        virtual bool IsPassiveLogger() {return true;}
+        virtual bool IsPassiveLogger() noexcept override {return true;}
 
-        virtual bool IsOutputStreamOpen() {return false;}
-        virtual void OpenOutputStream(const std::string_view, const i32) {}
-        virtual void CloseOutputStream() {}
-        virtual void FlushOutputStream() {}
-        virtual ~DefaultPassiveLogWriter() {}
+        virtual bool IsOutputStreamOpen() noexcept override {return false;}
+        virtual void OpenOutputStream(const std::string_view, const i32) noexcept override {}
+        virtual void CloseOutputStream() noexcept override {}
+        virtual void FlushOutputStream() noexcept override {}
+        ~DefaultPassiveLogWriter() {}
 };
 
 class DefaultOperativeLogWriter : public LogWriterInterface
@@ -163,7 +163,7 @@ class DefaultOperativeLogWriter : public LogWriterInterface
 
 
     public:
-        DefaultOperativeLogWriter() {this->SetUp();}
+        DefaultOperativeLogWriter() noexcept {this->SetUp();}
         DefaultOperativeLogWriter(const u32 collectioStringSize,
                                   const u32 tempStringSize,
                                   const u32 entryIndex,
@@ -176,21 +176,21 @@ class DefaultOperativeLogWriter : public LogWriterInterface
 
 
     public:
-        virtual void LogMsg(const u32 level, const std::string_view msg)
+        virtual void LogMsg(const u32 level, const std::string_view msg) override
         {
             this->LogByPartsStart();
             this->LogByPartsLvl(level);
             this->LogByPartsMsg(msg);
             this->LogByPartsFinish();
         }
-        virtual void LogVar(const u32 level, const std::string_view varName, const std::string_view varValue)
+        virtual void LogVar(const u32 level, const std::string_view varName, const std::string_view varValue) override
         {
             this->LogByPartsStart();
             this->LogByPartsLvl(level);
             this->LogByPartsVar(varName, varValue);
             this->LogByPartsFinish();
         }
-        virtual void LogMsgSource(const u32 level, const std::string_view file, const u32 lineNum, const std::string_view msg)
+        virtual void LogMsgSource(const u32 level, const std::string_view file, const u32 lineNum, const std::string_view msg) override
         {
 
             this->LogByPartsStart();
@@ -199,7 +199,7 @@ class DefaultOperativeLogWriter : public LogWriterInterface
             this->LogByPartsMsg(msg);
             this->LogByPartsFinish();
         }
-        virtual void LogVarSource(const u32 level, const std::string_view file, const u32 lineNum, const std::string_view varName, const std::string_view varValue)
+        virtual void LogVarSource(const u32 level, const std::string_view file, const u32 lineNum, const std::string_view varName, const std::string_view varValue) override
         {
             this->LogByPartsStart();
             this->LogByPartsSource(file, lineNum);
@@ -209,12 +209,12 @@ class DefaultOperativeLogWriter : public LogWriterInterface
         }
 
         ///Starts the logging by parts process; Always should be accompanied by LogByPartsFinish()
-        virtual void LogByPartsStart()
+        virtual void LogByPartsStart() override
         {
             this->ResetPartStrings();
         }
         ///Adds a source (file, line) part to the LogByParts process
-        virtual void LogByPartsSource(const std::string_view file, const u32 lineNum)
+        virtual void LogByPartsSource(const std::string_view file, const u32 lineNum) override
         {
             //Support only one source at a time - clears the string every time
             ResetString(this->SourcePartString);
@@ -222,7 +222,7 @@ class DefaultOperativeLogWriter : public LogWriterInterface
             AddSeparator(this->SourcePartString);
         }
         ///Adds a level (level) part to the LogByParts process
-        virtual void LogByPartsLvl(const u32 level)
+        virtual void LogByPartsLvl(const u32 level) override
         {
             //Support only one level at a time - clears the string every time
             ResetString(this->LevelPartString);
@@ -230,21 +230,21 @@ class DefaultOperativeLogWriter : public LogWriterInterface
             AddSeparator(this->LevelPartString);
         }
         ///Adds a message (msg) part to the LogByParts process
-        virtual void LogByPartsMsg(const std::string_view msg)
+        virtual void LogByPartsMsg(const std::string_view msg) override
         {
             //Adds the message to the MessagesPartString
             this->AddFormatedMsg(msg, this->MessagesPartString);
             AddSeparator(this->MessagesPartString);
         }
         ///Adds a variable (varName, varValue) part to the LogByParts process
-        virtual void LogByPartsVar(const std::string_view varName, const std::string_view varValue)
+        virtual void LogByPartsVar(const std::string_view varName, const std::string_view varValue) override
         {
             //Adds the message to the MessagesPartString
             this->AddFormatedVariable(varName, varValue, this->VariablesPartString);
             AddSeparator(this->VariablesPartString);
         }
         ///Ends the logging by parts process; Always should be accompanied by LogByPartsStart()
-        virtual void LogByPartsFinish()
+        virtual void LogByPartsFinish() override
         {
             //TODO - remove the omments and pack everything into functions
             //---Resets the collection
@@ -290,12 +290,15 @@ class DefaultOperativeLogWriter : public LogWriterInterface
 
 
         ///Logs a custom message; The functionSpecifier shoudl be filled with the implementaton specific enum values
-        virtual void LogCustom(const i32 functionSpecifier, const u32 level, void POINTER pointer = nullptr)
+        virtual void LogCustom(const i32 functionSpecifier, const u32 level, void POINTER pointer = nullptr) noexcept override
         {
             (void)functionSpecifier; (void)level; (void)pointer;
         }
         ///Sets a custom log state; The functionSpecifier shoudl be filled with the implementaton specific enum values
-        virtual void SetCustomLogState(const i32 functionSpecifier, void POINTER pointer = nullptr) {(void)functionSpecifier; (void)pointer;}
+        virtual void SetCustomLogState(const i32 functionSpecifier, void POINTER pointer = nullptr) noexcept override
+        {
+            (void)functionSpecifier; (void)pointer;
+        }
 
         ///Logs a message signifying the construction of the logger
         void LogConstructionMessage()
@@ -340,24 +343,24 @@ class DefaultOperativeLogWriter : public LogWriterInterface
             this->LogByPartsFinish();
         }
 
-        virtual bool IsPassiveLogger() {return false;}
-        virtual bool IsOutputStreamOpen()
+        virtual bool IsPassiveLogger() override {return false;}
+        virtual bool IsOutputStreamOpen() override
         {
             return  this->File.is_open();
         }
-        virtual void OpenOutputStream(const std::string_view path, const i32)
+        virtual void OpenOutputStream(const std::string_view path, const i32) override
         {
             this->File.open(path.data(), std::ios::out | std::ios::ate);
         }
-        virtual void CloseOutputStream()
+        virtual void CloseOutputStream() override
         {
             this->File.close();
         }
-        virtual void FlushOutputStream()
+        virtual void FlushOutputStream() override
         {
             this->File.flush();
         }
-        virtual ~DefaultOperativeLogWriter() {this->TearDown();}
+        ~DefaultOperativeLogWriter() {this->TearDown();}
 
 
     private:
@@ -432,7 +435,7 @@ class DefaultOperativeLogWriter : public LogWriterInterface
 
 
     private:
-        inline void ResetString(std::string PASS_REF temp) const {temp.clear();}
+        inline void ResetString(std::string PASS_REF temp) const noexcept {temp.clear();}
         inline void ResetCollectionString() {this->ResetString(this->CollectionString);}
         inline void ResetTempString() {this->ResetString(this->TempString);}
         inline void ReserveStrings(const u32 collectioStringSize = MinimumCollectionStringSize,

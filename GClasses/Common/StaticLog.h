@@ -306,9 +306,9 @@ namespace StaticLogger
 
         struct TestingDataPackage1
         {
-            StringType FileName;
-            u32 LineNum;
-            StringType Tags;
+            StringType FileName = "";
+            u32 LineNum = 0;
+            StringType Tags = "";
             StringType LastFunctionCalled = "";
             StringType Identifier = "TestingDataPackage";
             bool StreamState = false;
@@ -399,7 +399,6 @@ namespace StaticLogger
 
 
 
-    /*
     //The default logger interpret
     struct DefaultLogWiriterPackage
     {
@@ -433,7 +432,6 @@ namespace StaticLogger
             //The obligatory function overloads
         public:
     };
-    */
 
 
 }

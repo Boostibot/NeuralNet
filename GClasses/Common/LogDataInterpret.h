@@ -78,7 +78,7 @@ class DefaultDataInterpret : public DataInterpretInterface<DefaultDataInterpret,
         inline void InetrpretArg (double val, std::string PASS_REF outputString)               {outputString = std::to_string(val);}
         inline void InetrpretArg (long double val, std::string PASS_REF outputString)          {outputString = std::to_string(val);}
 
-        inline void InetrpretArg (void POINTER val, std::string PASS_REF outputString)         {outputString = std::to_string(reinterpret_cast<unsigned long long>(val));}
+        inline void InetrpretArg (void POINTER val, std::string PASS_REF outputString)         {outputString = std::to_string(static_cast<unsigned long long>(val));}
         inline void InetrpretArg (bool val, std::string PASS_REF outputString)
         {
             if(val)
