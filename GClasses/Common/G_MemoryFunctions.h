@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <utility>
 #include <cstring>
+#include <memory>
 
 ///Setting
 //Sets [size] bytes on the [ptr] address to specified [value]

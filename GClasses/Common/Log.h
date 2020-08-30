@@ -38,7 +38,8 @@ class Logger
         DataInterpretInterfaceType Interpret;
 
     public:
-        Logger() : Interpret() noexcept
+        Logger() noexcept
+            : Interpret()
         {
             this->SetUp();
         }
@@ -239,7 +240,7 @@ class Logger
         }
 
         ///Returns if logging is disabled
-        inline bool IsLoggingEnabled() const {return this->LoggingStatus;} noexcept
+        inline bool IsLoggingEnabled() const noexcept {return this->LoggingStatus;}
         ///Returns if logging is for a concrete level disabled
         inline bool IsLoggingLevelEnabled(const u32 level) const
         {
@@ -467,7 +468,7 @@ class Logger
             UnravelAndSetLoggingLevel<idnetifier, levels...>(onOff);
         }
         template<bool idnetifier>
-        inline void UnravelAndSetLoggingLevel(const bool) {} noexcept
+        inline void UnravelAndSetLoggingLevel(const bool) noexcept {}
 
 
         template<typename FirstLevelType, typename ... LevelTypes>

@@ -13,8 +13,12 @@
 #define NULLPTR (nullptr)
 
 ///Conditions
+#ifndef FALSE
 #define FALSE                   false
+#endif
+#ifndef TRUE
 #define TRUE                    true
+#endif
 #define NOT(expression)         !(expression)
 
 ///Pointer readability defines

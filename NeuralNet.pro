@@ -15,6 +15,27 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+#FMT
+SOURCES +=\
+    Libraries/Fmt/format.cc \
+    Libraries/Fmt/os.cc \
+
+HEADERS += \
+    Libraries/Fmt/fmt/chrono.h \
+    Libraries/Fmt/fmt/color.h \
+    Libraries/Fmt/fmt/compile.h \
+    Libraries/Fmt/fmt/core.h \
+    Libraries/Fmt/fmt/format.h \
+    Libraries/Fmt/fmt/format-inl.h \
+    Libraries/Fmt/fmt/locale.h \
+    Libraries/Fmt/fmt/os.h \
+    Libraries/Fmt/fmt/ostream.h \
+    Libraries/Fmt/fmt/posix.h \
+    Libraries/Fmt/fmt/printf.h \
+    Libraries/Fmt/fmt/ranges.h \
+    #Libraries/Fmt/fmt/.h \
+
+#User defined
 SOURCES += \
     Main/main.cpp \
     Main/mainwindow.cpp
@@ -28,15 +49,20 @@ HEADERS += \
     GClasses/Common/LogWriter.h \
     GClasses/Common/StaticLog.h \
     GClasses/Common/Tester.h \
+    Main/NeuralNetwork.h \
+    Main/Temp.h \
     Main/mainwindow.h
 
 FORMS += \
     Main/mainwindow.ui
 
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+#include(UnitTests/UnitTests.pro)
 
 #DISTFILES += \
 #    Libraries/fmt.lib
