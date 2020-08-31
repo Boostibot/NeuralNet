@@ -1005,7 +1005,7 @@ namespace StaticLogger
                 output.append(str);
                 output.pop_back(); //Removes th newline character
                 output += " - ";
-                this->PutNumIntoCharcterField(clock, this->LogIterationFieldSize, formater, output);
+                this->PutNumIntoCharcterField(static_cast<unsigned long>(clock), this->LogIterationFieldSize, formater, output);
                 output += ']';
             }
 

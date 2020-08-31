@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+/*
 void* operator new (size_t size)
 {
     std::cout << "Allocation: " << size << std::endl;
@@ -18,6 +19,7 @@ void operator delete(void* ptr, size_t size)
     std::cout << "Deleting: " << size << std::endl;
     free(ptr);
 }
+*/
 
 #include "Libraries/Fmt/fmt/core.h"
 #include "Libraries/Fmt/fmt/os.h"
@@ -119,7 +121,10 @@ void StaticLoggerInterpretTesting()
 
 void DefaultLogWritterPackageTesting()
 {
-    ::StaticLogger::StaticLogTesting::DefaultLogWiriterPackageTester Tester1("My file");
+    using namespace StaticLogger;
+    using namespace StaticLogTesting;
+
+    ::StaticLogger::StaticLogTesting::DefaultLogWriterPackageTester Tester1("My file");
 
     Tester1.CollectionString = "Collection string";
     Tester1.TempString = "Temp string";
@@ -129,7 +134,10 @@ void DefaultLogWritterPackageTesting()
     Tester1.Source = "Source";
     Tester1.EntryIndex = 1;
 
-    ::StaticLogger::StaticLogTesting::DefaultLogWiriterPackageTester Tester2(std::move(Tester1));
+    ::StaticLogger::StaticLogTesting::DefaultLogWriterPackageTester Tester2(std::move(Tester1));
+
+    StaticLogger::Logger<StaticLogger::DefaultLogWriter> Logger("File");
+
 }
 
 
@@ -145,9 +153,55 @@ void LoggerCopyTesting()
     logWriterMove1.DoLog(false);
     logWriterMove1.DoLoggingLevels<1, 3>(false);
     ::StaticLogger::Logger<::StaticLogger::StaticLogTesting::TestingLoggerMove> logWriterMove2(std::move(logWriterMove1));
+    //int a = 0;
+}
 
-    StaticLogger::StaticLogTesting::DefaultLogWiriterTester logWriterTest;
-    int a = 0;
+void LogDefWriterTesting()
+{
+    {
+        fmt::ostream temp_file = fmt::output_file("file.txt");
+        fmt::ostream move_constructed(std::move(temp_file));
+        move_constructed.print("Hello world");
+        int a = 0;
+        (void)a;
+    }
+
+    StaticLogger::DefaultLogWriterPackage dataPackage("FilePackage");
+    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).CollectionString   = "PackageCollectionString";
+    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).TempString         = "PackageTempString";
+    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).Messages           = "PackageMessages";
+    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).Variables          = "PackageVariables";
+    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).Tags               = "PackageTags";
+    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).Source             = "PackageSource";
+    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).EntryIndex         = 33;
+
+
+    StaticLogger::Logger<StaticLogger::DefaultLogWriter> logWriter1("File1");
+    StaticLogger::Logger<StaticLogger::DefaultLogWriter> logWriter2("File2");
+
+    StaticLogger::StaticLogTesting::GetDefWriterTester(logWriter1).CollectionString   = "Logger1CollectionString";
+    StaticLogger::StaticLogTesting::GetDefWriterTester(logWriter1).TempString         = "Logger1TempString";
+    StaticLogger::StaticLogTesting::GetDefWriterTester(logWriter1).Messages           = "Logger1Messages";
+    StaticLogger::StaticLogTesting::GetDefWriterTester(logWriter1).Variables          = "Logger1Variables";
+    StaticLogger::StaticLogTesting::GetDefWriterTester(logWriter1).Tags               = "Logger1Tags";
+    StaticLogger::StaticLogTesting::GetDefWriterTester(logWriter1).Source             = "Logger1Source";
+    StaticLogger::StaticLogTesting::GetDefWriterTester(logWriter1).EntryIndex         = 11;
+
+
+    {
+        StaticLogger::Logger<StaticLogger::DefaultLogWriter> fromWriter(std::move(logWriter1));
+
+        bool trueFalse = false;
+
+        trueFalse = StaticLogger::StaticLogTesting::GetDefWriterTester(fromWriter).CollectionString   == "Logger1CollectionString";
+        trueFalse = StaticLogger::StaticLogTesting::GetDefWriterTester(fromWriter).TempString         == "Logger1TempString";
+        trueFalse = StaticLogger::StaticLogTesting::GetDefWriterTester(fromWriter).Messages           == "Logger1Messages";
+        trueFalse = StaticLogger::StaticLogTesting::GetDefWriterTester(fromWriter).Variables          == "Logger1Variables";
+        trueFalse = StaticLogger::StaticLogTesting::GetDefWriterTester(fromWriter).Tags               == "Logger1Tags";
+        trueFalse = StaticLogger::StaticLogTesting::GetDefWriterTester(fromWriter).Source             == "Logger1Source";
+        trueFalse = StaticLogger::StaticLogTesting::GetDefWriterTester(fromWriter).EntryIndex         == 11;
+    }
+
 }
 
 void RunTemp()
@@ -155,7 +209,8 @@ void RunTemp()
     //FmtTesting();
     //StaticLoggerInterpretTesting();
     //DefaultLogWritterPackageTesting();
-    LoggerCopyTesting();
+    //LoggerCopyTesting();
+    LogDefWriterTesting();
 }
 
 #endif // TEMP_H
