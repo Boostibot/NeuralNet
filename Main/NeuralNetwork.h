@@ -573,20 +573,31 @@ void RunNeuralNetwork()
 
     std::vector<DecimalNum> outputs = {0};
 
-    for(int i = 0; i < 2000; i++)
+    for(int i = 0; i < 32000; i++)
     {
         ann.TrainSingle(inputs1, targetValues1, outputs, ann.Stats);
-        ann.PrintLayers();
+        //ann.PrintLayers();
 
         ann.TrainSingle(inputs2, targetValues2, outputs, ann.Stats);
-        ann.PrintLayers();
+        //ann.PrintLayers();
 
         ann.TrainSingle(inputs3, targetValues3, outputs, ann.Stats);
-        ann.PrintLayers();
+        //ann.PrintLayers();
 
         ann.TrainSingle(inputs4, targetValues4, outputs, ann.Stats);
-        ann.PrintLayers();
+        //ann.PrintLayers();
     }
+    ann.TrainSingle(inputs1, targetValues1, outputs, ann.Stats);
+    ann.PrintLayers();
+
+    ann.TrainSingle(inputs2, targetValues2, outputs, ann.Stats);
+    ann.PrintLayers();
+
+    ann.TrainSingle(inputs3, targetValues3, outputs, ann.Stats);
+    ann.PrintLayers();
+
+    ann.TrainSingle(inputs4, targetValues4, outputs, ann.Stats);
+    ann.PrintLayers();
 }
 
 #endif // NEURALNETWORK_H

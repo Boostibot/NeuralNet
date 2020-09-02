@@ -11,9 +11,9 @@ class CrtpBase : public DerivedDataPackage
         //The following functions are obligatory to be overloaded
     public:
         template <typename Type>
-        inline void OverloadedFunc(Type arg)
+        inline void BaseFunc(Type arg)
         {
-            static_cast<Derived POINTER>(this)->InterpretArg(arg);
+            static_cast<Derived POINTER>(this)->OverloadedFunc(arg);
         }
 
 };
@@ -32,7 +32,7 @@ class CrtpDerived : public CrtpBase<CrtpDerived, CrtpDerivedPackage>
         using ThisPackageType = CrtpDerivedPackage;
 
         //The obligatory function overloads
-    public:
+    private:
         template <typename Type>
         inline void OverloadedFunc(Type arg)
         {
@@ -90,6 +90,9 @@ struct AreTypesSame
 
 };
 
+template<typename ... NameAndValueTypes>
+constexpr bool AreEven() {return (sizeof...(NameAndValueTypes) % 2) == 0; }
+
 //Put into a file
 //#include "Libraries/Fmt/fmt/chrono.h"
 //#include "Libraries/Fmt/fmt/color.h"
@@ -112,12 +115,12 @@ namespace StaticLogger
 
     template <typename Derived,
               typename DerivedDataPackage = typename Derived::ThisPackageType>
-    class Logger : public DerivedDataPackage, public LogWriterTraits
+    class LoggerInterface : public DerivedDataPackage, public LogWriterTraits
     {
         public:
             using StringType = ::std::string;
             using StringViewType = ::std::string_view;
-            using ThisType = Logger<Derived, DerivedDataPackage>;
+            using ThisType = LoggerInterface<Derived, DerivedDataPackage>;
 
         public:
             static constexpr u32 LevelCount = 16; //This should be equal to the max number of levels suported
@@ -133,22 +136,22 @@ namespace StaticLogger
             Derived REF GetWriter() {return POINTER_VALUE(static_cast<Derived POINTER>(this));}
 
         public:
-            Logger() : DerivedDataPackage()
+            LoggerInterface() : DerivedDataPackage()
             {
                 this->SetUp();
             }
-            Logger(const ThisType PASS_REF other) : DerivedDataPackage(other)
+            LoggerInterface(const ThisType PASS_REF other) : DerivedDataPackage(other)
             {
                 this->LevelLoggingStatus = other.LevelLoggingStatus;
                 this->LoggingStatus = other.LoggingStatus;
-                this->GetWriter().OnConstruction();
+                //this->GetWriter().OnConstruction();
             }
-            Logger(ThisType PASS_RVALUE_REF other) : DerivedDataPackage(std::move(other))
+            LoggerInterface(ThisType PASS_RVALUE_REF other) : DerivedDataPackage(std::move(other))
             {
                 //Move constructor just copies instead of swapping because its faster
                 this->LevelLoggingStatus = other.LevelLoggingStatus;
                 this->LoggingStatus = other.LoggingStatus;
-                this->GetWriter().OnConstruction();
+                //this->GetWriter().OnConstruction();
             }
 
             //Any other constructor for the DerivedDataPackage
@@ -158,30 +161,26 @@ namespace StaticLogger
                      //Checks if any of the types arent same as the contructor types but only blocks the function if the type is alone (sizeof...(ArgumentTypes) == 1)
                      std::enable_if_t<!(AreTypesSame<ThisType PASS_REF, ArgumentTypes...>::value && (sizeof...(ArgumentTypes) == 1)), int> = 0
                      >
-            Logger(ArgumentTypes PASS_RVALUE_REF ... args) : DerivedDataPackage(std::forward<ArgumentTypes>(args)...)
+            LoggerInterface(ArgumentTypes PASS_RVALUE_REF ... args) : DerivedDataPackage(std::forward<ArgumentTypes>(args)...)
             {
                 //TypeViewer(std::forward<ArgumentTypes>(args)...);
                 this->SetUp();
             }
-            ~Logger()
+            ~LoggerInterface()
             {
-                GetWriter().OnDestruction();
+                //GetWriter().OnDestruction();
             }
 
-            /*
-            template<typename FirstType, typename... ArgTypes>
-            void TypeViewer(FirstType PASS_RVALUE_REF first, ArgTypes PASS_RVALUE_REF... args)
-            {
-                (void)first;
-                std::string name = typeid (FirstType).name();
-                (void)name;
-                TypeViewer(std::forward<ArgTypes>(args)...);
-            }
-            void TypeViewer()
-            {
+            //template<typename FirstType, typename... ArgTypes>
+            //void TypeViewer(FirstType PASS_RVALUE_REF first, ArgTypes PASS_RVALUE_REF... args)
+            //{
+            //    (void)first;
+            //    std::string name = typeid (FirstType).name();
+            //    (void)name;
+            //    TypeViewer(std::forward<ArgTypes>(args)...);
+            //}
+            //void TypeViewer(){}
 
-            }
-            */
         public:
             ThisType REF operator=(ThisType PASS_RVALUE_REF) = default;
             ThisType REF operator=(const ThisType PASS_REF) = default;
@@ -193,58 +192,62 @@ namespace StaticLogger
             void WriteMsgs(MsgTypes ... msgs)
             {
                 if(this->IsLogEnabled<level>())
-                    GetWriter().WriteMsgs(msgs...);
+                    GetWriter().WriteMsgsOverload(msgs...);
             }
-            template<u32 level, typename ... NameTypes, typename ... VarTypes>
-            void WriteVars(NameTypes ... names, VarTypes ... vars)
+            template<u32 level, typename ... NameAndValueTypes>
+            void WriteVars(NameAndValueTypes ... namesAndValues)
             {
+                static_assert (AreEven<NameAndValueTypes...>(), "LoggerInterface: WriteVars requires even number of arguments");
+
                 if(this->IsLogEnabled<level>())
-                    GetWriter().template WriteVars<NameTypes..., VarTypes...>(names..., vars...);
+                    GetWriter().template WriteVarsOverload<NameAndValueTypes...>(namesAndValues...);
             }
 
             template<u32 level, typename ... AdditionalTypes>
             void AppendSource(StringViewType file, const u32 lineNum, AdditionalTypes ... additional)
             {
                 if(this->IsLogEnabled<level>())
-                    GetWriter().AppendSource(file, lineNum, additional...);
+                    GetWriter().AppendSourceOverload(file, lineNum, additional...);
             }
             template<u32 level, typename ... TagTypes>
             void AppendTags(TagTypes ... tags)
             {
                 if(this->IsLogEnabled<level>())
-                    GetWriter().AppendTags(tags...);
+                    GetWriter().AppendTagsOverload(tags...);
             }
 
+            /*
             template<typename ... PathTypes>
             void OpenStream(PathTypes ... paths)
             {
-                GetWriter().OpenStream(paths...);
+                GetWriter().OpenStreamOverload(paths...);
             }
             template<typename ... StreamIdentifierTypes>
             void CloseStream(StreamIdentifierTypes ... indetifiers)
             {
-                GetWriter().CloseStream(indetifiers...);
+                GetWriter().CloseStreamOverload(indetifiers...);
             }
             template<typename ... StreamIdentifierTypes>
             bool IsStreamOpen(StreamIdentifierTypes ... indetifiers)
             {
-                return GetWriter().IsStreamOpen(indetifiers...);
+                return GetWriter().IsStreamOpenOverload(indetifiers...);
             }
             template<typename ... ArgTypes>
             void FlushStream(ArgTypes ... args)
             {
-                GetWriter().FlushStream(args...);
+                GetWriter().FlushStreamOverload(args...);
             }
 
         private:
             void OnConstruction()
             {
-                GetWriter().OnConstruction();
+                GetWriter().OnConstructionOverload();
             }
             void OnDestruction()
             {
-                GetWriter().OnDestruction();
+                GetWriter().OnDestructionOverload();
             }
+            */
             //Overloaded functions - end
 
 
@@ -287,7 +290,7 @@ namespace StaticLogger
                 this->UnravelAndSetLoggingLevel(onOff, levels...);
                 //Both could be done in a single recursive functions but if invalid arguments are
                 //  provided no levels should be set before the invalid argiment is encountered
-                //  ie. Logger.DoLoggingLevels(true, 0, 1, 2, 123, 4) would still set levels 0, 1, 2 and throw
+                //  ie. LoggerInterface.DoLoggingLevels(true, 0, 1, 2, 123, 4) would still set levels 0, 1, 2 and throw
                 //  important to notice the level 4 wouldnt be set - this is why this separate checking is necessary
             }
 
@@ -312,13 +315,13 @@ namespace StaticLogger
             template<u32 level>
             static constexpr bool AssertIfLevelIsOutOfRange()
             {
-                static_assert (ThisType::IsLevelInRange(level), "Logger: The provided level is out of array range;");
+                static_assert (ThisType::IsLevelInRange(level), "LoggerInterface: The provided level is out of array range;");
                 return ThisType::IsLevelInRange(level);
             }
             static void ThrowIfLevelIsOutOfRange(const u32 level)
             {
                 if(NOT(ThisType::IsLevelInRange(level)))
-                    throw std::runtime_error("Logger: The provided level is out of array range;");
+                    throw std::runtime_error("LoggerInterface: The provided level is out of array range;");
             }
 
             inline bool IsLogEnabledInternal(const u32 level) const
@@ -374,7 +377,7 @@ namespace StaticLogger
             inline void SetUp()
             {
                 LevelLoggingStatus.fill(true);
-                GetWriter().OnConstruction();
+                //GetWriter().OnConstruction();
             }
     };
 
@@ -391,7 +394,7 @@ namespace StaticLogger
             StringType POINTER OnDestructionWriteLocation = nullptr;
         };
 
-        struct TestingLogger1 : public Logger<TestingLogger1, TestingDataPackage1>
+        struct TestingLogger1 : public LoggerInterface<TestingLogger1, TestingDataPackage1>
         {
             public:
                 using ThisPackageType = StaticLogTesting::TestingDataPackage1;
@@ -400,32 +403,37 @@ namespace StaticLogger
                 using StringViewType = ::std::string_view;
 
                 template<typename ... MsgTypes>
-                void WriteMsgs(MsgTypes ... )                   {this->LastFunctionCalled = "WriteMsgs";}
-                template<typename ... NameTypes, typename ... VarTypes>
-                void WriteVars(NameTypes ..., VarTypes ...)     {this->LastFunctionCalled = "WriteVars";}
+                void WriteMsgsOverload(MsgTypes ... )                   {this->LastFunctionCalled = "WriteMsgs";}
+                template<typename ... NameAndValueTypes>
+                void WriteVarsOverload(NameAndValueTypes ...)     {this->LastFunctionCalled = "WriteVars";}
 
                 template<typename ... AdditionalTypes>
-                void AppendSource(StringViewType file, const u32 lineNum)
+                void AppendSourceOverload(StringViewType file, const u32 lineNum)
                 {
                     this->LastFunctionCalled = "AppendSource";
                     this->FileName = file;
                     this->LineNum = lineNum;
                 }
                 template<typename ... TagTypes>
-                void AppendTags(TagTypes ...)                   {this->LastFunctionCalled = "AppendTags";}
+                void AppendTagsOverload(TagTypes ...)                   {this->LastFunctionCalled = "AppendTags";}
 
-                void OpenStream(StringType)                     {this->LastFunctionCalled = "OpenStream";  this->StreamState = true;}
-                void CloseStream()                              {this->LastFunctionCalled = "CloseStream"; this->StreamState = false;}
-                bool IsStreamOpen()                             {this->LastFunctionCalled = "IsStreamOpen"; return this->StreamState;}
-                void FlushStream()                              {this->LastFunctionCalled = "FlushStream";}
+                /*
+                void OpenStreamOverload(StringType)                     {this->LastFunctionCalled = "OpenStream";  this->StreamState = true;}
+                void CloseStreamOverload()                              {this->LastFunctionCalled = "CloseStream"; this->StreamState = false;}
+                bool IsStreamOpenOverload()                             {this->LastFunctionCalled = "IsStreamOpen"; return this->StreamState;}
+                void FlushStreamOverload()                              {this->LastFunctionCalled = "FlushStream";}
 
-                void OnConstruction()                                       {this->LastFunctionCalled = "OnConstruction";}
-                void OnDestruction()
+                void OnConstructionOverload()                           {this->LastFunctionCalled = "OnConstruction";}
+                void OnDestructionOverload()
                 {
                     this->LastFunctionCalled = "OnDestruction";
                     if(OnDestructionWriteLocation != nullptr)
                         POINTER_VALUE(OnDestructionWriteLocation) = "OnDestruction";
                 }
+                */
+
+            public:
+                TestingLogger1() = default;
         };
 
         struct TestingDataPackage2
@@ -439,7 +447,7 @@ namespace StaticLogger
             bool StreamState = false;
         };
 
-        struct TestingLogger2 : public Logger<TestingLogger2, TestingDataPackage2>
+        struct TestingLogger2 : public LoggerInterface<TestingLogger2, TestingDataPackage2>
         {
             public:
                 using ThisPackageType = StaticLogTesting::TestingDataPackage2;
@@ -448,26 +456,30 @@ namespace StaticLogger
                 using StringViewType = ::std::string_view;
 
                 template<typename ... MsgTypes>
-                void WriteMsgs(MsgTypes ... )                   {this->LastFunctionCalled = "WriteMsgs";}
-                template<typename ... NameTypes, typename ... VarTypes>
-                void WriteVars(NameTypes ..., VarTypes ...)     {this->LastFunctionCalled = "WriteVars";}
+                void WriteMsgsOverload(MsgTypes ... )                   {this->LastFunctionCalled = "WriteMsgs";}
+                template<typename ... NameAndValueTypes>
+                void WriteVarsOverload(NameAndValueTypes ...)     {this->LastFunctionCalled = "WriteVars";}
 
                 template<typename ... AdditionalTypes>
-                void AppendSource(StringViewType, const u32)
+                void AppendSourceOverload(StringViewType, const u32)
                 {
                     this->LastFunctionCalled = "AppendSource";
                 }
                 template<typename ... TagTypes>
-                void AppendTags(TagTypes ...)                   {this->LastFunctionCalled = "AppendTags";}
+                void AppendTagsOverload(TagTypes ...)                   {this->LastFunctionCalled = "AppendTags";}
 
-                void OpenStream(StringType)                     {this->LastFunctionCalled = "OpenStream";  this->StreamState = true;}
-                void CloseStream()                              {this->LastFunctionCalled = "CloseStream"; this->StreamState = false;}
-                bool IsStreamOpen()                             {this->LastFunctionCalled = "IsStreamOpen"; return this->StreamState;}
-                void FlushStream()                              {this->LastFunctionCalled = "FlushStream";}
+                /*
+                void OpenStreamOverload(StringType)                     {this->LastFunctionCalled = "OpenStream";  this->StreamState = true;}
+                void CloseStreamOverload()                              {this->LastFunctionCalled = "CloseStream"; this->StreamState = false;}
+                bool IsStreamOpenOverload()                             {this->LastFunctionCalled = "IsStreamOpen"; return this->StreamState;}
+                void FlushStreamOverload()                              {this->LastFunctionCalled = "FlushStream";}
 
-                void OnConstruction()                           {this->LastFunctionCalled = "OnConstruction";}
-                void OnDestruction()                            {this->LastFunctionCalled = "OnDestruction";}
+                void OnConstructionOverload()                           {this->LastFunctionCalled = "OnConstruction";}
+                void OnDestructionOverload()                            {this->LastFunctionCalled = "OnDestruction";}
+                */
 
+            public:
+                TestingLogger2() = default;
         };
 
 
@@ -500,21 +512,23 @@ namespace StaticLogger
 
         };
 
-        struct TestingLoggerMove : public Logger<TestingLoggerMove, TestingDataPackageMove>
+        struct TestingLoggerMove : public LoggerInterface<TestingLoggerMove, TestingDataPackageMove>
         {
                 using ThisPackageType = StaticLogTesting::TestingDataPackageMove;
-                using LoggerType = Logger<TestingLoggerMove, TestingDataPackageMove>;
+                using LoggerInterfaceType = LoggerInterface<TestingLoggerMove, TestingDataPackageMove>;
 
-                void WriteMsgs() {}
-                void WriteVars() {}
-                void AppendSource() {}
-                void AppendTags() {}
-                void OpenStream() {}
-                void CloseStream() {}
-                bool IsStreamOpen() {return false;}
-                void FlushStream() {}
-                void OnConstruction() {}
-                void OnDestruction() {}
+                void WriteMsgsOverload() {}
+                void WriteVarsOverload() {}
+                void AppendSourceOverload() {}
+                void AppendTagsOverload() {}
+                /*
+                void OpenStreamOverload() {}
+                void CloseStreamOverload() {}
+                bool IsStreamOpenOverload() {return false;}
+                void FlushStreamOverload() {}
+                void OnConstructionOverload() {}
+                void OnDestructionOverload() {}
+                */
                 TestingLoggerMove() = delete;
                 TestingLoggerMove(const TestingLoggerMove PASS_REF) = delete;
                 TestingLoggerMove(TestingLoggerMove PASS_RVALUE_REF) = default;
@@ -540,27 +554,72 @@ namespace StaticLogger
 
         };
 
-        struct TestingLoggerCopy : public Logger<TestingLoggerCopy, TestingDataPackageCopy>
+        struct TestingLoggerCopy : public LoggerInterface<TestingLoggerCopy, TestingDataPackageCopy>
         {
                 using ThisPackageType = StaticLogTesting::TestingDataPackageCopy;
-                using LoggerType = Logger<TestingLoggerCopy, TestingDataPackageCopy>;
+                using LoggerInterfaceType = LoggerInterface<TestingLoggerCopy, TestingDataPackageCopy>;
 
-                void WriteMsgs() {}
-                void WriteVars() {}
-                void AppendSource() {}
-                void AppendTags() {}
-                void OpenStream() {}
-                void CloseStream() {}
-                bool IsStreamOpen() {return false;}
-                void FlushStream() {}
-                void OnConstruction() {}
-                void OnDestruction() {}
+                void WriteMsgsOverload() {}
+                void WriteVarsOverload() {}
+                void AppendSourceOverload() {}
+                void AppendTagsOverload() {}
+                /*
+                void OpenStreamOverload() {}
+                void CloseStreamOverload() {}
+                bool IsStreamOpenOverload() {return false;}
+                void FlushStreamOverload() {}
+                void OnConstructionOverload() {}
+                void OnDestructionOverload() {}
+                */
                 TestingLoggerCopy() = delete;
                 TestingLoggerCopy(const TestingLoggerCopy PASS_REF) = default;
                 TestingLoggerCopy(TestingLoggerCopy PASS_RVALUE_REF) = delete;
 
                 TestingLoggerCopy REF operator=(TestingLoggerCopy PASS_RVALUE_REF) = delete;
                 TestingLoggerCopy REF operator=(const TestingLoggerCopy PASS_REF other) = default;
+        };
+
+
+        struct TestingDataPackageConstruct
+        {
+            u32 LineNum = 0;
+            StringType Str = "";
+
+            TestingDataPackageConstruct(StringViewType str) : Str(str) {}
+            TestingDataPackageConstruct(u32 lineNum, StringViewType str) : LineNum(lineNum), Str(str) {}
+            TestingDataPackageConstruct() = default;
+            TestingDataPackageConstruct(const TestingDataPackageConstruct PASS_REF) = default;
+            TestingDataPackageConstruct(TestingDataPackageConstruct PASS_RVALUE_REF) = delete;
+
+            //Assignment
+            TestingDataPackageConstruct REF operator=(TestingDataPackageConstruct PASS_RVALUE_REF) = delete;
+            TestingDataPackageConstruct REF operator=(const TestingDataPackageConstruct PASS_REF) = default;
+
+        };
+
+        struct TestingLoggerConstruct : public LoggerInterface<TestingLoggerConstruct, TestingDataPackageConstruct>
+        {
+                using ThisPackageType = StaticLogTesting::TestingDataPackageConstruct;
+                using LoggerInterfaceType = LoggerInterface<TestingLoggerConstruct, TestingDataPackageConstruct>;
+
+                void WriteMsgsOverload() {}
+                void WriteVarsOverload() {}
+                void AppendSourceOverload() {}
+                void AppendTagsOverload() {}
+                /*
+                void OpenStreamOverload() {}
+                void CloseStreamOverload() {}
+                bool IsStreamOpenOverload() {return false;}
+                void FlushStreamOverload() {}
+                void OnConstructionOverload() {}
+                void OnDestructionOverload() {}
+                */
+                TestingLoggerConstruct() = default;
+                TestingLoggerConstruct(const TestingLoggerConstruct PASS_REF) = default;
+                TestingLoggerConstruct(TestingLoggerConstruct PASS_RVALUE_REF) = delete;
+
+                TestingLoggerConstruct REF operator=(TestingLoggerConstruct PASS_RVALUE_REF) = delete;
+                TestingLoggerConstruct REF operator=(const TestingLoggerConstruct PASS_REF other) = default;
         };
     }
 
@@ -612,17 +671,17 @@ namespace StaticLogger
     };
 
     //The default logger interpret
-    struct DefaultLogWriterPackage
+    struct DefaultLoggerPackage
     {
         public:
             using DataInterpretType = DefaultDataInterpret;
 
         public:
-            DefaultLogWriterPackage(const StringViewType filePath)
+            DefaultLoggerPackage(const StringViewType filePath)
             {
                 this->SetUp(filePath);
             }
-            DefaultLogWriterPackage(DefaultLogWriterPackage PASS_RVALUE_REF other)
+            DefaultLoggerPackage(DefaultLoggerPackage PASS_RVALUE_REF other)
                 : Interpret(std::move(other.Interpret)),
                   Formater(std::move(other.Formater)),
                   File(std::move(other.File)),
@@ -639,7 +698,7 @@ namespace StaticLogger
             {
                 other.OpenFile("TempFile");
             }
-            DefaultLogWriterPackage REF operator=(DefaultLogWriterPackage PASS_RVALUE_REF other)
+            DefaultLoggerPackage REF operator=(DefaultLoggerPackage PASS_RVALUE_REF other)
             {
                 this->Interpret = (std::move(other.Interpret));
                 this->Formater = (std::move(other.Formater));
@@ -659,8 +718,8 @@ namespace StaticLogger
                 return POINTER_VALUE(this);
             }
 
-            DefaultLogWriterPackage(const DefaultLogWriterPackage PASS_REF) = delete;
-            void operator=(const DefaultLogWriterPackage PASS_REF) = delete ;
+            DefaultLoggerPackage(const DefaultLoggerPackage PASS_REF) = delete;
+            void operator=(const DefaultLoggerPackage PASS_REF) = delete ;
 
         protected:
             DataInterpretType Interpret;
@@ -716,57 +775,58 @@ namespace StaticLogger
 
     namespace StaticLogTesting
     {
-        class DefaultLogWriterPackageTester : public DefaultLogWriterPackage
+        class DefaultLoggerPackageTester : public DefaultLoggerPackage
         {
             public:
-                using DefaultLogWriterPackage::Interpret;
-                using DefaultLogWriterPackage::Formater;
-                using DefaultLogWriterPackage::File;
-                using DefaultLogWriterPackage::CollectionString;
-                using DefaultLogWriterPackage::TempString;
-                using DefaultLogWriterPackage::Messages;
-                using DefaultLogWriterPackage::Variables;
-                using DefaultLogWriterPackage::Tags;
-                using DefaultLogWriterPackage::Source;
-                using DefaultLogWriterPackage::EntryIndex;
+                using DefaultLoggerPackage::Interpret;
+                using DefaultLoggerPackage::Formater;
+                using DefaultLoggerPackage::File;
+                using DefaultLoggerPackage::CollectionString;
+                using DefaultLoggerPackage::TempString;
+                using DefaultLoggerPackage::Messages;
+                using DefaultLoggerPackage::Variables;
+                using DefaultLoggerPackage::Tags;
+                using DefaultLoggerPackage::Source;
+                using DefaultLoggerPackage::EntryIndex;
 
-                using DefaultLogWriterPackage::SetUp;
-                using DefaultLogWriterPackage::OpenFile;
-                using DefaultLogWriterPackage::ReserveStrings;
+                using DefaultLoggerPackage::SetUp;
+                using DefaultLoggerPackage::OpenFile;
+                using DefaultLoggerPackage::ReserveStrings;
 
-                using DefaultLogWriterPackage::MinimumCollectionStringSize;
-                using DefaultLogWriterPackage::MinimumTempStringSize;
-                using DefaultLogWriterPackage::MinimumMessagesSize;
-                using DefaultLogWriterPackage::MinimumVariablesSize;
-                using DefaultLogWriterPackage::MinimumTagsSize;
-                using DefaultLogWriterPackage::MinimumSourceSize;
+                using DefaultLoggerPackage::MinimumCollectionStringSize;
+                using DefaultLoggerPackage::MinimumTempStringSize;
+                using DefaultLoggerPackage::MinimumMessagesSize;
+                using DefaultLoggerPackage::MinimumVariablesSize;
+                using DefaultLoggerPackage::MinimumTagsSize;
+                using DefaultLoggerPackage::MinimumSourceSize;
 
 
             public:
-                DefaultLogWriterPackageTester(const StringType filePath) : DefaultLogWriterPackage(filePath) {}
-                DefaultLogWriterPackageTester(DefaultLogWriterPackageTester PASS_RVALUE_REF) = default;
-                DefaultLogWriterPackageTester REF operator=(DefaultLogWriterPackageTester PASS_RVALUE_REF) = default;
+                DefaultLoggerPackageTester(const StringType filePath) : DefaultLoggerPackage(filePath) {}
+                DefaultLoggerPackageTester(DefaultLoggerPackageTester PASS_RVALUE_REF) = default;
+                DefaultLoggerPackageTester REF operator=(DefaultLoggerPackageTester PASS_RVALUE_REF) = default;
 
-                DefaultLogWriterPackageTester(const DefaultLogWriterPackageTester PASS_REF) = delete;
-                void operator=(const DefaultLogWriterPackageTester PASS_REF) = delete ;
+                DefaultLoggerPackageTester(const DefaultLoggerPackageTester PASS_REF) = delete;
+                void operator=(const DefaultLoggerPackageTester PASS_REF) = delete ;
 
         };
 
-        DefaultLogWriterPackageTester REF GetDefPackageTester(DefaultLogWriterPackage PASS_REF package)
+        DefaultLoggerPackageTester REF GetDefPackageTester(DefaultLoggerPackage PASS_REF package)
         {
-            return static_cast<DefaultLogWriterPackageTester REF>(package);
+            return static_cast<DefaultLoggerPackageTester REF>(package);
         }
     }
 
 
-    class DefaultLogWriter : public Logger<DefaultLogWriter, DefaultLogWriterPackage>
+    class DefaultLogger : public LoggerInterface<DefaultLogger, DefaultLoggerPackage>
     {
         public:
-            using ThisPackageType = DefaultLogWriterPackage;
-            using ThisLoggerType = Logger<DefaultLogWriter, DefaultLogWriterPackage>;
-            using ThisType = DefaultLogWriter;
+            using ThisPackageType = DefaultLoggerPackage;
+            using ThisLoggerInterfaceType = LoggerInterface<DefaultLogger, DefaultLoggerPackage>;
+            using ThisType = DefaultLogger;
             using StringType = ::std::string;
             using StringViewType = ::std::string_view;
+            friend ThisLoggerInterfaceType;
 
         protected:
             static constexpr u32 LogIterationFieldSize = 8;
@@ -776,11 +836,14 @@ namespace StaticLogger
             static constexpr char Separator = ' ';
             static constexpr bool DoAppOutputLog = false;
 
+            //Crashes debugger when part of the class
+            //static constexpr char LevelIndicatorStrings[ThisType::LevelCount][3] {{"00"}, {"01"}, {"02"}, {"03"}, {"04"}, {"05"}, {"06"}, {"07"}, {"08"}, {"09"}, {"10"}, {"11"}, {"12"}, {"13"}, {"14"}, {"15"}};
+
 
             //The obligatory function overloads
-        public:
+        protected:
             template<typename ... MsgTypes>
-            void WriteMsgs(const u32 level, const MsgTypes ... msgs)
+            void WriteMsgsOverload(const u32 level, const MsgTypes ... msgs)
             {
                 this->AppendMsgs(msgs...);
 
@@ -788,48 +851,49 @@ namespace StaticLogger
 
                 this->PushLogOut();
             }
-            template<typename ... NameTypes, typename ... VarTypes>
-            void WriteVars(const u32 level, const NameTypes ... varNames, const VarTypes ... varValues)
+            template<typename ... NameAndValueTypes>
+            void WriteVarsOverload(const u32 level, NameAndValueTypes... namesAndValues)
             {
-                this->AppendVars(varNames..., varValues...);
+                this->AppendVars(namesAndValues...);
 
                 this->AddAll(level);
 
                 this->PushLogOut();
             }
 
-            void AppendSource(const StringViewType file, const u32 lineNum)
+            void AppendSourceOverload(const StringViewType file, const u32 lineNum)
             {
                 AddFormatedSource(file, lineNum, this->Formater, this->Source);
                 AddSeparator(this->Source);
             }
             template<typename ... TagTypes>
-            void AppendTags(TagTypes ... tags)
+            void AppendTagsOverload(TagTypes ... tags)
             {
-                this->UnravelAndAppendTags(tags...);
+                this->UnravelAndAddTags(tags...);
             }
 
-            void OpenStream(const StringViewType path)
+            /*
+            void OpenStreamOverload(const StringViewType path)
             {
                 this->OpenFile(path);
             }            
-            void CloseStream() = delete;
+            void CloseStreamOverload() = delete;
 
-            bool IsStreamOpen()
+            bool IsStreamOpenOverload()
             {
                 return true;
             }
-            void FlushStream() = delete;
+            void FlushStreamOverload() = delete;
 
-            void OnConstruction()
+            void OnConstructionOverload()
             {
                 this->LogConstructionMessage(ThisType::MaxLevelIndex);
             }
-            void OnDestruction()
+            void OnDestructionOverload()
             {
                 this->LogDestructionMessage(ThisType::MaxLevelIndex);
             }
-
+            */
 
             //Custom added public functions
         public:
@@ -839,12 +903,30 @@ namespace StaticLogger
                 this->UnravelAndAddMsgs(msgs...);
             }
 
-            template<typename ... StringArgumentTypes, typename ... ValueArgumentTypes>
-            void AppendVars(const StringArgumentTypes ... stringArgs, const ValueArgumentTypes ... valueArgs)
-            {
-                this->UnravelAndAddVariables(stringArgs..., valueArgs...);
+            template<typename ... NameAndValueTypes>
+            void AppendVars(NameAndValueTypes ... namesAndValues)
+            {                
+                static_assert (AreEven<NameAndValueTypes...>(), "DefaultLogger: AppendVars requires even number of arguments");
+                this->UnravelAndAddVariables(namesAndValues...);
             }
 
+        public:
+            DefaultLogger() = delete;
+            DefaultLogger(const ThisType PASS_REF other)= delete;
+            DefaultLogger(ThisType PASS_RVALUE_REF other) : ThisLoggerInterfaceType(std::move(static_cast<ThisLoggerInterfaceType &&>(other))) {this->LogConstructionMessage(ThisType::MaxLevelIndex);}
+
+            //Any other constructor for the DerivedDataPackage
+            template<typename ... ArgumentTypes ,
+                     //Checks assure that the ArgumentTypes are not identical to the ones of copy and move constructor
+                     //This is to resolve the ambiguous function call
+                     //Checks if any of the types arent same as the contructor types but only blocks the function if the type is alone (sizeof...(ArgumentTypes) == 1)
+                     std::enable_if_t<!(AreTypesSame<ThisType PASS_REF, ArgumentTypes...>::value && (sizeof...(ArgumentTypes) == 1)), int> = 0
+                     >
+            DefaultLogger(ArgumentTypes PASS_RVALUE_REF ... args) : ThisLoggerInterfaceType(std::forward<ArgumentTypes>(args)...) {this->LogConstructionMessage(ThisType::MaxLevelIndex);}
+            ~DefaultLogger() {this->LogDestructionMessage(ThisType::MaxLevelIndex);}
+
+            DefaultLogger REF operator=(const DefaultLogger PASS_REF other) = delete;
+            DefaultLogger REF operator=(DefaultLogger PASS_RVALUE_REF) = default;
 
         protected:
             void AddSource()
@@ -902,7 +984,7 @@ namespace StaticLogger
             void LogConstructionMessage(const u32 level)
             {
                 this->AppendMsgs("Log Starting................");
-                this->AppendTags("log_construction", "log_starting");
+                this->AppendTagsOverload("log_construction", "log_starting");
 
                 this->AddAll(level);
 
@@ -911,7 +993,7 @@ namespace StaticLogger
             void LogDestructionMessage(const u32 level)
             {
                 this->AppendMsgs("Log Ending..................");
-                this->AppendTags("log_destruction", "log_ending");
+                this->AppendTagsOverload("log_destruction", "log_ending");
 
                 this->AddAll(level);
 
@@ -920,7 +1002,7 @@ namespace StaticLogger
             void LogLoggerInfo(const u32 level)
             {
                 this->AppendMsgs("Logger info : Default log writer; Displaying in order: 1-Code source 2-iteration count 3-Date and time 4-Level 5-Messages 6-variables 7-tags");
-                this->AppendTags("log_info");
+                this->AppendTagsOverload("log_info");
 
                 this->AddAll(level);
 
@@ -957,6 +1039,7 @@ namespace StaticLogger
 
 
         protected:
+            //TODO - Add type checks using AreSameType<...>::value
             template<typename FirstMsgType, typename ... MsgTypes>
             inline void UnravelAndAddMsgs(FirstMsgType firstMsg, MsgTypes ... msgs)
             {
@@ -964,35 +1047,30 @@ namespace StaticLogger
                 this->AddUnformatedMsgPart(this->TempString, this->Messages);
                 this->UnravelAndAddMsgs(msgs...);
             }
-            inline void UnravelAndAddMsgs()
-            {
+            inline void UnravelAndAddMsgs() {}
 
-            }
 
             template<typename FirstStringArgument, typename FirstValueArgument,
-                     typename ... StringArgumentTypes, typename ... ValueArgumentTypes>
+                     typename ... NameAndValueTypes>
             inline void UnravelAndAddVariables(const FirstStringArgument firstString, const FirstValueArgument firstValue,
-                                                const StringArgumentTypes ... stringArgs, const ValueArgumentTypes ... valueArgs)
+                                                NameAndValueTypes ... nameAndValues)
             {
                 this->Interpret.InterpretArg(firstValue, this->TempString);
-                this->AddFormatedVariable(firstString, firstValue, this->Variables);
+                this->AddFormatedVariable(firstString, this->TempString, this->Variables);
                 this->AddSeparator(this->Variables);
-                this->UnravelAndAddVariables(stringArgs..., valueArgs...);
+                this->UnravelAndAddVariables(nameAndValues...);
             }
             inline void UnravelAndAddVariables() {}
 
 
             template<typename FirstTagType, typename ... TagTypes>
-            inline void UnravelAndAppendTags(FirstTagType firstTag, TagTypes ... tags)
+            inline void UnravelAndAddTags(FirstTagType firstTag, TagTypes ... tags)
             {
                 this->AddFormatedTag(firstTag, this->Tags);
                 this->AddSeparator(this->Tags);
-                this->UnravelAndAppendTags(tags...);
+                this->UnravelAndAddTags(tags...);
             }
-            inline void UnravelAndAppendTags()
-            {
-
-            }
+            inline void UnravelAndAddTags() {}
 
 
         protected:
@@ -1005,7 +1083,7 @@ namespace StaticLogger
                 output.append(str);
                 output.pop_back(); //Removes th newline character
                 output += " - ";
-                this->PutNumIntoCharcterField(clock, this->LogIterationFieldSize, formater, output);
+                this->PutNumIntoCharcterField(static_cast<unsigned long>(clock), this->LogIterationFieldSize, formater, output);
                 output += ']';
             }
 
@@ -1028,6 +1106,8 @@ namespace StaticLogger
                 output += '<';
                 formater.format_unsigned(level);
                 output.append(formater.data(), formater.size());
+                //output += ThisType::LevelIndicatorStrings[level];
+                //(void)formater;
                 output += '>';
             }
 
@@ -1085,76 +1165,84 @@ namespace StaticLogger
 
     namespace StaticLogTesting
     {
-        struct DefaultLogWriterTester : public DefaultLogWriter
+        struct DefaultLoggerTester : public DefaultLogger
         {
             public:
-                using DefaultLogWriter::Interpret;
-                using DefaultLogWriter::Formater;
-                using DefaultLogWriter::File;
-                using DefaultLogWriter::CollectionString;
-                using DefaultLogWriter::TempString;
-                using DefaultLogWriter::Messages;
-                using DefaultLogWriter::Variables;
-                using DefaultLogWriter::Tags;
-                using DefaultLogWriter::Source;
-                using DefaultLogWriter::EntryIndex;
+                using DefaultLogger::Interpret;
+                using DefaultLogger::Formater;
+                using DefaultLogger::File;
+                using DefaultLogger::CollectionString;
+                using DefaultLogger::TempString;
+                using DefaultLogger::Messages;
+                using DefaultLogger::Variables;
+                using DefaultLogger::Tags;
+                using DefaultLogger::Source;
+                using DefaultLogger::EntryIndex;
 
-                using DefaultLogWriter::LogIterationFieldSize;
-                using DefaultLogWriter::LogClockFieldSize;
-                using DefaultLogWriter::Separator;
-                using DefaultLogWriter::DoAppOutputLog;
+                using DefaultLogger::LogIterationFieldSize;
+                using DefaultLogger::LogClockFieldSize;
+                using DefaultLogger::Separator;
+                using DefaultLogger::DoAppOutputLog;
 
-                using DefaultLogWriter::OnConstruction;
-                using DefaultLogWriter::OnDestruction;
+                using DefaultLogger::WriteMsgsOverload;
+                using DefaultLogger::WriteVarsOverload;
+                using DefaultLogger::AppendSourceOverload;
+                using DefaultLogger::AppendTagsOverload;
+                //using DefaultLogger::OpenStreamOverload;
+                //using DefaultLogger::CloseStreamOverload;
+                //using DefaultLogger::IsStreamOpenOverload;
+                //using DefaultLogger::FlushStreamOverload;
+                //using DefaultLogger::OnConstructionOverload;
+                //using DefaultLogger::OnDestructionOverload;
 
-                using DefaultLogWriter::AddSource;
-                using DefaultLogWriter::AddIterations;
-                using DefaultLogWriter::AddTime;
-                using DefaultLogWriter::AddLvl;
-                using DefaultLogWriter::AddMsgs;
-                using DefaultLogWriter::AddVars;
-                using DefaultLogWriter::AddTags;
-                using DefaultLogWriter::AddAll;
+                using DefaultLogger::AddSource;
+                using DefaultLogger::AddIterations;
+                using DefaultLogger::AddTime;
+                using DefaultLogger::AddLvl;
+                using DefaultLogger::AddMsgs;
+                using DefaultLogger::AddVars;
+                using DefaultLogger::AddTags;
+                using DefaultLogger::AddAll;
 
-                using DefaultLogWriter::IncrementEntryIndex;
-                using DefaultLogWriter::PushLogOut;
-                using DefaultLogWriter::AfterLog;
-                using DefaultLogWriter::CleanUp;
+                using DefaultLogger::IncrementEntryIndex;
+                using DefaultLogger::PushLogOut;
+                using DefaultLogger::AfterLog;
+                using DefaultLogger::CleanUp;
 
-                using DefaultLogWriter::UnravelAndAddMsgs;
-                using DefaultLogWriter::UnravelAndAddVariables;
-                using DefaultLogWriter::UnravelAndAppendTags;
+                using DefaultLogger::UnravelAndAddMsgs;
+                using DefaultLogger::UnravelAndAddVariables;
+                using DefaultLogger::UnravelAndAddTags;
 
-                using DefaultLogWriter::AddFormatedTime;
-                using DefaultLogWriter::AddFormatedSource;
-                using DefaultLogWriter::AddFormatedIterationCount;
-                using DefaultLogWriter::AddFormatedLevel;
-                using DefaultLogWriter::AddFormatedMsg;
-                using DefaultLogWriter::AddUnformatedMsgPart;
-                using DefaultLogWriter::AddFormatedTag;
-                using DefaultLogWriter::AddFormatedVariable;
-                using DefaultLogWriter::AddSeparator;
-                using DefaultLogWriter::AddNewline;
-                using DefaultLogWriter::PutNumIntoCharcterField;
-                using DefaultLogWriter::ResetString;
+                using DefaultLogger::AddFormatedTime;
+                using DefaultLogger::AddFormatedSource;
+                using DefaultLogger::AddFormatedIterationCount;
+                using DefaultLogger::AddFormatedLevel;
+                using DefaultLogger::AddFormatedMsg;
+                using DefaultLogger::AddUnformatedMsgPart;
+                using DefaultLogger::AddFormatedTag;
+                using DefaultLogger::AddFormatedVariable;
+                using DefaultLogger::AddSeparator;
+                using DefaultLogger::AddNewline;
+                using DefaultLogger::PutNumIntoCharcterField;
+                using DefaultLogger::ResetString;
 
                 /*
-                DataInterpretType REF GetInterpret() {return this->Interpret;}
-                fmt::format_int REF GetFormater() {return this->Formater;}
-                std::unique_ptr<fmt::ostream> REF GetFile() {return this->File;}
-                std::string REF GetCollectionString() {return this->CollectionString;}
-                std::string REF GetTempString() {return this->TempString;}
-                std::string REF GetMessages() {return this->Messages;}
-                std::string REF GetVariables() {return this->Variables;}
-                std::string REF GetTags() {return this->Tags;}
-                std::string REF GetSource() {return this->Source;}
-                u32 REF GetEntryIndex() {return this->EntryIndex;}
+                DefaultLoggerTester() = delete;
+                DefaultLoggerTester(const DefaultLoggerTester PASS_REF) = delete;
+                DefaultLoggerTester(DefaultLoggerTester PASS_RVALUE_REF) = default;
+
+                DefaultLoggerTester REF operator=(const DefaultLoggerTester PASS_REF other) = delete;
+                DefaultLoggerTester REF operator=(DefaultLoggerTester PASS_RVALUE_REF) = default;
                 */
         };
 
-        DefaultLogWriterTester REF GetDefWriterTester(Logger<DefaultLogWriter> PASS_REF logger)
+        DefaultLoggerTester REF GetDefLoggerTester(LoggerInterface<DefaultLogger> PASS_REF logger)
         {
-            return static_cast<DefaultLogWriterTester REF>(logger.GetWriter());
+            return static_cast<DefaultLoggerTester REF>(logger.GetWriter());
+        }
+        DefaultLoggerTester REF GetDefLoggerTester(DefaultLogger PASS_REF logger)
+        {
+            return static_cast<DefaultLoggerTester REF>(logger);
         }
     }
 }
