@@ -33,7 +33,6 @@ HEADERS += \
     Libraries/Fmt/fmt/posix.h \
     Libraries/Fmt/fmt/printf.h \
     Libraries/Fmt/fmt/ranges.h \
-    #Libraries/Fmt/fmt/.h \
 
 #User defined
 SOURCES += \
@@ -42,12 +41,6 @@ SOURCES += \
 
 HEADERS += \
     GClasses/Common/G_Common.h \
-    GClasses/Common/Log.h \
-    GClasses/Common/LogDataInterpret.h \
-    GClasses/Common/LogDefines.h \
-    GClasses/Common/LogTests.h \
-    GClasses/Common/LogWriter.h \
-    GClasses/Common/StaticLog.h \
     GClasses/Common/Tester.h \
     Main/NeuralNetwork.h \
     Main/Temp.h \

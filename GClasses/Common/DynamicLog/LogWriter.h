@@ -9,8 +9,8 @@
 #include <fstream>
 #include <typeinfo>
 
-#include "G_Defines.h"
-#include "G_StandartTypedefs.h"
+#include "GClasses/Common/G_Defines.h"
+#include "GClasses/Common/G_StandartTypedefs.h"
 
 //LogWriters are the most influencial classes on the logging process
 //Logging cores are tasked with doing the following:

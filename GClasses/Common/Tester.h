@@ -1,15 +1,12 @@
 #ifndef TESTER_H
 #define TESTER_H
 
-#include "LogDefines.h"
-
-
-#define UNIQUE_NAME(name) CONCAT(name, __COUNTER__)
-
 #include <map>
 #include <vector>
 #include <string>
 #include "G_Common.h"
+
+#define UNIQUE_NAME(name) CONCAT(name, __COUNTER__)
 
 //using StringType = ConstructionViewer<std::string>;
 //using StringViewType = std::string_view;

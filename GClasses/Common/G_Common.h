@@ -6,6 +6,5 @@
 #include "G_GeneralFunctions.h"
 //#include "G_MemoryFunctions.h"
 #include "G_Pointer.h"
-#include "Log.h"
 
 #endif // G_COMMON_H

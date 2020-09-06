@@ -2,13 +2,13 @@
 
 #include "mainwindow.h"
 #include "NeuralNetwork.h"
-#include "Temp.h"
+//#include "Temp.h"
 
 void RunAllDefaults()
 {
     std::string in;
 
-    RunTemp();
+    //RunTemp();
 
     std::cin >> in;
 

@@ -26,38 +26,6 @@ void operator delete(void* ptr, size_t size)
 #include "Libraries/Fmt/fmt/printf.h"
 #include "Libraries/Fmt/fmt/compile.h"
 
-/*
-
-template <typename S, typename... Args,
-          typename Char = enable_if_t<detail::is_string<S>::value, char_t<S>>>
-inline std::basic_string<Char> sprintf(const S& format, const Args&... args) {
-  using context = basic_printf_context_t<Char>;
-  return vsprintf(to_string_view(format), make_format_args<context>(args...));
-}
-
-
-template <typename S, typename Char = char_t<S>>
-inline std::basic_string<Char> vsprintf(
-    const S& format,
-    basic_format_args<basic_printf_context_t<type_identity_t<Char>>> args) {
-  basic_memory_buffer<Char> buffer;
-  vprintf(buffer, to_string_view(format), args);
-  return to_string(buffer);
-}
-
-
-// Converts an integer argument to T for printf, if T is an integral type.
-// If T is void, the argument is converted to corresponding signed or unsigned
-// type depending on the type specifier: 'd' and 'i' - signed, other -
-// unsigned).
-template <typename T, typename Context, typename Char>
-void convert_arg(basic_format_arg<Context>& arg, Char type) {
-  visit_format_arg(arg_converter<T, Context>(arg, type), arg);
-}
-
-OutputIt basic_printf_context<OutputIt, Char>::format() {
-*/
-
 void FmtTesting()
 {
     std::string buffer;
@@ -95,10 +63,11 @@ void FmtTesting()
     std::cout << buffer << std::endl;
 }
 
-#include "GClasses/Common/Log.h"
-#include "GClasses/Common/LogTests.h"
+#include "GClasses/Common/DynamicLog/Log.h"
+#include "GClasses/Common/DynamicLog/LogTests.h"
 #include "GClasses/Common/Tester.h"
-#include "GClasses/Common/StaticLog.h"
+#include "GClasses/Common/StaticLog/StaticLog.h"
+#include "GClasses/Common/StaticLog/TesterClasses.h"
 
 G_TEST_CASE("Test test-case")
 {
@@ -110,143 +79,121 @@ template<typename type>
 struct IndetifierStruct {};
 
 
-void StaticLoggerInterpretTesting()
+void StaticLogInterpretTesting()
 {
 
     std::string output;
     output.reserve(512);
-    ::StaticLogger::DefaultDataInterpret interpret;
+    ::StaticLog::DefaultDataInterpret interpret;
     interpret.InterpretArg(0, output);
 }
 
 void DefaultLogWritterPackageTesting()
 {
-    using namespace StaticLogger;
+    using namespace StaticLog;
     using namespace StaticLogTesting;
 
-    ::StaticLogger::StaticLogTesting::DefaultLoggerPackageTester Tester1("My file");
+    ::StaticLog::StaticLogTesting::DefaultLoggerPackageTester Tester1("My file");
 
     Tester1.CollectionString = "Collection string";
     Tester1.TempString = "Temp string";
-    Tester1.Messages = "Messages";
-    Tester1.Variables = "Variables";
     Tester1.Tags = "Tags";
-    Tester1.Source = "Source";
     Tester1.EntryIndex = 1;
 
-    ::StaticLogger::StaticLogTesting::DefaultLoggerPackageTester Tester2(std::move(Tester1));
+    ::StaticLog::StaticLogTesting::DefaultLoggerPackageTester Tester2(std::move(Tester1));
 
-    StaticLogger::LoggerInterface<StaticLogger::DefaultLogger> LoggerInterface("File");
+    StaticLog::LoggerInterface<StaticLog::DefaultLogger<>> LoggerInterface("File");
 
 }
 
-
 void LoggerCopyTesting()
 {
-    ::StaticLogger::LoggerInterface<::StaticLogger::StaticLogTesting::TestingLoggerCopy> logWriterCopy1(11, "Copy1");
+    ::StaticLog::LoggerInterface<::StaticLog::StaticLogTesting::TestingLoggerCopy> logWriterCopy1(11, "Copy1");
     logWriterCopy1.DoLog(false);
     logWriterCopy1.DoLoggingLevels<1, 3>(false);
 
-    ::StaticLogger::LoggerInterface<::StaticLogger::StaticLogTesting::TestingLoggerCopy> copyConstructed(logWriterCopy1);
+    ::StaticLog::LoggerInterface<::StaticLog::StaticLogTesting::TestingLoggerCopy> copyConstructed(logWriterCopy1);
 
-    ::StaticLogger::LoggerInterface<::StaticLogger::StaticLogTesting::TestingLoggerMove> logWriterMove1(11, "Move1");
+    ::StaticLog::LoggerInterface<::StaticLog::StaticLogTesting::TestingLoggerMove> logWriterMove1(11, "Move1");
     logWriterMove1.DoLog(false);
     logWriterMove1.DoLoggingLevels<1, 3>(false);
-    ::StaticLogger::LoggerInterface<::StaticLogger::StaticLogTesting::TestingLoggerMove> logWriterMove2(std::move(logWriterMove1));
+    ::StaticLog::LoggerInterface<::StaticLog::StaticLogTesting::TestingLoggerMove> logWriterMove2(std::move(logWriterMove1));
     //int a = 0;
 }
 
 void LogDefLoggerTesting()
 {
-    StaticLogger::DefaultLoggerPackage dataPackage("FilePackage");
-    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).CollectionString   = "PackageCollectionString";
-    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).TempString         = "PackageTempString";
-    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).Messages           = "PackageMessages";
-    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).Variables          = "PackageVariables";
-    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).Tags               = "PackageTags";
-    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).Source             = "PackageSource";
-    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).EntryIndex         = 33;
+    StaticLog::DefaultLoggerPackage dataPackage("FilePackage");
+    StaticLog::StaticLogTesting::GetDefPackageTester(dataPackage).CollectionString   = "PackageCollectionString";
+    StaticLog::StaticLogTesting::GetDefPackageTester(dataPackage).TempString         = "PackageTempString";
+    StaticLog::StaticLogTesting::GetDefPackageTester(dataPackage).Tags               = "PackageTags";
+    StaticLog::StaticLogTesting::GetDefPackageTester(dataPackage).EntryIndex         = 33;
 
 
-    StaticLogger::LoggerInterface<StaticLogger::DefaultLogger> logWriter1("File1");
-    StaticLogger::LoggerInterface<StaticLogger::DefaultLogger> logWriter2("File2");
+    StaticLog::LoggerInterface<StaticLog::DefaultLogger<>> logWriter1("File1");
+    StaticLog::LoggerInterface<StaticLog::DefaultLogger<>> logWriter2("File2");
 
-    StaticLogger::StaticLogTesting::GetDefLoggerTester(logWriter1).CollectionString   = "Logger1CollectionString";
-    StaticLogger::StaticLogTesting::GetDefLoggerTester(logWriter1).TempString         = "Logger1TempString";
-    StaticLogger::StaticLogTesting::GetDefLoggerTester(logWriter1).Messages           = "Logger1Messages";
-    StaticLogger::StaticLogTesting::GetDefLoggerTester(logWriter1).Variables          = "Logger1Variables";
-    StaticLogger::StaticLogTesting::GetDefLoggerTester(logWriter1).Tags               = "Logger1Tags";
-    StaticLogger::StaticLogTesting::GetDefLoggerTester(logWriter1).Source             = "Logger1Source";
-    StaticLogger::StaticLogTesting::GetDefLoggerTester(logWriter1).EntryIndex         = 11;
+    StaticLog::StaticLogTesting::GetDefLoggerTester(logWriter1).CollectionString   = "Logger1CollectionString";
+    StaticLog::StaticLogTesting::GetDefLoggerTester(logWriter1).TempString         = "Logger1TempString";
+    StaticLog::StaticLogTesting::GetDefLoggerTester(logWriter1).Tags               = "Logger1Tags";
+    StaticLog::StaticLogTesting::GetDefLoggerTester(logWriter1).EntryIndex         = 11;
 
 
     {
-        StaticLogger::LoggerInterface<StaticLogger::DefaultLogger> fromWriter(std::move(logWriter1));
+        StaticLog::LoggerInterface<StaticLog::DefaultLogger<>> fromWriter(std::move(logWriter1));
 
         bool trueFalse = false;
         (void)trueFalse;
-        trueFalse = StaticLogger::StaticLogTesting::GetDefLoggerTester(fromWriter).CollectionString   == "Logger1CollectionString";
-        trueFalse = StaticLogger::StaticLogTesting::GetDefLoggerTester(fromWriter).TempString         == "Logger1TempString";
-        trueFalse = StaticLogger::StaticLogTesting::GetDefLoggerTester(fromWriter).Messages           == "Logger1Messages";
-        trueFalse = StaticLogger::StaticLogTesting::GetDefLoggerTester(fromWriter).Variables          == "Logger1Variables";
-        trueFalse = StaticLogger::StaticLogTesting::GetDefLoggerTester(fromWriter).Tags               == "Logger1Tags";
-        trueFalse = StaticLogger::StaticLogTesting::GetDefLoggerTester(fromWriter).Source             == "Logger1Source";
-        trueFalse = StaticLogger::StaticLogTesting::GetDefLoggerTester(fromWriter).EntryIndex         == 11;
+
+        std::cout << StaticLog::StaticLogTesting::GetDefLoggerTester(fromWriter).CollectionString << std::endl;
+        std::cout << StaticLog::StaticLogTesting::GetDefLoggerTester(fromWriter).TempString << std::endl;
+        std::cout << StaticLog::StaticLogTesting::GetDefLoggerTester(fromWriter).Tags << std::endl;
+        std::cout << StaticLog::StaticLogTesting::GetDefLoggerTester(fromWriter).EntryIndex << std::endl;
+
+        trueFalse = StaticLog::StaticLogTesting::GetDefLoggerTester(fromWriter).CollectionString   == "Logger1CollectionString";
+        trueFalse = StaticLog::StaticLogTesting::GetDefLoggerTester(fromWriter).TempString         == "Logger1TempString";
+        trueFalse = StaticLog::StaticLogTesting::GetDefLoggerTester(fromWriter).Tags               == "Logger1Tags";
+        trueFalse = StaticLog::StaticLogTesting::GetDefLoggerTester(fromWriter).EntryIndex         == 11;
     }
 }
 
 void LogDefLoggerConstructing()
 {
-    StaticLogger::DefaultLoggerPackage dataPackage("FilePackage");
-    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).CollectionString   = "PackageCollectionString";
-    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).TempString         = "PackageTempString";
-    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).Messages           = "PackageMessages";
-    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).Variables          = "PackageVariables";
-    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).Tags               = "PackageTags";
-    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).Source             = "PackageSource";
-    StaticLogger::StaticLogTesting::GetDefPackageTester(dataPackage).EntryIndex         = 33;
+    StaticLog::DefaultLoggerPackage dataPackage("FilePackage");
+    StaticLog::StaticLogTesting::GetDefPackageTester(dataPackage).CollectionString   = "PackageCollectionString";
+    StaticLog::StaticLogTesting::GetDefPackageTester(dataPackage).TempString         = "PackageTempString";
+    StaticLog::StaticLogTesting::GetDefPackageTester(dataPackage).Tags               = "PackageTags";
+    StaticLog::StaticLogTesting::GetDefPackageTester(dataPackage).EntryIndex         = 33;
 
 
-    StaticLogger::DefaultLogger logWriter1("File1");
-    StaticLogger::DefaultLogger logWriter2("File2");
+    StaticLog::DefaultLogger logWriter1("File1");
+    StaticLog::DefaultLogger logWriter2("File2");
 
-    StaticLogger::StaticLogTesting::GetDefLoggerTester(logWriter1).CollectionString   = "Logger1CollectionString";
-    StaticLogger::StaticLogTesting::GetDefLoggerTester(logWriter1).TempString         = "Logger1TempString";
-    StaticLogger::StaticLogTesting::GetDefLoggerTester(logWriter1).Messages           = "Logger1Messages";
-    StaticLogger::StaticLogTesting::GetDefLoggerTester(logWriter1).Variables          = "Logger1Variables";
-    StaticLogger::StaticLogTesting::GetDefLoggerTester(logWriter1).Tags               = "Logger1Tags";
-    StaticLogger::StaticLogTesting::GetDefLoggerTester(logWriter1).Source             = "Logger1Source";
-    StaticLogger::StaticLogTesting::GetDefLoggerTester(logWriter1).EntryIndex         = 11;
+    StaticLog::StaticLogTesting::GetDefLoggerTester(logWriter1).CollectionString   = "Logger1CollectionString";
+    StaticLog::StaticLogTesting::GetDefLoggerTester(logWriter1).TempString         = "Logger1TempString";
+    StaticLog::StaticLogTesting::GetDefLoggerTester(logWriter1).Tags               = "Logger1Tags";
+    StaticLog::StaticLogTesting::GetDefLoggerTester(logWriter1).EntryIndex         = 11;
 
 
     {
-        StaticLogger::DefaultLogger fromWriter(std::move(logWriter1));
-        StaticLogger::DefaultLogger fromPackage(std::move(dataPackage));
+        StaticLog::DefaultLogger fromWriter(std::move(logWriter1));
+        StaticLog::DefaultLogger fromPackage(std::move(dataPackage));
 
         bool trueFalse = false;
         (void)trueFalse;
 
-        std::cout << StaticLogger::StaticLogTesting::GetDefLoggerTester(fromPackage).CollectionString << std::endl;
-        std::cout << StaticLogger::StaticLogTesting::GetDefLoggerTester(fromPackage).TempString << std::endl;
-        std::cout << StaticLogger::StaticLogTesting::GetDefLoggerTester(fromPackage).Messages << std::endl;
-        std::cout << StaticLogger::StaticLogTesting::GetDefLoggerTester(fromPackage).Variables << std::endl;
-        std::cout << StaticLogger::StaticLogTesting::GetDefLoggerTester(fromPackage).Tags << std::endl;
-        std::cout << StaticLogger::StaticLogTesting::GetDefLoggerTester(fromPackage).Source << std::endl;
-        std::cout << StaticLogger::StaticLogTesting::GetDefLoggerTester(fromPackage).EntryIndex << std::endl;
+        std::cout << StaticLog::StaticLogTesting::GetDefLoggerTester(fromPackage).CollectionString << std::endl;
+        std::cout << StaticLog::StaticLogTesting::GetDefLoggerTester(fromPackage).TempString << std::endl;
+        std::cout << StaticLog::StaticLogTesting::GetDefLoggerTester(fromPackage).Tags << std::endl;
+        std::cout << StaticLog::StaticLogTesting::GetDefLoggerTester(fromPackage).EntryIndex << std::endl;
 
-        trueFalse = StaticLogger::StaticLogTesting::GetDefLoggerTester(fromWriter).CollectionString   == "Logger1CollectionString";
-        trueFalse = StaticLogger::StaticLogTesting::GetDefLoggerTester(fromWriter).TempString         == "Logger1TempString";
-        trueFalse = StaticLogger::StaticLogTesting::GetDefLoggerTester(fromWriter).Messages           == "Logger1Messages";
-        trueFalse = StaticLogger::StaticLogTesting::GetDefLoggerTester(fromWriter).Variables          == "Logger1Variables";
-        trueFalse = StaticLogger::StaticLogTesting::GetDefLoggerTester(fromWriter).Tags               == "Logger1Tags";
-        trueFalse = StaticLogger::StaticLogTesting::GetDefLoggerTester(fromWriter).Source             == "Logger1Source";
-        trueFalse = StaticLogger::StaticLogTesting::GetDefLoggerTester(fromWriter).EntryIndex         == 11;
+        trueFalse = StaticLog::StaticLogTesting::GetDefLoggerTester(fromWriter).CollectionString   == "Logger1CollectionString";
+        trueFalse = StaticLog::StaticLogTesting::GetDefLoggerTester(fromWriter).TempString         == "Logger1TempString";
+        trueFalse = StaticLog::StaticLogTesting::GetDefLoggerTester(fromWriter).Tags               == "Logger1Tags";
+        trueFalse = StaticLog::StaticLogTesting::GetDefLoggerTester(fromWriter).EntryIndex         == 11;
     }
-    //StaticLogger::StaticLogTesting::GetDefLoggerTester(logWriter2).UnravelAndAddVariables("var1", "value", "var2", 32, "var3", static_cast<void POINTER>(0x0));
-    StaticLogger::StaticLogTesting::GetDefLoggerTester(logWriter2).UnravelAndAddMsgs("Msg1", "Msg2", "Msg3", "Msg4");
-
-    StaticLogger::StaticLogTesting::TestingLoggerConstruct logger;
-    logger.WriteMsgs<3>();
+    //StaticLog::StaticLogTesting::GetDefLoggerTester(logWriter2).UnravelAndAddVariables("var1", "value", "var2", 32, "var3", static_cast<void POINTER>(0x0));
+    StaticLog::StaticLogTesting::GetDefLoggerTester(logWriter2).UnravelAndAddMsgs("Msg1", "Msg2", "Msg3", "Msg4");
 }
 
 namespace UnorderedArgumentChain
@@ -476,25 +423,104 @@ void ConstexprNumConversion()
     using namespace DefaultLoggerHelper;
 
     //constexpr u32 charsetLenght = StringLenght(charset);
-    constexpr CompileTimeString<32> str = CompileTimeString<32>(true);
-    //constexpr bool isConstexpr = ConvertToString<32>(1358);
-    CompileTimeString<6> converted = ConvertToStringRun<6>(-1358);
+    //constexpr CompileTimeString<32> str = CompileTimeString<32>(true);
+    CompileTimeString<StrSizeForConversion(-1358)> converted = ConvertToStringRun<StrSizeForConversion(-1358)>(-1358);
     converted = ConvertToStringRun<6>(1358);
 
     std::cout << Convert<123456>::Value << std::endl;
     std::cout << Convert<-123456>::Value << std::endl;
 }
 
+void StringAdditionSpeedTesting()
+{
+    using MicrosecondsChronoDurations = std::chrono::duration<double, std::ratio<1, 1000>>;
+
+    auto tempTimePoint = std::chrono::high_resolution_clock::now();
+    std::vector<MicrosecondsChronoDurations> duartions(15);
+
+    std::string str1 = "Hello ";
+    std::string str2 = "";
+
+    for(u32 rotations = 0; rotations < 5; rotations ++)
+    {
+        tempTimePoint = std::chrono::high_resolution_clock::now();
+        for(u32 i = 0; i < 100000000; i++)
+        {
+            str1.append(str2);
+        }
+        duartions[0 + rotations] = std::chrono::high_resolution_clock::now() - tempTimePoint;
+    }
+
+    for(u32 rotations = 0; rotations < 5; rotations ++)
+    {
+        tempTimePoint = std::chrono::high_resolution_clock::now();
+        for(u32 i = 0; i < 100000000; i++)
+        {
+            if(NOT(str2.empty()))
+                str1.append(str2);
+        }
+        duartions[5 + rotations] = std::chrono::high_resolution_clock::now() - tempTimePoint;
+    }
+
+    for(u32 rotations = 0; rotations < 5; rotations ++)
+    {
+        tempTimePoint = std::chrono::high_resolution_clock::now();
+        for(u32 i = 0; i < 100000000; i++)
+        {
+            //str1.append(str2);
+        }
+        duartions[10 + rotations] = std::chrono::high_resolution_clock::now() - tempTimePoint;
+    }
+
+    u64 append = 0;
+    u64 emptySwitch = 0;
+    u64 control = 0;
+
+    for(u32 rotations = 0; rotations < 5; rotations ++)
+    {
+        append += duartions[0 + rotations].count();
+        emptySwitch += duartions[5 + rotations].count();
+        control += duartions[10 + rotations].count();
+    }
+
+    append /= 5;
+    emptySwitch /= 5;
+    control /= 5;
+
+    std::cout << "Simple append: " << append << "ms\n";
+    std::cout << "Empty switch: " << emptySwitch << "ms\n";
+    std::cout << "Control loop: " << control << "ms\n";
+}
+
+struct CrashDebugger
+{
+        static constexpr const char MyString[6] = {"Hello"};
+};
+
+struct DontCrashDebugger
+{
+        const char MyString[6] = {"Hello"};
+};
+
+void DebuggerCrashTesting()
+{
+    DontCrashDebugger dont;
+    CrashDebugger crash;
+    int b = 0;
+}
+
 void RunTemp()
 {
     //FmtTesting();
-    //StaticLoggerInterpretTesting();
-    //DefaultLogWritterPackageTesting();
-    //LoggerCopyTesting();
-    //LogDefLoggerTesting();
-    //LogDefLoggerConstructing();
+    StaticLogInterpretTesting();
+    DefaultLogWritterPackageTesting();
+    LoggerCopyTesting();
+    LogDefLoggerTesting();
+    LogDefLoggerConstructing();
     //UnorderedArgumentChainTesting();
-    ConstexprNumConversion();
+    //ConstexprNumConversion();
+    //StringAdditionSpeedTesting();
+    DebuggerCrashTesting();
 }
 
 #endif // TEMP_H

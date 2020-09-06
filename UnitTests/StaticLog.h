@@ -2,13 +2,14 @@
 #define STATICLOG2_H
 
 #include "Catch2/Catch.hpp"
-#include "Libraries/Fmt/fmt/os.h"
-#include "Libraries/Fmt/fmt/printf.h"
-#include "GClasses/Common/StaticLog.h"
+//#include "Libraries/Fmt/fmt/os.h"
+//#include "Libraries/Fmt/fmt/printf.h"
+#include "GClasses/Common/StaticLog/StaticLog.h"
+#include "GClasses/Common/StaticLog/TesterClasses.h"
 
 
 //#include "gtest/gtest.h"
-namespace StaticLogger
+namespace StaticLog
 {
     using namespace StaticLogTesting;
 
@@ -173,21 +174,36 @@ namespace StaticLogger
         TEST_CASE("Calling overloaded functions throught LoggerInterface", "[LoggerInterface]")
         {
 
-            SECTION("Calling func: WriteMsgs", "[LoggerInterface]")
+            SECTION("Calling func: LogMsgs", "[LoggerInterface]")
             {
                 LoggerInterface<TestingLogger1> logWriter1;
-                logWriter1.WriteMsgs<2>("Msg1", "Msg2");
-                REQUIRE(logWriter1.LastFunctionCalled == "WriteMsgs");
+                logWriter1.LogMsgs<2>("Msg1", "Msg2");
+                REQUIRE(logWriter1.LastFunctionCalled == "LogMsgs");
             }
 
-            SECTION("Calling func: WriteVars", "[LoggerInterface]")
+            SECTION("Calling func: LogVars", "[LoggerInterface]")
             {
 
                 LoggerInterface<TestingLogger1> logWriter1;
-                logWriter1.WriteVars<2, int, int>(1, 2);
-                REQUIRE(logWriter1.LastFunctionCalled == "WriteVars");
+                logWriter1.LogVars<2>(1, 2);
+                REQUIRE(logWriter1.LastFunctionCalled == "LogVars");
             }
 
+            SECTION("Calling func: LogMsgsSource", "[LoggerInterface]")
+            {
+                LoggerInterface<TestingLogger1> logWriter1;
+                logWriter1.LogMsgsSource<2>("file", 321, "Msg1", "Msg2");
+                REQUIRE(logWriter1.LastFunctionCalled == "LogMsgsSource");
+            }
+
+            SECTION("Calling func: LogVarsSource", "[LoggerInterface]")
+            {
+                LoggerInterface<TestingLogger1> logWriter1;
+                logWriter1.LogVarsSource<2>("file", 321, 1, 2);
+                REQUIRE(logWriter1.LastFunctionCalled == "LogVarsSource");
+            }
+
+            /*
             SECTION("Calling func: AppendSource", "[LoggerInterface]")
             {
 
@@ -200,6 +216,7 @@ namespace StaticLogger
                 REQUIRE(logWriter1.FileName == file);
                 REQUIRE(logWriter1.LineNum == lineNum);
             }
+            */
 
             SECTION("Calling func: AppendTags", "[LoggerInterface]")
             {
@@ -580,19 +597,13 @@ namespace StaticLogger
                 REQUIRE(Tester1.Formater.size() == 0);
                 REQUIRE(Tester1.CollectionString.capacity() >= Tester1.MinimumCollectionStringSize);
                 REQUIRE(Tester1.TempString.capacity() >= Tester1.MinimumTempStringSize);
-                REQUIRE(Tester1.Messages.capacity() >= Tester1.MinimumMessagesSize);
-                REQUIRE(Tester1.Variables.capacity() >= Tester1.MinimumVariablesSize);
                 REQUIRE(Tester1.Tags.capacity() >= Tester1.MinimumTagsSize);
-                REQUIRE(Tester1.Source.capacity() >= Tester1.MinimumSourceSize);
                 REQUIRE(Tester1.EntryIndex == 0);
             }
 
             Tester1.CollectionString = "Collection string";
             Tester1.TempString = "Temp string";
-            Tester1.Messages = "Messages";
-            Tester1.Variables = "Variables";
             Tester1.Tags = "Tags";
-            Tester1.Source = "Source";
             Tester1.EntryIndex = 1;
 
             SECTION("Move assignment")
@@ -600,10 +611,7 @@ namespace StaticLogger
                 Tester2 = std::move(Tester1);
                 REQUIRE(Tester2.CollectionString == "Collection string");
                 REQUIRE(Tester2.TempString == "Temp string");
-                REQUIRE(Tester2.Messages == "Messages");
-                REQUIRE(Tester2.Variables == "Variables");
                 REQUIRE(Tester2.Tags == "Tags");
-                REQUIRE(Tester2.Source == "Source");
                 REQUIRE(Tester2.EntryIndex == 1);
 
                 REQUIRE(Tester1.CollectionString == "");
@@ -615,10 +623,7 @@ namespace StaticLogger
                 DefaultLoggerPackageTester Tester3(std::move(Tester1));
                 REQUIRE(Tester3.CollectionString == "Collection string");
                 REQUIRE(Tester3.TempString == "Temp string");
-                REQUIRE(Tester3.Messages == "Messages");
-                REQUIRE(Tester3.Variables == "Variables");
                 REQUIRE(Tester3.Tags == "Tags");
-                REQUIRE(Tester3.Source == "Source");
                 REQUIRE(Tester3.EntryIndex == 1);
 
                 REQUIRE(Tester2.CollectionString == "");
@@ -633,21 +638,15 @@ namespace StaticLogger
                 DefaultLoggerPackage dataPackage("FilePackage");
                 GetDefPackageTester(dataPackage).CollectionString   = "PackageCollectionString";
                 GetDefPackageTester(dataPackage).TempString         = "PackageTempString";
-                GetDefPackageTester(dataPackage).Messages           = "PackageMessages";
-                GetDefPackageTester(dataPackage).Variables          = "PackageVariables";
                 GetDefPackageTester(dataPackage).Tags               = "PackageTags";
-                GetDefPackageTester(dataPackage).Source             = "PackageSource";
                 GetDefPackageTester(dataPackage).EntryIndex         = 33;
 
-                LoggerInterface<DefaultLogger> logWriter1("File1");
-                LoggerInterface<DefaultLogger> logWriter2("File2");
+                LoggerInterface<DefaultLogger<>> logWriter1("File1");
+                LoggerInterface<DefaultLogger<>> logWriter2("File2");
 
                 GetDefLoggerTester(logWriter1).CollectionString   = "Logger1CollectionString";
                 GetDefLoggerTester(logWriter1).TempString         = "Logger1TempString";
-                GetDefLoggerTester(logWriter1).Messages           = "Logger1Messages";
-                GetDefLoggerTester(logWriter1).Variables          = "Logger1Variables";
                 GetDefLoggerTester(logWriter1).Tags               = "Logger1Tags";
-                GetDefLoggerTester(logWriter1).Source             = "Logger1Source";
                 GetDefLoggerTester(logWriter1).EntryIndex         = 11;
 
                 logWriter1.DoLog(false);
@@ -655,46 +654,34 @@ namespace StaticLogger
 
                 WHEN("Move constructing from package")
                 {
-                    LoggerInterface<DefaultLogger> fromPackage(std::move(dataPackage));
+                    LoggerInterface<DefaultLogger<>> fromPackage(std::move(dataPackage));
                     THEN("The contents will be swaped with the package")
                     {
-                        REQUIRE(GetDefLoggerTester(logWriter2).CollectionString    == "Logger1CollectionString");
-                        REQUIRE(GetDefLoggerTester(logWriter2).TempString          == "Logger1TempString");
-                        REQUIRE(GetDefLoggerTester(logWriter2).Messages            == "Logger1Messages");
-                        REQUIRE(GetDefLoggerTester(logWriter2).Variables           == "Logger1Variables");
-                        REQUIRE(GetDefLoggerTester(logWriter2).Tags                == "Logger1Tags");
-                        REQUIRE(GetDefLoggerTester(logWriter2).Source              == "Logger1Source");
-                        REQUIRE(GetDefLoggerTester(logWriter2).EntryIndex          == 11);
+                        REQUIRE(GetDefLoggerTester(fromPackage).CollectionString    == "PackageCollectionString");
+                        REQUIRE(GetDefLoggerTester(fromPackage).TempString          == "PackageTempString");
+                        REQUIRE(GetDefLoggerTester(fromPackage).Tags                == "PackageTags");
+                        REQUIRE(GetDefLoggerTester(fromPackage).EntryIndex          == 33);
 
                         REQUIRE(GetDefPackageTester(dataPackage).CollectionString   == "");
                         REQUIRE(GetDefPackageTester(dataPackage).TempString         == "");
-                        REQUIRE(GetDefPackageTester(dataPackage).Messages           == "");
-                        REQUIRE(GetDefPackageTester(dataPackage).Variables          == "");
                         REQUIRE(GetDefPackageTester(dataPackage).Tags               == "");
-                        REQUIRE(GetDefPackageTester(dataPackage).Source             == "");
                         REQUIRE(GetDefPackageTester(dataPackage).EntryIndex         == 33); //trivially constructible types are just copied
                     }
                 }
 
                 WHEN("Move constructing from logWriter")
                 {
-                    LoggerInterface<DefaultLogger> moveConstructed(std::move(logWriter1));
+                    LoggerInterface<DefaultLogger<>> moveConstructed(std::move(logWriter1));
                     THEN("The contents will be swaped with the logger")
                     {
-                        REQUIRE(GetDefLoggerTester(logWriter2).CollectionString    == "Logger1CollectionString");
-                        REQUIRE(GetDefLoggerTester(logWriter2).TempString          == "Logger1TempString");
-                        REQUIRE(GetDefLoggerTester(logWriter2).Messages            == "Logger1Messages");
-                        REQUIRE(GetDefLoggerTester(logWriter2).Variables           == "Logger1Variables");
-                        REQUIRE(GetDefLoggerTester(logWriter2).Tags                == "Logger1Tags");
-                        REQUIRE(GetDefLoggerTester(logWriter2).Source              == "Logger1Source");
-                        REQUIRE(GetDefLoggerTester(logWriter2).EntryIndex          == 11);
+                        REQUIRE(GetDefLoggerTester(moveConstructed).CollectionString    == "Logger1CollectionString");
+                        REQUIRE(GetDefLoggerTester(moveConstructed).TempString          == "Logger1TempString");
+                        REQUIRE(GetDefLoggerTester(moveConstructed).Tags                == "Logger1Tags");
+                        REQUIRE(GetDefLoggerTester(moveConstructed).EntryIndex          == 11);
 
                         REQUIRE(GetDefLoggerTester(logWriter1).CollectionString    == "");
                         REQUIRE(GetDefLoggerTester(logWriter1).TempString          == "");
-                        REQUIRE(GetDefLoggerTester(logWriter1).Messages            == "");
-                        REQUIRE(GetDefLoggerTester(logWriter1).Variables           == "");
                         REQUIRE(GetDefLoggerTester(logWriter1).Tags                == "");
-                        REQUIRE(GetDefLoggerTester(logWriter1).Source              == "");
                         REQUIRE(GetDefLoggerTester(logWriter1).EntryIndex          == 11); //trivially constructible types are just copied
 
                         //Status level array is just copied
@@ -716,18 +703,12 @@ namespace StaticLogger
                         //No OnConstruction function is called when move assigning therefore the values are either swapped or set equal
                         REQUIRE(GetDefLoggerTester(logWriter2).CollectionString    == "Logger1CollectionString");
                         REQUIRE(GetDefLoggerTester(logWriter2).TempString          == "Logger1TempString");
-                        REQUIRE(GetDefLoggerTester(logWriter2).Messages            == "Logger1Messages");
-                        REQUIRE(GetDefLoggerTester(logWriter2).Variables           == "Logger1Variables");
                         REQUIRE(GetDefLoggerTester(logWriter2).Tags                == "Logger1Tags");
-                        REQUIRE(GetDefLoggerTester(logWriter2).Source              == "Logger1Source");
                         REQUIRE(GetDefLoggerTester(logWriter2).EntryIndex          == 11);
 
                         REQUIRE(GetDefLoggerTester(logWriter1).CollectionString    == "");
                         REQUIRE(GetDefLoggerTester(logWriter1).TempString          == "");
-                        REQUIRE(GetDefLoggerTester(logWriter1).Messages            == "");
-                        REQUIRE(GetDefLoggerTester(logWriter1).Variables           == "");
                         REQUIRE(GetDefLoggerTester(logWriter1).Tags                == "");
-                        REQUIRE(GetDefLoggerTester(logWriter1).Source              == "");
                         REQUIRE(GetDefLoggerTester(logWriter1).EntryIndex          == 11); //trivially constructible types are just copied
 
                         //Status level array is just copied
@@ -753,21 +734,15 @@ namespace StaticLogger
                 DefaultLoggerPackage dataPackage("FilePackage");
                 GetDefPackageTester(dataPackage).CollectionString   = "PackageCollectionString";
                 GetDefPackageTester(dataPackage).TempString         = "PackageTempString";
-                GetDefPackageTester(dataPackage).Messages           = "PackageMessages";
-                GetDefPackageTester(dataPackage).Variables          = "PackageVariables";
                 GetDefPackageTester(dataPackage).Tags               = "PackageTags";
-                GetDefPackageTester(dataPackage).Source             = "PackageSource";
                 GetDefPackageTester(dataPackage).EntryIndex         = 33;
 
-                DefaultLogger logWriter1("File1");
-                DefaultLogger logWriter2("File2");
+                DefaultLogger<> logWriter1("File1");
+                DefaultLogger<> logWriter2("File2");
 
                 GetDefLoggerTester(logWriter1).CollectionString   = "Logger1CollectionString";
                 GetDefLoggerTester(logWriter1).TempString         = "Logger1TempString";
-                GetDefLoggerTester(logWriter1).Messages           = "Logger1Messages";
-                GetDefLoggerTester(logWriter1).Variables          = "Logger1Variables";
                 GetDefLoggerTester(logWriter1).Tags               = "Logger1Tags";
-                GetDefLoggerTester(logWriter1).Source             = "Logger1Source";
                 GetDefLoggerTester(logWriter1).EntryIndex         = 11;
 
                 logWriter1.DoLog(false);
@@ -775,48 +750,35 @@ namespace StaticLogger
 
                 WHEN("Move constructing from package")
                 {
-                    DefaultLogger fromPackage(std::move(dataPackage));
+                    DefaultLogger<> fromPackage(std::move(dataPackage));
                     THEN("The contents will be swaped with empty package but then reset as a result of OnConstruction")
                     {
                         //All strings except TempSTring get reset as result of pushing out the OnConstruction message
                         REQUIRE(GetDefLoggerTester(fromPackage).CollectionString    == "");
                         //REQUIRE(GetDefLoggerTester(fromPackage).TempString          == "");
-                        REQUIRE(GetDefLoggerTester(fromPackage).Messages            == "");
-                        REQUIRE(GetDefLoggerTester(fromPackage).Variables           == "");
                         REQUIRE(GetDefLoggerTester(fromPackage).Tags                == "");
-                        REQUIRE(GetDefLoggerTester(fromPackage).Source              == "");
                         REQUIRE(GetDefLoggerTester(fromPackage).EntryIndex          == 34); //1 is added cause of the OnConstruction msg
 
                         REQUIRE(GetDefPackageTester(dataPackage).CollectionString   == "");
                         REQUIRE(GetDefPackageTester(dataPackage).TempString         == "");
-                        REQUIRE(GetDefPackageTester(dataPackage).Messages           == "");
-                        REQUIRE(GetDefPackageTester(dataPackage).Variables          == "");
                         REQUIRE(GetDefPackageTester(dataPackage).Tags               == "");
-                        REQUIRE(GetDefPackageTester(dataPackage).Source             == "");
                         REQUIRE(GetDefPackageTester(dataPackage).EntryIndex         == 33); //trivially constructible types are just copied
                     }
                 }
 
                 WHEN("Move constructing from logWriter")
                 {
-                    DefaultLogger moveConstructed(std::move(logWriter1));
-                    THEN("The contents will be swaped with empty package but then reset as a result of OnConstruction")
+                    DefaultLogger<> moveConstructed(std::move(logWriter1));
+                    THEN("The contents will be swaped with logWriter1; No on construction msg because all logging is disabled")
                     {
-                        //All strings except TempSTring get reset as result of pushing out the OnConstruction message
-                        REQUIRE(GetDefLoggerTester(moveConstructed).CollectionString    == "");
-                        //REQUIRE(GetDefLoggerTester(moveConstructed).TempString          == "");
-                        REQUIRE(GetDefLoggerTester(moveConstructed).Messages            == "");
-                        REQUIRE(GetDefLoggerTester(moveConstructed).Variables           == "");
-                        REQUIRE(GetDefLoggerTester(moveConstructed).Tags                == "");
-                        REQUIRE(GetDefLoggerTester(moveConstructed).Source              == "");
-                        REQUIRE(GetDefLoggerTester(moveConstructed).EntryIndex          == 12); //1 is added cause of the OnConstruction msg
+                        REQUIRE(GetDefLoggerTester(moveConstructed).CollectionString    == "Logger1CollectionString");
+                        REQUIRE(GetDefLoggerTester(moveConstructed).TempString          == "Logger1TempString");
+                        REQUIRE(GetDefLoggerTester(moveConstructed).Tags                == "Logger1Tags");
+                        REQUIRE(GetDefLoggerTester(moveConstructed).EntryIndex          == 11);
 
                         REQUIRE(GetDefLoggerTester(logWriter1).CollectionString    == "");
                         REQUIRE(GetDefLoggerTester(logWriter1).TempString          == "");
-                        REQUIRE(GetDefLoggerTester(logWriter1).Messages            == "");
-                        REQUIRE(GetDefLoggerTester(logWriter1).Variables           == "");
                         REQUIRE(GetDefLoggerTester(logWriter1).Tags                == "");
-                        REQUIRE(GetDefLoggerTester(logWriter1).Source              == "");
                         REQUIRE(GetDefLoggerTester(logWriter1).EntryIndex          == 11); //trivially constructible types are just copied
 
                         //Status level array is just copied
@@ -838,18 +800,12 @@ namespace StaticLogger
                         //No OnConstruction function is called when move assigning therefore the values are either swapped or set equal
                         REQUIRE(GetDefLoggerTester(logWriter2).CollectionString    == "Logger1CollectionString");
                         REQUIRE(GetDefLoggerTester(logWriter2).TempString          == "Logger1TempString");
-                        REQUIRE(GetDefLoggerTester(logWriter2).Messages            == "Logger1Messages");
-                        REQUIRE(GetDefLoggerTester(logWriter2).Variables           == "Logger1Variables");
                         REQUIRE(GetDefLoggerTester(logWriter2).Tags                == "Logger1Tags");
-                        REQUIRE(GetDefLoggerTester(logWriter2).Source              == "Logger1Source");
                         REQUIRE(GetDefLoggerTester(logWriter2).EntryIndex          == 11);
 
                         REQUIRE(GetDefLoggerTester(logWriter1).CollectionString    == "");
                         REQUIRE(GetDefLoggerTester(logWriter1).TempString          == "");
-                        REQUIRE(GetDefLoggerTester(logWriter1).Messages            == "");
-                        REQUIRE(GetDefLoggerTester(logWriter1).Variables           == "");
                         REQUIRE(GetDefLoggerTester(logWriter1).Tags                == "");
-                        REQUIRE(GetDefLoggerTester(logWriter1).Source              == "");
                         REQUIRE(GetDefLoggerTester(logWriter1).EntryIndex          == 11); //trivially constructible types are just copied
 
                         //Status level array is just copied
@@ -869,7 +825,7 @@ namespace StaticLogger
         {
             GIVEN("A LogWriter and a output string and formater")
             {
-                DefaultLogger writer("File1");
+                DefaultLogger<> writer("File1");
                 std::string output;
                 fmt::format_int formater;
                 output.reserve(256);
@@ -925,6 +881,23 @@ namespace StaticLogger
                     REQUIRE(output[2] == separator);
                 }
 
+                SECTION("AddFormatedVariableAsListPart")
+                {
+                    DefaultLogger<>::DataInterpretType REF interpret = GetDefLoggerTester(writer).Interpret;
+                    DefaultLogger<>::StringType REF temp = GetDefLoggerTester(writer).TempString;
+
+                    GetDefLoggerTester(writer).AddFormatedVariableAsListPart("Name", "Value", interpret, temp, output);
+                    REQUIRE(output == "Name = Value");
+                    GetDefLoggerTester(writer).AddFormatedVariableAsListPart("Name2", "Value2", interpret, temp, output);
+                    REQUIRE(output == "Name = ValueName2 = Value2");
+                    output.clear();
+                    GetDefLoggerTester(writer).AddFormatedVariableAsListPart("32", "64", interpret, temp, output);
+                    REQUIRE(output == "32 = 64");
+                    output.clear();
+                    GetDefLoggerTester(writer).AddFormatedVariableAsListPart("\n", "\t", interpret, temp, output);
+                    REQUIRE(output == "\n = \t");
+                }
+
                 SECTION("AddFormatedVariable")
                 {
                     GetDefLoggerTester(writer).AddFormatedVariable("Name", "Value", output);
@@ -974,12 +947,12 @@ namespace StaticLogger
 
                 SECTION("AddFormatedLevel")
                 {
-                    GetDefLoggerTester(writer).AddFormatedLevel(15, formater, output);
+                    GetDefLoggerTester(writer).AddFormatedLevel(15, output);
                     REQUIRE(output == "<15>");
-                    GetDefLoggerTester(writer).AddFormatedLevel(3, formater, output);
+                    GetDefLoggerTester(writer).AddFormatedLevel(3, output);
                     REQUIRE(output == "<15><03>");
                     output.clear();
-                    GetDefLoggerTester(writer).AddFormatedLevel(0, formater, output);
+                    GetDefLoggerTester(writer).AddFormatedLevel(0, output);
                     REQUIRE(output == "<00>");
                 }
 
@@ -1035,7 +1008,7 @@ namespace StaticLogger
         {
             GIVEN("A LogWriter")
             {
-                DefaultLogger writer("File1");
+                DefaultLogger<> writer("File1");
                 std::string expected;
                 std::string temp;
                 expected.reserve(256);
@@ -1046,7 +1019,7 @@ namespace StaticLogger
                     GetDefLoggerTester(writer).UnravelAndAddMsgs("msg1", "msg2", "msg3", "msg4");
                     THEN("Concatenates them together")
                     {
-                        REQUIRE(GetDefLoggerTester(writer).Messages == "msg1msg2msg3msg4");
+                        REQUIRE(GetDefLoggerTester(writer).CollectionString == "msg1msg2msg3msg4");
                     }
                 }
 
@@ -1058,7 +1031,7 @@ namespace StaticLogger
                         expected = "Num: 32; Address: ";
                         GetDefLoggerTester(writer).Interpret.InterpretArg(ADDRESS(expected), temp);
                         expected += temp;
-                        REQUIRE(GetDefLoggerTester(writer).Messages == expected);
+                        REQUIRE(GetDefLoggerTester(writer).CollectionString == expected);
                     }
                 }
 
@@ -1069,17 +1042,17 @@ namespace StaticLogger
                     GetDefLoggerTester(writer).UnravelAndAddMsgs("msg6", "msg7");
                     THEN("Adds the messeges accross all of the calls")
                     {
-                        REQUIRE(GetDefLoggerTester(writer).Messages == "msg1msg2msg3msg4msg5msg6msg7");
+                        REQUIRE(GetDefLoggerTester(writer).CollectionString == "msg1msg2msg3msg4msg5msg6msg7");
                     }
                 }
 
                 WHEN("Is given no arguments")
                 {
-                    GetDefLoggerTester(writer).Messages = "Preset";
+                    GetDefLoggerTester(writer).CollectionString = "Preset";
                     GetDefLoggerTester(writer).UnravelAndAddMsgs();
                     THEN("Does nothing")
                     {
-                        REQUIRE(GetDefLoggerTester(writer).Messages == "Preset");
+                        REQUIRE(GetDefLoggerTester(writer).CollectionString == "Preset");
                     }
                 }
             }
@@ -1089,7 +1062,7 @@ namespace StaticLogger
         {
             GIVEN("A LogWriter")
             {
-                DefaultLogger writer("File1");
+                DefaultLogger<> writer("File1");
                 std::string expected;
                 std::string temp;
                 expected.reserve(256);
@@ -1100,7 +1073,7 @@ namespace StaticLogger
                     GetDefLoggerTester(writer).UnravelAndAddVariables("varName", 0);
                     THEN("Concatenates them together in formated form")
                     {
-                        REQUIRE(GetDefLoggerTester(writer).Variables == "varName = 0 ");
+                        REQUIRE(GetDefLoggerTester(writer).CollectionString == ", varName = 0");
                     }
                 }
 
@@ -1109,11 +1082,10 @@ namespace StaticLogger
                     GetDefLoggerTester(writer).UnravelAndAddVariables("var1", "value", "var2", 32, "var3", ADDRESS(expected));
                     THEN("Concatenates them together after conversion from Interpret")
                     {
-                        expected = "var1 = value var2 = 32 var3 = ";
+                        expected = ", var1 = value, var2 = 32, var3 = ";
                         GetDefLoggerTester(writer).Interpret.InterpretArg(ADDRESS(expected), temp);
                         expected += temp;
-                        expected += " ";
-                        REQUIRE(GetDefLoggerTester(writer).Variables == expected);
+                        REQUIRE(GetDefLoggerTester(writer).CollectionString == expected);
                     }
                 }
 
@@ -1123,17 +1095,17 @@ namespace StaticLogger
                     GetDefLoggerTester(writer).UnravelAndAddVariables<StringType, StringType>("var", "value");
                     THEN("Adds the variable messeges accross all of the calls")
                     {
-                        REQUIRE(GetDefLoggerTester(writer).Variables == "var = value var = value var = value ");
+                        REQUIRE(GetDefLoggerTester(writer).CollectionString == ", var = value, var = value, var = value");
                     }
                 }
 
                 WHEN("Is given no arguments")
                 {
-                    GetDefLoggerTester(writer).Variables = "Preset";
+                    GetDefLoggerTester(writer).CollectionString = "Preset";
                     GetDefLoggerTester(writer).UnravelAndAddVariables();
                     THEN("Does nothing")
                     {
-                        REQUIRE(GetDefLoggerTester(writer).Variables == "Preset");
+                        REQUIRE(GetDefLoggerTester(writer).CollectionString == "Preset");
                     }
                 }
             }
@@ -1143,7 +1115,7 @@ namespace StaticLogger
         {
             GIVEN("A LogWriter")
             {
-                DefaultLogger writer("File1");
+                DefaultLogger<> writer("File1");
 
                 WHEN("Is given just strings")
                 {
@@ -1172,6 +1144,160 @@ namespace StaticLogger
                     {
                         REQUIRE(GetDefLoggerTester(writer).Tags == "Preset");
                     }
+                }
+            }
+        }
+
+        TEST_CASE("Using nonconstant helper functions", "[DefaultLogWritter]")
+        {
+            GIVEN("A LogWriter")
+            {
+                DefaultLogger<> writer("File");
+
+                SECTION("IncrementEntryIndex")
+                {
+                    //Is incremented cause of the OnConstruction msg
+                    REQUIRE(GetDefLoggerTester(writer).EntryIndex == 1);
+
+                    GetDefLoggerTester(writer).EntryIndex = 0;
+                    GetDefLoggerTester(writer).IncrementEntryIndex();
+                    REQUIRE(GetDefLoggerTester(writer).EntryIndex == 1);
+                    GetDefLoggerTester(writer).IncrementEntryIndex();
+                    REQUIRE(GetDefLoggerTester(writer).EntryIndex == 2);
+                }
+
+                //SECTION("PushLogOut") {} //Poorly testable
+
+                SECTION("CleanUp")
+                {
+                    //Strings should be empty by default
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString.empty());
+                    REQUIRE(GetDefLoggerTester(writer).Tags.empty());
+
+                    GetDefLoggerTester(writer).CollectionString = "Collection";
+                    GetDefLoggerTester(writer).Tags = "Tag";
+
+                    GetDefLoggerTester(writer).CleanUp();
+
+                    //After clean up the strings should be reset
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString.empty());
+                    REQUIRE(GetDefLoggerTester(writer).Tags.empty());
+
+                    //Clean up on empty does nothing
+                    GetDefLoggerTester(writer).CleanUp();
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString.empty());
+                    REQUIRE(GetDefLoggerTester(writer).Tags.empty());
+                }
+
+                WHEN("AfterLog")
+                {
+                    GetDefLoggerTester(writer).CollectionString = "Collection";
+                    GetDefLoggerTester(writer).Tags = "Tag";
+                    GetDefLoggerTester(writer).EntryIndex = 0;
+
+                    GetDefLoggerTester(writer).AfterLog();
+                    THEN("The CleanUp and IncremntEntryIndex functions are called")
+                    {
+                        REQUIRE(GetDefLoggerTester(writer).CollectionString.empty());
+                        REQUIRE(GetDefLoggerTester(writer).Tags.empty());
+                        REQUIRE(GetDefLoggerTester(writer).EntryIndex == 1);
+                    }
+                }
+            }
+        }
+
+        TEST_CASE("Using nonconstant Adding functions")
+        {
+            GIVEN("A LogWriter")
+            {
+                DefaultLogger<> writer("File1");
+                std::string expected;
+                std::string temp;
+                expected.reserve(256);
+                temp.reserve(256);
+
+                //All are tested only little cause the fraction functions were tested beforehand
+                SECTION("AddSource")
+                {
+                    GetDefLoggerTester(writer).AddSource("file", 32);
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "file [32] ");
+                    GetDefLoggerTester(writer).AddSource("file2", 64);
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "file [32] file2 [64] ");
+                }
+
+                SECTION("AddIterations")
+                {
+                    GetDefLoggerTester(writer).AddIterations();
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "00000001 ");
+                    GetDefLoggerTester(writer).AddIterations();
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "00000001 00000001 ");
+                    GetDefLoggerTester(writer).CollectionString.clear();
+
+                    GetDefLoggerTester(writer).EntryIndex = 123;
+                    GetDefLoggerTester(writer).AddIterations();
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "00000123 ");
+                }
+
+                //SECTION("AddTime") {} //Badly testable
+
+                SECTION("AddLvl")
+                {
+                    GetDefLoggerTester(writer).AddLvl(1);
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "<01> ");
+                    GetDefLoggerTester(writer).AddLvl(10);
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "<01> <10> ");
+
+                    GetDefLoggerTester(writer).CollectionString.clear();
+                    GetDefLoggerTester(writer).AddLvl(0);
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "<00> ");
+                    GetDefLoggerTester(writer).AddLvl(15);
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "<00> <15> ");
+                }
+
+
+                SECTION("AddMsgs")
+                {
+                    GetDefLoggerTester(writer).AddMsgs(1, 2, "msgs");
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "msg = 12msgs ");
+                    GetDefLoggerTester(writer).AddMsgs("Another");
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "msg = 12msgs msg = Another ");
+
+                    GetDefLoggerTester(writer).CollectionString.clear();
+
+                    GetDefLoggerTester(writer).AddMsgs(true, false, "no");
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "msg = truefalseno ");
+
+                    GetDefLoggerTester(writer).CollectionString.clear();
+
+                    GetDefLoggerTester(writer).AddMsgs();
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "msg =  ");
+                }
+
+                SECTION("AddMsgs")
+                {
+                    GetDefLoggerTester(writer).AddVars("var", 2, "var", 5);
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "var = 2, var = 5 ");
+                    GetDefLoggerTester(writer).AddVars("var", 2);
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "var = 2, var = 5 var = 2 ");
+
+                    GetDefLoggerTester(writer).CollectionString.clear();
+
+                    GetDefLoggerTester(writer).AddVars("var", true);
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "var = true ");
+                }
+
+                SECTION("AddTags")
+                {
+                    GetDefLoggerTester(writer).Tags = "Tags";
+                    GetDefLoggerTester(writer).AddTags();
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "Tags");
+                    GetDefLoggerTester(writer).AddTags();
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "TagsTags");
+
+                    GetDefLoggerTester(writer).CollectionString.clear();
+                    GetDefLoggerTester(writer).Tags = "";
+                    GetDefLoggerTester(writer).AddTags();
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "");
                 }
             }
         }

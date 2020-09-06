@@ -2,11 +2,8 @@
 #define DYNAMICLOG_H
 
 #include "Catch2/Catch.hpp"
-#include "GClasses/Common/Log.h"
+#include "GClasses/Common/DynamicLog/Log.h"
 
-#include "Libraries/Fmt/fmt/os.h"
-//#include "Libraries/Fmt/fmt/core.h"
-//#include "Libraries/Fmt/fmt/compile.h"
 namespace DynamicLogger
 {
     TEST_CASE("Setting and Getting logging levels", "[DynamicLogger]")
