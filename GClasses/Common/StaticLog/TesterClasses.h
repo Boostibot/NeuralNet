@@ -120,15 +120,6 @@ namespace StaticLog
                 template<typename ... TagTypes>
                 void AppendTagsOverload(TagTypes ...)                   {this->LastFunctionCalled = "AppendTags";}
 
-                /*
-                void OpenStreamOverload(StringType)                     {this->LastFunctionCalled = "OpenStream";  this->StreamState = true;}
-                void CloseStreamOverload()                              {this->LastFunctionCalled = "CloseStream"; this->StreamState = false;}
-                bool IsStreamOpenOverload()                             {this->LastFunctionCalled = "IsStreamOpen"; return this->StreamState;}
-                void FlushStreamOverload()                              {this->LastFunctionCalled = "FlushStream";}
-
-                void OnConstructionOverload()                           {this->LastFunctionCalled = "OnConstruction";}
-                void OnDestructionOverload()                            {this->LastFunctionCalled = "OnDestruction";}
-                */
 
             public:
                 TestingLogger2() = default;
@@ -175,14 +166,6 @@ namespace StaticLog
                 void LogVarsSourceOverload(StringViewType, const u32, const u32) {}
                 void AppendSourceOverload() {}
                 void AppendTagsOverload() {}
-                /*
-                void OpenStreamOverload() {}
-                void CloseStreamOverload() {}
-                bool IsStreamOpenOverload() {return false;}
-                void FlushStreamOverload() {}
-                void OnConstructionOverload() {}
-                void OnDestructionOverload() {}
-                */
                 TestingLoggerMove() = delete;
                 TestingLoggerMove(const TestingLoggerMove PASS_REF) = delete;
                 TestingLoggerMove(TestingLoggerMove PASS_RVALUE_REF) = default;
@@ -219,14 +202,6 @@ namespace StaticLog
                 void LogVarsSourceOverload(StringViewType, const u32, const u32) {}
                 //void AppendSourceOverload() {}
                 void AppendTagsOverload() {}
-                /*
-                void OpenStreamOverload() {}
-                void CloseStreamOverload() {}
-                bool IsStreamOpenOverload() {return false;}
-                void FlushStreamOverload() {}
-                void OnConstructionOverload() {}
-                void OnDestructionOverload() {}
-                */
                 TestingLoggerCopy() = delete;
                 TestingLoggerCopy(const TestingLoggerCopy PASS_REF) = default;
                 TestingLoggerCopy(TestingLoggerCopy PASS_RVALUE_REF) = delete;
@@ -262,16 +237,8 @@ namespace StaticLog
                 void LogVarsOverload(const u32) {}
                 void LogMsgsSourceOverload(StringViewType, const u32, const u32) {}
                 void LogVarsSourceOverload(StringViewType, const u32, const u32) {}
-                //void AppendSourceOverload() {}
                 void AppendTagsOverload() {}
-                /*
-                void OpenStreamOverload() {}
-                void CloseStreamOverload() {}
-                bool IsStreamOpenOverload() {return false;}
-                void FlushStreamOverload() {}
-                void OnConstructionOverload() {}
-                void OnDestructionOverload() {}
-                */
+
                 TestingLoggerConstruct() = default;
                 TestingLoggerConstruct(const TestingLoggerConstruct PASS_REF) = default;
                 TestingLoggerConstruct(TestingLoggerConstruct PASS_RVALUE_REF) = delete;
@@ -321,66 +288,73 @@ namespace StaticLog
 
     namespace StaticLogTesting
     {
-        struct DefaultLoggerTester : public DefaultLogger<>
+        template<typename InterpretType = DefaultDataInterpret, bool DoAppOutput = true>
+        struct DefaultLoggerTester : public DefaultLogger<InterpretType, DoAppOutput>
         {
+                using DefaultLoggerType = DefaultLogger<InterpretType, DoAppOutput>;
             public:
-                using DefaultLogger::Interpret;
-                using DefaultLogger::Formater;
-                using DefaultLogger::File;
-                using DefaultLogger::CollectionString;
-                using DefaultLogger::TempString;
-                using DefaultLogger::Tags;
-                using DefaultLogger::EntryIndex;
+                using DefaultLoggerType::Interpret;
+                using DefaultLoggerType::Formater;
+                using DefaultLoggerType::File;
+                using DefaultLoggerType::CollectionString;
+                using DefaultLoggerType::TempString;
+                using DefaultLoggerType::Tags;
+                using DefaultLoggerType::EntryIndex;
+                using DefaultLoggerType::AppOutputLogStatus;
 
-                using DefaultLogger::LogIterationFieldSize;
-                using DefaultLogger::LogClockFieldSize;
-                using DefaultLogger::Separator;
-                using DefaultLogger::DoAppOutputLog;
+                using DefaultLoggerType::LogIterationFieldSize;
+                using DefaultLoggerType::LogClockFieldSize;
+                using DefaultLoggerType::Separator;
+                using DefaultLoggerType::DoAppOutputLog;
 
-                using DefaultLogger::LogMsgsOverload;
-                using DefaultLogger::LogVarsOverload;
-                using DefaultLogger::AppendTagsOverload;
+                using DefaultLoggerType::LogMsgsOverload;
+                using DefaultLoggerType::LogVarsOverload;
+                using DefaultLoggerType::AppendTagsOverload;
 
-                using DefaultLogger::AddSource;
-                using DefaultLogger::AddIterations;
-                using DefaultLogger::AddTime;
-                using DefaultLogger::AddLvl;
-                using DefaultLogger::AddMsgs;
-                using DefaultLogger::AddVars;
-                using DefaultLogger::AddTags;
+                using DefaultLoggerType::AddSource;
+                using DefaultLoggerType::AddIterations;
+                using DefaultLoggerType::AddTime;
+                using DefaultLoggerType::AddLvl;
+                using DefaultLoggerType::AddMsgs;
+                using DefaultLoggerType::AddVars;
+                using DefaultLoggerType::AddTags;
 
-                using DefaultLogger::IncrementEntryIndex;
-                using DefaultLogger::PushLogOut;
-                using DefaultLogger::AfterLog;
-                using DefaultLogger::CleanUp;
+                using DefaultLoggerType::IncrementEntryIndex;
+                using DefaultLoggerType::PushLogOut;
+                using DefaultLoggerType::AfterLog;
+                using DefaultLoggerType::CleanUp;
 
-                using DefaultLogger::UnravelAndAddMsgs;
-                using DefaultLogger::UnravelAndAddVariables;
-                using DefaultLogger::UnravelAndAddTags;
+                using DefaultLoggerType::UnravelAndAddMsgs;
+                using DefaultLoggerType::UnravelAndAddVariables;
+                using DefaultLoggerType::UnravelAndAddTags;
 
-                using DefaultLogger::AddFormatedTime;
-                using DefaultLogger::AddFormatedSource;
-                using DefaultLogger::AddFormatedIterationCount;
-                using DefaultLogger::AddFormatedLevel;
-                using DefaultLogger::AddFormatedMsg;
-                using DefaultLogger::AddUnformatedMsgPart;
-                using DefaultLogger::AddFormatedTag;
-                using DefaultLogger::AddFormatedVariable;
-                using DefaultLogger::AddFormatedVariableAsListPart;
+                using DefaultLoggerType::AddFormatedTime;
+                using DefaultLoggerType::AddFormatedSource;
+                using DefaultLoggerType::AddFormatedIterationCount;
+                using DefaultLoggerType::AddFormatedLevel;
+                using DefaultLoggerType::AddFormatedMsg;
+                using DefaultLoggerType::AddUnformatedMsgPart;
+                using DefaultLoggerType::AddFormatedTag;
+                using DefaultLoggerType::AddFormatedVariable;
+                using DefaultLoggerType::AddFormatedVariableAsListPart;
 
-                using DefaultLogger::AddSeparator;
-                using DefaultLogger::AddNewline;
-                using DefaultLogger::PutNumIntoCharcterField;
-                using DefaultLogger::ResetString;
+                using DefaultLoggerType::AddSeparator;
+                using DefaultLoggerType::AddNewline;
+                using DefaultLoggerType::PutNumIntoCharcterField;
+                using DefaultLoggerType::ResetString;
         };
 
-        DefaultLoggerTester REF GetDefLoggerTester(LoggerInterface<DefaultLogger<>> PASS_REF logger)
+        template<typename InterpretType, bool DoAppOutput>
+        DefaultLoggerTester<InterpretType, DoAppOutput> REF
+            GetDefLoggerTester(LoggerInterface<DefaultLogger<InterpretType, DoAppOutput>> REF logger)
         {
-            return static_cast<DefaultLoggerTester REF>(logger.GetWriter());
+            return static_cast<DefaultLoggerTester<InterpretType, DoAppOutput> REF>(logger.GetWriter());
         }
-        DefaultLoggerTester REF GetDefLoggerTester(DefaultLogger<> PASS_REF logger)
+        template<typename InterpretType, bool DoAppOutput>
+        DefaultLoggerTester<InterpretType, DoAppOutput> REF
+            GetDefLoggerTester(DefaultLogger<InterpretType, DoAppOutput> REF logger)
         {
-            return static_cast<DefaultLoggerTester REF>(logger);
+            return static_cast<DefaultLoggerTester<InterpretType, DoAppOutput> REF>(logger);
         }
     }
 }

@@ -10,14 +10,12 @@ namespace DynamicLogger
     {
         Logger log;
 
-        //
         REQUIRE(log.IsLoggingLevelEnabled<3>() == true);
         REQUIRE(log.IsLoggingLevelEnabled(3) == true);
 
         REQUIRE_THROWS(log.IsLoggingLevelEnabled(Logger<>::LevelArraySize + 1));
         //REQUIRE_THROWS(log.IsLoggingLevelEnabled<Logger<>::LevelArraySize + 1>()); //will produce static_assertion thus works
 
-        //
         log.DoLoggingLevel(3, false);
 
         REQUIRE(log.IsLoggingLevelEnabled<3>() == false);
@@ -242,4 +240,7 @@ namespace DynamicLogger
         }
     }
 }
+
+#undef GLOG_INTERNAL_LOG_MSG_DO_SOURCE_OPTION_true
+#undef GLOG_INTERNAL_LOG_MSG_DO_SOURCE_OPTION_false
 #endif // DYNAMICLOG_H

@@ -2,6 +2,7 @@
 #define LOGTESTS_H
 
 #include <vector>
+#include <chrono>
 #include "Log.h"
 
 
@@ -13,11 +14,11 @@ class ConstructionViewer : public Type
         {
             std::cout << "Default Constructed" << std::endl;
         }
-        ConstructionViewer(const ConstructionViewer PASS_REF viewer) : Type(reinterpret_cast<Type>(viewer))
+        ConstructionViewer(const ConstructionViewer REF viewer) : Type(reinterpret_cast<Type>(viewer))
         {
             std::cout << "Copy Constructed" << std::endl;
         }
-        ConstructionViewer(ConstructionViewer PASS_RVALUE_REF viewer) : Type(std::move(reinterpret_cast<Type>(viewer)))
+        ConstructionViewer(ConstructionViewer RVALUE_REF viewer) : Type(std::move(reinterpret_cast<Type>(viewer)))
         {
             std::cout << "Move Constructed" << std::endl;
         }
@@ -33,11 +34,11 @@ class ConstructionViewer2
         {
             std::cout << "Default Constructed" << std::endl;
         }
-        ConstructionViewer2(const ConstructionViewer2 PASS_REF viewer) : Viewed(viewer.Viewed)
+        ConstructionViewer2(const ConstructionViewer2 REF viewer) : Viewed(viewer.Viewed)
         {
             std::cout << "Copy Constructed" << std::endl;
         }
-        ConstructionViewer2(ConstructionViewer2 PASS_RVALUE_REF viewer) : Viewed(std::move(viewer.Viewed))
+        ConstructionViewer2(ConstructionViewer2 RVALUE_REF viewer) : Viewed(std::move(viewer.Viewed))
         {
             std::cout << "Move Constructed" << std::endl;
         }

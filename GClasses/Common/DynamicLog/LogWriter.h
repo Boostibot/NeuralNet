@@ -2,6 +2,7 @@
 #define LOGWRITER_H
 
 #include <string_view>
+#include <chrono>
 #include <string>
 #include <sstream>
 #include <memory>
@@ -175,8 +176,8 @@ class DefaultOperativeLogWriter : public LogWriterInterface
         {
             this->SetUp(collectioStringSize, tempStringSize, partStringSize, entryIndex);
         }
-        //DefaultOperativeLogWriter(const DefaultOperativeLogWriter PASS_REF) = default;
-        DefaultOperativeLogWriter(DefaultOperativeLogWriter PASS_RVALUE_REF) = default;
+        //DefaultOperativeLogWriter(const DefaultOperativeLogWriter REF) = default;
+        DefaultOperativeLogWriter(DefaultOperativeLogWriter RVALUE_REF) = default;
 
 
     public:
@@ -377,7 +378,7 @@ class DefaultOperativeLogWriter : public LogWriterInterface
 
     private:
 
-        inline void AddFormatedDate(std::string PASS_REF temp, std::string PASS_REF output) const
+        inline void AddFormatedDate(std::string REF temp, std::string REF output) const
         {
             time_t rawTime;
             time(&rawTime);
@@ -395,7 +396,7 @@ class DefaultOperativeLogWriter : public LogWriterInterface
             output += ']';
         }
 
-        inline void AddFormatedSource(const std::string_view file, const u32 lineNum, std::string PASS_REF output) const
+        inline void AddFormatedSource(const std::string_view file, const u32 lineNum, std::string REF output) const
         {
             output += file;
             output += " [";
@@ -403,45 +404,45 @@ class DefaultOperativeLogWriter : public LogWriterInterface
             output += "]";
         }
 
-        inline void AddFormatedIterationCount(const u32 iterations, std::string PASS_REF temp, std::string PASS_REF output) const
+        inline void AddFormatedIterationCount(const u32 iterations, std::string REF temp, std::string REF output) const
         {
             this->PutNumIntocharcterField(iterations, ThisType::LogIterationFieldSize, temp, output);
         }
 
-        inline void AddFormatedLevel(const u32 level, std::string PASS_REF output) const
+        inline void AddFormatedLevel(const u32 level, std::string REF output) const
         {
             output += '<';
             output += std::to_string(level);
             output += '>';
         }
 
-        inline void AddFormatedMsg(const std::string_view msg, std::string PASS_REF output) const
+        inline void AddFormatedMsg(const std::string_view msg, std::string REF output) const
         {
             output += "msg = ";
             output += msg;
         }
 
-        inline void AddFormatedVariable(const std::string_view varName, const std::string_view varValue, std::string PASS_REF output) const
+        inline void AddFormatedVariable(const std::string_view varName, const std::string_view varValue, std::string REF output) const
         {
             output += varName;
             output += " = ";
             output += varValue;
         }
 
-        inline void AddFormatedTags(const std::string_view tags, std::string PASS_REF output) const
+        inline void AddFormatedTags(const std::string_view tags, std::string REF output) const
         {
             output += "tags = <";
             output += tags;
             output += ">";
         }
 
-        inline void AddSeparator(std::string PASS_REF output) const
+        inline void AddSeparator(std::string REF output) const
         {
             output += Separator;
         }
 
     private:
-        inline void PutNumIntocharcterField(const u32 num, const u32 fieldLenght, std::string PASS_REF temp, std::string PASS_REF output) const
+        inline void PutNumIntocharcterField(const u32 num, const u32 fieldLenght, std::string REF temp, std::string REF output) const
         {
             temp += std::to_string(num);
             //Only puts in the field if its size is bigger than the num as string size
@@ -454,7 +455,7 @@ class DefaultOperativeLogWriter : public LogWriterInterface
 
 
     private:
-        inline void ResetString(std::string PASS_REF temp) const noexcept {temp.clear();}
+        inline void ResetString(std::string REF temp) const noexcept {temp.clear();}
         inline void ResetCollectionString() {this->ResetString(this->CollectionString);}
         inline void ResetTempString() {this->ResetString(this->TempString);}
         inline void ReserveStrings(const u32 collectioStringSize = MinimumCollectionStringSize,
@@ -501,7 +502,7 @@ class DefaultOperativeLogWriter : public LogWriterInterface
             this->ResetString(TagsPartString);
         }
         inline void IncrementEntryIndex() {this->EntryIndex ++;}
-        inline void PushStringOut(const std::string_view PASS_REF string)
+        inline void PushStringOut(const std::string_view REF string)
         {
             if(File.is_open())
                 this->File << string << std::endl;

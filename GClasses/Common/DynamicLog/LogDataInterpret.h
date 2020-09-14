@@ -27,7 +27,7 @@ class DataInterpretInterface : public DerivedDataPackage
         //The following functions are obligatory to be overloaded
     public:
         template <typename Type>
-        inline void InetrpretArg(Type arg, std::string PASS_REF outputString)
+        inline void InetrpretArg(Type arg, std::string REF outputString)
         {
             static_cast<Derived POINTER>(this)->InetrpretArg(arg, outputString);
         }
@@ -51,7 +51,7 @@ class OStreamDataInterpret : public DataInterpretInterface<OStreamDataInterpret,
         //The obligatory function overloads
     public:
         template <typename Type>
-        inline void InetrpretArg(Type arg, std::string PASS_REF outputString)
+        inline void InetrpretArg(Type arg, std::string REF outputString)
         {
             Stream << arg;
             outputString = Stream.str();
@@ -68,18 +68,18 @@ class DefaultDataInterpret : public DataInterpretInterface<DefaultDataInterpret,
         //The obligatory function overloads
     public:
 
-        inline void InetrpretArg (int val, std::string PASS_REF outputString)                  {outputString = std::to_string(val);}
-        inline void InetrpretArg (long val, std::string PASS_REF outputString)                 {outputString = std::to_string(val);}
-        inline void InetrpretArg (long long val, std::string PASS_REF outputString)            {outputString = std::to_string(val);}
-        inline void InetrpretArg (unsigned val, std::string PASS_REF outputString)             {outputString = std::to_string(val);}
-        inline void InetrpretArg (unsigned long val, std::string PASS_REF outputString)        {outputString = std::to_string(val);}
-        inline void InetrpretArg (unsigned long long val, std::string PASS_REF outputString)   {outputString = std::to_string(val);}
-        inline void InetrpretArg (float val, std::string PASS_REF outputString)                {outputString = std::to_string(val);}
-        inline void InetrpretArg (double val, std::string PASS_REF outputString)               {outputString = std::to_string(val);}
-        inline void InetrpretArg (long double val, std::string PASS_REF outputString)          {outputString = std::to_string(val);}
+        inline void InetrpretArg (int val, std::string REF outputString)                  {outputString = std::to_string(val);}
+        inline void InetrpretArg (long val, std::string REF outputString)                 {outputString = std::to_string(val);}
+        inline void InetrpretArg (long long val, std::string REF outputString)            {outputString = std::to_string(val);}
+        inline void InetrpretArg (unsigned val, std::string REF outputString)             {outputString = std::to_string(val);}
+        inline void InetrpretArg (unsigned long val, std::string REF outputString)        {outputString = std::to_string(val);}
+        inline void InetrpretArg (unsigned long long val, std::string REF outputString)   {outputString = std::to_string(val);}
+        inline void InetrpretArg (float val, std::string REF outputString)                {outputString = std::to_string(val);}
+        inline void InetrpretArg (double val, std::string REF outputString)               {outputString = std::to_string(val);}
+        inline void InetrpretArg (long double val, std::string REF outputString)          {outputString = std::to_string(val);}
 
-        inline void InetrpretArg (void POINTER val, std::string PASS_REF outputString)         {outputString = std::to_string(reinterpret_cast<unsigned long long>(val));}
-        inline void InetrpretArg (bool val, std::string PASS_REF outputString)
+        inline void InetrpretArg (void POINTER val, std::string REF outputString)         {outputString = std::to_string(reinterpret_cast<unsigned long long>(val));}
+        inline void InetrpretArg (bool val, std::string REF outputString)
         {
             if(val)
                 outputString = "true";

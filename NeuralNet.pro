@@ -21,6 +21,10 @@ SOURCES +=\
     Libraries/Fmt/os.cc \
 
 HEADERS += \
+    GClasses/Common/ConstexprNumConversion.h \
+    GClasses/Common/MetaPrograming.h \
+    GClasses/Common/OptionalTemplateArgs.h \
+    GClasses/Common/StaticLog/SpeedTests.h \
     Libraries/Fmt/fmt/chrono.h \
     Libraries/Fmt/fmt/color.h \
     Libraries/Fmt/fmt/compile.h \
@@ -33,6 +37,7 @@ HEADERS += \
     Libraries/Fmt/fmt/posix.h \
     Libraries/Fmt/fmt/printf.h \
     Libraries/Fmt/fmt/ranges.h \
+    Main/UnbufferedFile.h
 
 #User defined
 SOURCES += \
@@ -41,7 +46,19 @@ SOURCES += \
 
 HEADERS += \
     GClasses/Common/G_Common.h \
-    GClasses/Common/Tester.h \
+    GClasses/Common/DynamicLog/Log.h \
+    GClasses/Common/DynamicLog/LogDataInterpret.h \
+    GClasses/Common/DynamicLog/LogDefines.h \
+    GClasses/Common/DynamicLog/LogTests.h \
+    GClasses/Common/DynamicLog/LogWriter.h \
+    \
+    GClasses/Common/StaticLog/StaticLog.h \
+    GClasses/Common/StaticLog/DefaultDataInterpret.h \
+    GClasses/Common/StaticLog/DefaultLogger.h \
+    GClasses/Common/StaticLog/LoggerInterface.h \
+    GClasses/Common/StaticLog/TesterClasses.h \
+    GClasses/Common/StaticLog/LogDefines.h \
+    \
     Main/NeuralNetwork.h \
     Main/Temp.h \
     Main/mainwindow.h

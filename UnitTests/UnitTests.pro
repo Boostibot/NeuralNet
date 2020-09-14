@@ -10,7 +10,10 @@ INCLUDEPATH += \
         ../
 
 #Prerequisites
-HEADERS += Catch2/Catch.hpp
+HEADERS += Catch2/Catch.hpp \
+    AllocatorFramework.h \
+    CFileManager.h \
+    UnbufferedFile.h
 SOURCES += UnitTestsMain.cpp
 
 

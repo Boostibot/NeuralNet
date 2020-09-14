@@ -2,8 +2,6 @@
 #define STATICLOG2_H
 
 #include "Catch2/Catch.hpp"
-//#include "Libraries/Fmt/fmt/os.h"
-//#include "Libraries/Fmt/fmt/printf.h"
 #include "GClasses/Common/StaticLog/StaticLog.h"
 #include "GClasses/Common/StaticLog/TesterClasses.h"
 
@@ -872,7 +870,7 @@ namespace StaticLog
 
                 SECTION("AddSeparator")
                 {
-                    constexpr char separator = DefaultLoggerTester::Separator;
+                    constexpr char separator = DefaultLoggerTester<>::Separator;
                     GetDefLoggerTester(writer).AddSeparator(output);
                     REQUIRE(output[0] == separator);
                     GetDefLoggerTester(writer).AddSeparator(output);
@@ -948,12 +946,12 @@ namespace StaticLog
                 SECTION("AddFormatedLevel")
                 {
                     GetDefLoggerTester(writer).AddFormatedLevel(15, output);
-                    REQUIRE(output == "<15>");
+                    REQUIRE(output == "<15> : ");
                     GetDefLoggerTester(writer).AddFormatedLevel(3, output);
-                    REQUIRE(output == "<15><03>");
+                    REQUIRE(output == "<15> : <03> : ");
                     output.clear();
                     GetDefLoggerTester(writer).AddFormatedLevel(0, output);
-                    REQUIRE(output == "<00>");
+                    REQUIRE(output == "<00> : ");
                 }
 
                 SECTION("AddFormatedIterationCount")
@@ -970,12 +968,12 @@ namespace StaticLog
                 SECTION("AddFormatedSource")
                 {
                     GetDefLoggerTester(writer).AddFormatedSource("file1", 32, formater, output);
-                    REQUIRE(output == "file1 [32]");
+                    REQUIRE(output == "file1 : 32 - ");
                     GetDefLoggerTester(writer).AddFormatedSource("file2", 64, formater, output);
-                    REQUIRE(output == "file1 [32]file2 [64]");
+                    REQUIRE(output == "file1 : 32 - file2 : 64 - ");
                     output.clear();
                     GetDefLoggerTester(writer).AddFormatedSource("\n", 0, formater, output);
-                    REQUIRE(output == "\n [0]");
+                    REQUIRE(output == "\n : 0 - ");
                 }
 
                 SECTION("AddFormatedTime")
@@ -983,20 +981,20 @@ namespace StaticLog
                     time_t rawTime;
                     time(&rawTime);
                     unsigned long long lenght;
-                    GetDefLoggerTester(writer).AddFormatedTime(formater, rawTime, clock(), output);
+                    GetDefLoggerTester(writer).AddFormatedTime(formater, clock(), output);
                     REQUIRE(output.empty() == false);
                     lenght = output.size();
-                    GetDefLoggerTester(writer).AddFormatedTime(formater, rawTime, clock(), output);
+                    GetDefLoggerTester(writer).AddFormatedTime(formater, clock(), output);
                     REQUIRE(output.empty() == false);
                     REQUIRE(output.size() > lenght);
                     output.clear();
 
-                    GetDefLoggerTester(writer).AddFormatedTime(formater, 0, 0, output);
+                    GetDefLoggerTester(writer).AddFormatedTime(formater, 0, output);
                     REQUIRE(output.empty() == false);
                     lenght = output.size();
                     output.clear();
 
-                    GetDefLoggerTester(writer).AddFormatedTime(formater, std::numeric_limits<unsigned long long>::max(), std::numeric_limits<unsigned long>::max(), output);
+                    GetDefLoggerTester(writer).AddFormatedTime(formater, std::numeric_limits<unsigned long>::max(), output);
                     REQUIRE(output.empty() == false);
                     lenght = output.size();
                 }
@@ -1220,9 +1218,9 @@ namespace StaticLog
                 SECTION("AddSource")
                 {
                     GetDefLoggerTester(writer).AddSource("file", 32);
-                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "file [32] ");
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "file : 32 - ");
                     GetDefLoggerTester(writer).AddSource("file2", 64);
-                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "file [32] file2 [64] ");
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "file : 32 - file2 : 64 - ");
                 }
 
                 SECTION("AddIterations")
@@ -1243,15 +1241,15 @@ namespace StaticLog
                 SECTION("AddLvl")
                 {
                     GetDefLoggerTester(writer).AddLvl(1);
-                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "<01> ");
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "<01> : ");
                     GetDefLoggerTester(writer).AddLvl(10);
-                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "<01> <10> ");
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "<01> : <10> : ");
 
                     GetDefLoggerTester(writer).CollectionString.clear();
                     GetDefLoggerTester(writer).AddLvl(0);
-                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "<00> ");
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "<00> : ");
                     GetDefLoggerTester(writer).AddLvl(15);
-                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "<00> <15> ");
+                    REQUIRE(GetDefLoggerTester(writer).CollectionString == "<00> : <15> : ");
                 }
 
 
@@ -1298,6 +1296,91 @@ namespace StaticLog
                     GetDefLoggerTester(writer).Tags = "";
                     GetDefLoggerTester(writer).AddTags();
                     REQUIRE(GetDefLoggerTester(writer).CollectionString == "");
+                }
+            }
+        }
+
+        TEST_CASE("Enabling and disablig AppOutputLog")
+        {
+            GIVEN("A AppOutputLog enabled LogWriter")
+            {
+                DefaultLogger<> enabledLog("File");
+
+                SECTION("Getting app output log")
+                {
+                    //When writer is first created its app output (if not sttaically disabled) should be enabled
+                    REQUIRE(enabledLog.IsAppOutputLogEnabled() == true);
+
+                    GetDefLoggerTester(enabledLog).AppOutputLogStatus = false;
+                    REQUIRE(enabledLog.IsAppOutputLogEnabled() == false);
+
+                    //Getting the state shouldnt chnage the state
+                    REQUIRE(enabledLog.IsAppOutputLogEnabled() == false);
+                }
+
+                SECTION("Setting App output log")
+                {
+                    //When writer is first created its app output (if not sttaically disabled) should be enabled
+                    REQUIRE(GetDefLoggerTester(enabledLog).AppOutputLogStatus == true);
+
+                    //Switching it switches it
+                    enabledLog.DoAppOutputLog(false);
+                    REQUIRE(GetDefLoggerTester(enabledLog).AppOutputLogStatus == false);
+                    enabledLog.DoAppOutputLog(true);
+                    REQUIRE(GetDefLoggerTester(enabledLog).AppOutputLogStatus == true);
+
+                    //Setting it to a state its already in shouldnt change the state
+                    enabledLog.DoAppOutputLog(true);
+                    REQUIRE(GetDefLoggerTester(enabledLog).AppOutputLogStatus == true);
+                }
+
+                SECTION("A disabling and enabling using functions")
+                {
+                    REQUIRE(GetDefLoggerTester(enabledLog).AppOutputLogStatus == true);
+
+                    enabledLog.DisableAppOutputLog();
+
+                    REQUIRE(GetDefLoggerTester(enabledLog).AppOutputLogStatus == false);
+
+                    enabledLog.EnableAppOutputLog();
+                    REQUIRE(GetDefLoggerTester(enabledLog).AppOutputLogStatus == true);
+                    enabledLog.EnableAppOutputLog();
+                    REQUIRE(GetDefLoggerTester(enabledLog).AppOutputLogStatus == true);
+                }
+            }
+
+            GIVEN("A AppOutputLog disabled LogWriter")
+            {
+                DefaultLogger<DefaultDataInterpret, false> disabledLog("File");
+
+                SECTION("Getting app output log")
+                {
+                    REQUIRE(disabledLog.IsAppOutputLogEnabled() == false);
+                    //Calling the function shouldnt change the state
+                    REQUIRE(disabledLog.IsAppOutputLogEnabled() == false);
+                    //Switching the status shouldnt chnage the result if statically disabled
+                    GetDefLoggerTester(disabledLog).AppOutputLogStatus = true;
+                    REQUIRE(disabledLog.IsAppOutputLogEnabled() == false);
+                }
+
+                SECTION("Setting App output log")
+                {
+                    disabledLog.DoAppOutputLog(true);
+                    REQUIRE(disabledLog.IsAppOutputLogEnabled() == false);
+                    disabledLog.DoAppOutputLog(false);
+                    REQUIRE(disabledLog.IsAppOutputLogEnabled() == false);
+                    disabledLog.DoAppOutputLog(true);
+                    REQUIRE(disabledLog.IsAppOutputLogEnabled() == false);
+                }
+
+                SECTION("A disabling and enabling using functions")
+                {
+                    disabledLog.EnableAppOutputLog();
+                    REQUIRE(disabledLog.IsAppOutputLogEnabled() == false);
+                    disabledLog.DisableAppOutputLog();
+                    REQUIRE(disabledLog.IsAppOutputLogEnabled() == false);
+                    disabledLog.EnableAppOutputLog();
+                    REQUIRE(disabledLog.IsAppOutputLogEnabled() == false);
                 }
             }
         }

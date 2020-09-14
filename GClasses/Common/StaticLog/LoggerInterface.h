@@ -31,8 +31,9 @@ struct LogTraits
         }
 };
 
+
 template<typename SameTo, typename ... ArgumentTypes>
-struct AreTypesSame
+struct IsTypePresent
 {
         template<bool indetifier, typename FirstType, typename ... OtherArgumentTypes>
         constexpr static bool RecursiveCall()
@@ -51,6 +52,7 @@ struct AreTypesSame
         static constexpr bool value = RecursiveCall<true, ArgumentTypes...>();
 
 };
+
 
 template<typename ... NameAndValueTypes>
 constexpr bool AreEven() {return (sizeof...(NameAndValueTypes) % 2) == 0; }
@@ -112,7 +114,7 @@ namespace StaticLog
                      //Checks assure that the ArgumentTypes are not identical to the ones of copy and move constructor
                      //This is to resolve the ambiguous function call
                      //Checks if any of the types arent same as the contructor types but only blocks the function if the type is alone (sizeof...(ArgumentTypes) == 1)
-                     std::enable_if_t<!(AreTypesSame<ThisType PASS_REF, ArgumentTypes...>::value && (sizeof...(ArgumentTypes) == 1)), int> = 0
+                     std::enable_if_t<!(MetaPrograming::IsTypePresent<ThisType PASS_REF, ArgumentTypes...>::value && (sizeof...(ArgumentTypes) == 1)), int> = 0
                      >
             LoggerInterface(ArgumentTypes PASS_RVALUE_REF ... args) : DerivedDataPackage(std::forward<ArgumentTypes>(args)...)
             {
@@ -142,83 +144,40 @@ namespace StaticLog
             //Overloaded functions - begin
         public:
             template<u32 level, typename ... MsgTypes>
-            void LogMsgs(MsgTypes ... msgs)
+            void LogMsgs(MsgTypes RVALUE_REF ... msgs)
             {
                 if(this->IsLogEnabled<level>())
-                    GetWriter().LogMsgsOverload(level, msgs...);
+                    GetWriter().LogMsgsOverload(level, std::forward<MsgTypes>(msgs)...);
             }
             template<u32 level, typename ... NameAndValueTypes>
-            void LogVars(NameAndValueTypes ... namesAndValues)
+            void LogVars(NameAndValueTypes RVALUE_REF ... namesAndValues)
             {
-                static_assert (AreEven<NameAndValueTypes...>(), "LoggerInterface: LogVars requires even number of arguments");
+                static_assert (AreEven<NameAndValueTypes...>(), "LoggerInterface: LogVars requires even number of arguments, ie. name and value pairs");
 
                 if(this->IsLogEnabled<level>())
-                    GetWriter().template LogVarsOverload<NameAndValueTypes...>(level, namesAndValues...);
+                    GetWriter().template LogVarsOverload<NameAndValueTypes...>(level, std::forward<NameAndValueTypes>(namesAndValues)...);
             }
 
             template<u32 level, typename ... MsgTypes>
-            void LogMsgsSource(StringViewType file, const u32 lineNum, MsgTypes ... msgs)
+            void LogMsgsSource(StringViewType file, const u32 lineNum, MsgTypes RVALUE_REF ... msgs)
             {
                 if(this->IsLogEnabled<level>())
-                    GetWriter().LogMsgsSourceOverload(file, lineNum, level, msgs...);
+                    GetWriter().LogMsgsSourceOverload(file, lineNum, level, std::forward<MsgTypes>(msgs)...);
             }
             template<u32 level, typename ... NameAndValueTypes>
-            void LogVarsSource(StringViewType file, const u32 lineNum, NameAndValueTypes ... namesAndValues)
+            void LogVarsSource(StringViewType file, const u32 lineNum, NameAndValueTypes RVALUE_REF ... namesAndValues)
             {
-                static_assert (AreEven<NameAndValueTypes...>(), "LoggerInterface: LogVars requires even number of arguments");
+                static_assert (AreEven<NameAndValueTypes...>(), "LoggerInterface: LogVars requires even number of arguments, ie. name and value pairs");
 
                 if(this->IsLogEnabled<level>())
-                    GetWriter().template LogVarsSourceOverload<NameAndValueTypes...>(file, lineNum, level, namesAndValues...);
+                    GetWriter().template LogVarsSourceOverload<NameAndValueTypes...>(file, lineNum, level, std::forward<NameAndValueTypes>(namesAndValues)...);
             }
-
-            /*
-            template<u32 level, typename ... AdditionalTypes>
-            void AppendSource(StringViewType file, const u32 lineNum, AdditionalTypes ... additional)
-            {
-                if(this->IsLogEnabled<level>())
-                    GetWriter().AppendSourceOverload(file, lineNum, additional...);
-            }
-            */
-
             template<u32 level, typename ... TagTypes>
-            void AppendTags(TagTypes ... tags)
+            void AppendTags(TagTypes RVALUE_REF ... tags)
             {
                 if(this->IsLogEnabled<level>())
-                    GetWriter().AppendTagsOverload(tags...);
+                    GetWriter().AppendTagsOverload(std::forward<TagTypes>(tags)...);
             }
-
-            /*
-            template<typename ... PathTypes>
-            void OpenStream(PathTypes ... paths)
-            {
-                GetWriter().OpenStreamOverload(paths...);
-            }
-            template<typename ... StreamIdentifierTypes>
-            void CloseStream(StreamIdentifierTypes ... indetifiers)
-            {
-                GetWriter().CloseStreamOverload(indetifiers...);
-            }
-            template<typename ... StreamIdentifierTypes>
-            bool IsStreamOpen(StreamIdentifierTypes ... indetifiers)
-            {
-                return GetWriter().IsStreamOpenOverload(indetifiers...);
-            }
-            template<typename ... ArgTypes>
-            void FlushStream(ArgTypes ... args)
-            {
-                GetWriter().FlushStreamOverload(args...);
-            }
-
-        private:
-            void OnConstruction()
-            {
-                GetWriter().OnConstructionOverload();
-            }
-            void OnDestruction()
-            {
-                GetWriter().OnDestructionOverload();
-            }
-            */
             //Overloaded functions - end
 
 
@@ -348,7 +307,6 @@ namespace StaticLog
             inline void SetUp()
             {
                 LevelLoggingStatus.fill(true);
-                //GetWriter().OnConstruction();
             }
     };
 }

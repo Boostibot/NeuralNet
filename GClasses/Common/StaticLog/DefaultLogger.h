@@ -1,52 +1,77 @@
 #ifndef DEFAULTLOGGER_H
 #define DEFAULTLOGGER_H
 
+#include <iostream>
+#include <fstream>
+#include <chrono>
+
 #include "DefaultDataInterpret.h"
 
 namespace StaticLog
 {
+    namespace Internal
+    {
+        struct AlwaysReadyFile
+        {
+            public:
+                using FileType = std::fstream;
+                FileType File;
+                //static constexpr size_t BufferSize = 1023; //1 smaller than the basic_filebuf 1024 Byte limit
+                //char Buffer[BufferSize];
+                //size_t BufferUsage = 0;
+
+            public:
+                inline AlwaysReadyFile(const StringViewType filePath)
+                {
+                    this->OpenFile(filePath);
+                }
+
+                inline AlwaysReadyFile(AlwaysReadyFile PASS_RVALUE_REF other) :
+                    File(std::move(other.File))
+                {
+                    //Opens a new file to not leave the other in an invalid state
+                    other.OpenFile("TempFile.txt");
+                }
+
+                inline AlwaysReadyFile REF operator=(AlwaysReadyFile PASS_RVALUE_REF other)
+                {
+                    this->File.swap(other.File);
+                    return POINTER_VALUE(this);
+                }
+
+                AlwaysReadyFile(AlwaysReadyFile PASS_REF) = delete;
+                AlwaysReadyFile REF operator=(AlwaysReadyFile PASS_REF) = delete;
+
+            public:
+                inline void OpenFile(const StringViewType filePath)
+                {
+                    File.open(filePath.data(), FileType::binary | FileType::trunc | FileType::out);
+
+                    if(NOT(File.is_open()))
+                        throw std::runtime_error("StaticLog::AlwaysReadyFile: File couldnt be opened");
+                }
+                inline void Print(const char* data, size_t size)
+                {
+                    File.write(data, size);
+                    /*
+                    BufferUsage += size;
+
+                    if(BufferUsage > BufferSize)
+                    {
+                        File.write(Buffer, BufferUsage - size);
+                        BufferUsage = size;
+                    }
+
+                    memcpy(Buffer, data, size);
+                    */
+                }
+        };
+    }
+
     //The default logger interpret
     template <typename DataInterpretType = DefaultDataInterpret>
     struct DefaultLoggerPackage
     {
-        public:
-            struct AlwaysReadyFile
-            {
-                public:
-                    std::unique_ptr<fmt::ostream> File;
-
-                public:
-                    inline AlwaysReadyFile(const StringViewType filePath)
-                    {
-                        this->OpenFile(filePath);
-                    }
-
-                    inline AlwaysReadyFile(AlwaysReadyFile PASS_RVALUE_REF other) :
-                        File(std::move(other.File))
-                    {
-                        //Opens a new file to not leave the other in an invalid state
-                        other.OpenFile("TempFile.txt");
-                    }
-
-                    inline AlwaysReadyFile REF operator=(AlwaysReadyFile PASS_RVALUE_REF other)
-                    {
-                        this->File.swap(other.File);
-                        return POINTER_VALUE(this);
-                    }
-
-                    AlwaysReadyFile(AlwaysReadyFile PASS_REF) = delete;
-                    AlwaysReadyFile REF operator=(AlwaysReadyFile PASS_REF) = delete;
-
-                public:
-                    inline void OpenFile(const StringViewType filePath)
-                    {
-                        File = std::make_unique<fmt::ostream>(fmt::output_file(filePath.data()));
-                    }
-                    inline void Print(const StringViewType msg)
-                    {
-                        File->print(msg);
-                    }
-            };
 
         public:
             DefaultLoggerPackage(const StringViewType filePath) : File(filePath) {this->SetUp();}
@@ -61,20 +86,19 @@ namespace StaticLog
 
         protected:
             fmt::format_int Formater;
-            AlwaysReadyFile File;
+            Internal::AlwaysReadyFile File;
             StringType CollectionString;
             StringType TempString;
 
             StringType Tags;
 
-            u32 EntryIndex;
+            u32 EntryIndex = 0;
+            bool AppOutputLogStatus = true;
 
         protected:
             void SetUp()
             {
                 this->ReserveStrings();
-
-                EntryIndex = 0;
             }
             void ReserveStrings()
             {
@@ -91,15 +115,16 @@ namespace StaticLog
     };
 
 
-    template<typename DataInterpretTypeArg = DefaultDataInterpret>
-    class DefaultLogger : public LoggerInterface<DefaultLogger<DataInterpretTypeArg>,
+    template<typename DataInterpretTypeArg = DefaultDataInterpret,
+             bool StaticEnableAppOutputLogArg = true>
+    class DefaultLogger : public LoggerInterface<DefaultLogger<DataInterpretTypeArg, StaticEnableAppOutputLogArg>,
                                                  DefaultLoggerPackage<DataInterpretTypeArg>
                                                 >
     {
         public:
             using DataInterpretType = DataInterpretTypeArg;
             using ThisPackageType = DefaultLoggerPackage<DataInterpretType>;
-            using ThisType = DefaultLogger<DataInterpretType>;
+            using ThisType = DefaultLogger<DataInterpretType, StaticEnableAppOutputLogArg>;
             using ThisLoggerInterfaceType = LoggerInterface<ThisType, ThisPackageType>;
             using StringType = ::std::string;
             using StringViewType = ::std::string_view;
@@ -109,71 +134,75 @@ namespace StaticLog
             static constexpr u32 LogIterationFieldSize = 8;
             static constexpr u32 LogClockFieldSize = 8;
             static constexpr char Newline = '\n';
+            static constexpr char NameIndicator = '\'';
+            static constexpr char ValueIndicator = '"';
             static constexpr char Separator = ' ';
             static constexpr const char ListSeparator[] = ", ";
-            static constexpr bool DoAppOutputLog = false;
+            static constexpr bool StaticEnableAppOutputLog = StaticEnableAppOutputLogArg;
+
 
             struct StringLiteralArray
             {
                     //Crashes debugger when part of the class
                     //So its necessary to put it into unralated class
-                    static constexpr char LevelMarkers[ThisType::LevelCount][3] {{"00"}, {"01"}, {"02"}, {"03"}, {"04"}, {"05"}, {"06"}, {"07"}, {"08"}, {"09"}, {"10"}, {"11"}, {"12"}, {"13"}, {"14"}, {"15"}};
+                    static constexpr char LevelMarkers[ThisType::LevelCount][8] {{"<00> : "}, {"<01> : "}, {"<02> : "}, {"<03> : "}, {"<04> : "}, {"<05> : "}, {"<06> : "}, {"<07> : "},
+                                                                                 {"<08> : "}, {"<09> : "}, {"<10> : "}, {"<11> : "}, {"<12> : "}, {"<13> : "}, {"<14> : "}, {"<15> : "}};
             };
 
 
             //The obligatory function overloads
         protected:
             template<typename ... MsgTypes>
-            void LogMsgsOverload(const u32 level, const MsgTypes ... msgs)
+            void LogMsgsOverload(const u32 level, MsgTypes RVALUE_REF ... msgs)
             {
                 this->AddIterations();
                 this->AddTime();
                 this->AddLvl(level);
-                this->AddMsgs(msgs...);
+                this->AddMsgs(std::forward<MsgTypes>(msgs)...);
                 this->AddTags();
 
                 this->PushLogOut();
             }
             template<typename ... NameAndValueTypes>
-            void LogVarsOverload(const u32 level, NameAndValueTypes... namesAndValues)
+            void LogVarsOverload(const u32 level, NameAndValueTypes RVALUE_REF ... namesAndValues)
             {
                 this->AddIterations();
                 this->AddTime();
                 this->AddLvl(level);
-                this->AddVars(namesAndValues...);
+                this->AddVars(std::forward<NameAndValueTypes>(namesAndValues)...);
                 this->AddTags();
 
                 this->PushLogOut();
             }
             template<typename ... MsgTypes>
-            void LogMsgsSourceOverload(const StringViewType file, const u32 lineNum, const u32 level, const MsgTypes ... msgs)
+            void LogMsgsSourceOverload(const StringViewType file, const u32 lineNum, const u32 level, MsgTypes RVALUE_REF ... msgs)
             {
                 this->AddSource(file, lineNum);
                 this->AddIterations();
                 this->AddTime();
                 this->AddLvl(level);
-                this->AddMsgs(msgs...);
+                this->AddMsgs(std::forward<MsgTypes>(msgs)...);
                 this->AddTags();
 
                 this->PushLogOut();
             }
             template<typename ... NameAndValueTypes>
-            void LogVarsSourceOverload(const StringViewType file, const u32 lineNum, const u32 level, NameAndValueTypes... namesAndValues)
+            void LogVarsSourceOverload(const StringViewType file, const u32 lineNum, const u32 level, NameAndValueTypes RVALUE_REF ... namesAndValues)
             {
                 this->AddSource(file, lineNum);
                 this->AddIterations();
                 this->AddTime();
                 this->AddLvl(level);
-                this->AddVars(namesAndValues...);
+                this->AddVars(std::forward<NameAndValueTypes>(namesAndValues)...);
                 this->AddTags();
 
                 this->PushLogOut();
             }
 
             template<typename ... TagTypes>
-            void AppendTagsOverload(TagTypes ... tags)
+            void AppendTagsOverload(TagTypes RVALUE_REF ... tags)
             {
-                this->UnravelAndAddTags(tags...);
+                this->UnravelAndAddTags(std::forward<TagTypes>(tags)...);
             }
 
         public:
@@ -186,7 +215,7 @@ namespace StaticLog
                      //Checks assure that the ArgumentTypes are not identical to the ones of copy and move constructor
                      //This is to resolve the ambiguous function call
                      //Checks if any of the types arent same as the contructor types but only blocks the function if the type is alone (sizeof...(ArgumentTypes) == 1)
-                     std::enable_if_t<!(AreTypesSame<ThisType PASS_REF, ArgumentTypes...>::value && (sizeof...(ArgumentTypes) == 1)), int> = 0
+                     std::enable_if_t<!(MetaPrograming::IsTypePresent<ThisType PASS_REF, ArgumentTypes...>::value && (sizeof...(ArgumentTypes) == 1)), int> = 0
                      >
             DefaultLogger(ArgumentTypes PASS_RVALUE_REF ... args) : ThisLoggerInterfaceType(std::forward<ArgumentTypes>(args)...) {this->LogConstructionMessage();}
             ~DefaultLogger() {this->LogDestructionMessage();}
@@ -198,7 +227,7 @@ namespace StaticLog
             void AddSource(const StringViewType file, const u32 lineNum)
             {
                 AddFormatedSource(file, lineNum, this->Formater, this->CollectionString);
-                AddSeparator(this->CollectionString);
+                //AddSeparator(this->CollectionString); //Merged within the AddFormatedTime for performance
             }
 
             void AddIterations()
@@ -209,36 +238,36 @@ namespace StaticLog
 
             void AddTime()
             {
-                time_t rawTime;
-                time(&rawTime);
-
-                AddFormatedTime(this->Formater, rawTime, clock(), this->CollectionString);
-                AddSeparator(this->CollectionString);
+                AddFormatedTime(this->Formater, clock(), this->CollectionString);
+                //AddSeparator(this->CollectionString); //Merged within the AddFormatedTime for performance
             }
 
             void AddLvl(const u32 level)
             {
                 AddFormatedLevel(level, this->CollectionString);
-                AddSeparator(this->CollectionString);
+                //AddSeparator(this->CollectionString); //Merged within the AddFormatedLevel for performance
             }
 
             template<typename ... MsgTypes>
-            void AddMsgs(MsgTypes... msgs)
+            void AddMsgs(MsgTypes RVALUE_REF ... msgs)
             {
                 AddFormatedMsgHeader(this->CollectionString);
-                UnravelAndAddMsgs(msgs...);
+                UnravelAndAddMsgs(std::forward<MsgTypes>(msgs)...);
                 AddSeparator(this->CollectionString);
             }
 
-            template<typename FirstStringArgument, typename FirstValueArgument,
+            template<typename FirstStringType, typename FirstValueType,
                      typename ... NameAndValueTypes>
-            inline void AddVars(const FirstStringArgument firstString, const FirstValueArgument firstValue,
-                                                NameAndValueTypes ... namesAndValues)
+            inline void AddVars(FirstStringType RVALUE_REF firstString, FirstValueType RVALUE_REF firstValue,
+                                                NameAndValueTypes RVALUE_REF ... namesAndValues)
             {
                 static_assert (AreEven<NameAndValueTypes...>(), "DefaultLogger: AppendVars requires even number of arguments");
 
-                this->AddFormatedVariableAsListPart(firstString, firstValue, this->Interpret, this->TempString, this->CollectionString);
-                this->UnravelAndAddVariables(namesAndValues...);
+                this->AddFormatedVariableAsListPart<FirstValueType>(
+                            std::forward<FirstStringType>(firstString),
+                            std::forward<FirstValueType>(firstValue), this->Interpret, this->TempString, this->CollectionString);
+
+                this->UnravelAndAddVariables(std::forward<NameAndValueTypes>(namesAndValues)...);
 
                 this->AddSeparator(this->CollectionString);
             }
@@ -260,8 +289,16 @@ namespace StaticLog
                 if(NOT(this->template IsLogEnabled<level>()))
                     return;
 
+                time_t rawTime;
+                time(&rawTime);
+                StringType date;
+                date.reserve(40);
+
+                this->TempString.clear();
+                this->AddFormatedDate(rawTime, date);
+
                 this->AppendTagsOverload("log_construction", "log_starting");
-                this->LogMsgsOverload(level, "Log Starting................");
+                this->LogMsgsOverload(level, date.data(), "Log Starting................");
             }
             template<u32 level = ThisType::MaxLevelIndex>
             void LogDestructionMessage()
@@ -269,8 +306,16 @@ namespace StaticLog
                 if(NOT(this->template IsLogEnabled<level>()))
                     return;
 
+                time_t rawTime;
+                time(&rawTime);
+                StringType date;
+                date.reserve(40);
+
+                this->TempString.clear();
+                this->AddFormatedDate(rawTime, date);
+
                 this->AppendTagsOverload("log_destruction", "log_ending");
-                this->LogMsgsOverload(level, "Log Ending..................");
+                this->LogMsgsOverload(level, date, "Log Ending..................");
             }
 
 
@@ -285,86 +330,120 @@ namespace StaticLog
                 this->LogMsgsOverload(level, "Logger info : Default log writer; Displaying in order: 1-Code source 2-iteration count 3-Date and time 4-Level 5-Messages 6-variables 7-tags");
             }
 
+        public:
+            inline void DoAppOutputLog(const bool doLog) noexcept
+            {
+                if constexpr(ThisType::StaticEnableAppOutputLog)
+                        this->AppOutputLogStatus = doLog;
+                else
+                    return;
+
+            }
+            inline void EnableAppOutputLog() noexcept {this->DoAppOutputLog(true);}
+            inline void DisableAppOutputLog() noexcept {this->DoAppOutputLog(false);}
+
+            inline bool IsAppOutputLogEnabled() const noexcept
+            {
+                //If the static log is enabled returns the dynamic AppOutputLogStatus
+                if constexpr(ThisType::StaticEnableAppOutputLog)
+                    return this->AppOutputLogStatus;
+                else
+                    return false;
+            }
+
 
         protected:
-            inline void IncrementEntryIndex() {this->EntryIndex ++;}
+            inline void IncrementEntryIndex() noexcept {this->EntryIndex ++;}
             inline void PushLogOut()
             {
                 this->AddNewline(this->CollectionString);
 
-                this->File.Print(this->CollectionString);
+                //this->File.Print(this->CollectionString);
 
-                if(DoAppOutputLog)
-                    fmt::print(this->CollectionString);
-
+                if constexpr (StaticEnableAppOutputLog)
+                {
+                    if(this->IsAppOutputLogEnabled())
+                    {
+                        //fmt::print(this->CollectionString); //Slow and bad
+                        std::cout.write(this->CollectionString.data(), this->CollectionString.size());
+                        std::cout.flush();
+                    }
+                }
                 this->AfterLog();
             }
-            inline void AfterLog()
+            inline void AfterLog() noexcept
             {
                 this->IncrementEntryIndex();
                 this->CleanUp();
             }
-            inline void CleanUp()
+            inline void CleanUp() noexcept
             {
                 this->ResetString(this->CollectionString);
                 this->ResetString(this->Tags);
             }
 
         protected:
-            //TODO - Add type checks using AreSameType<...>::value
             template<typename FirstMsgType, typename ... MsgTypes>
-            inline void UnravelAndAddMsgs(FirstMsgType firstMsg, MsgTypes ... msgs)
+            inline void UnravelAndAddMsgs(FirstMsgType RVALUE_REF firstMsg, MsgTypes RVALUE_REF ... msgs)
             {
-                this->Interpret.InterpretArg(firstMsg, this->TempString);
+                this->Interpret.InterpretArg(std::forward<FirstMsgType>(firstMsg), this->TempString);
                 this->AddUnformatedMsgPart(this->TempString, this->CollectionString);
-                this->UnravelAndAddMsgs(msgs...);
+                this->UnravelAndAddMsgs(std::forward<MsgTypes>(msgs)...);
             }
             inline void UnravelAndAddMsgs() {}
 
 
-            template<typename FirstStringArgument, typename FirstValueArgument,
+            template<typename FirstStringType, typename FirstValueType,
                      typename ... NameAndValueTypes>
-            inline void UnravelAndAddVariables(const FirstStringArgument firstString, const FirstValueArgument firstValue,
-                                                NameAndValueTypes ... namesAndValues)
+            inline void UnravelAndAddVariables(FirstStringType RVALUE_REF firstString, FirstValueType RVALUE_REF firstValue,
+                                                NameAndValueTypes RVALUE_REF ... namesAndValues)
             {
                 this->AddListSeparator(this->CollectionString);
-                this->AddFormatedVariableAsListPart<FirstValueArgument>(firstString, firstValue, this->Interpret, this->TempString, this->CollectionString);
-                this->UnravelAndAddVariables(namesAndValues...);
+
+                this->AddFormatedVariableAsListPart<FirstValueType>(
+                            std::forward<FirstStringType>(firstString),
+                            std::forward<FirstValueType>(firstValue), this->Interpret, this->TempString, this->CollectionString);
+
+                this->UnravelAndAddVariables(std::forward<NameAndValueTypes>(namesAndValues)...);
             }
             inline void UnravelAndAddVariables() {}
 
 
             template<typename FirstTagType, typename ... TagTypes>
-            inline void UnravelAndAddTags(FirstTagType firstTag, TagTypes ... tags)
+            inline void UnravelAndAddTags(FirstTagType RVALUE_REF firstTag, TagTypes RVALUE_REF ... tags)
             {
-                this->AddFormatedTag(firstTag, this->Tags);
+                this->AddFormatedTag(std::forward<FirstTagType>(firstTag), this->Tags);
                 this->AddSeparator(this->Tags);
-                this->UnravelAndAddTags(tags...);
+                this->UnravelAndAddTags(std::forward<TagTypes>(tags)...);
             }
             inline void UnravelAndAddTags() {}
 
 
         protected:
-            inline void AddFormatedTime(fmt::format_int PASS_REF formater, const time_t rawTime, const clock_t clock, std::string PASS_REF output) const
+            inline void AddFormatedDate(const time_t rawTime, std::string PASS_REF output) const
             {
                 char str[26];
                 ctime_s(str, sizeof str, &rawTime);
 
+                output += "Date : [";
+                output.append(str, 24); // doesnt put in the newline and nullcharcter
+                output += "] ";
+            }
+
+            inline void AddFormatedTime(fmt::format_int PASS_REF formater, const clock_t clock, std::string PASS_REF output) const
+            {
                 output += '[';
-                output.append(str);
-                output.pop_back(); //Removes th newline character
-                output += " - ";
-                this->PutNumIntoCharcterField(static_cast<unsigned long>(clock), this->LogIterationFieldSize, formater, output);
-                output += ']';
+                this->PutNumIntoCharcterField(static_cast<unsigned long>(clock), this->LogClockFieldSize, formater, output);
+                output += "] ";
             }
 
             inline void AddFormatedSource(const std::string_view file, const u32 lineNum, fmt::format_int PASS_REF formater, std::string PASS_REF output) const
             {
                 output += file;
-                output += " [";
+                output += " : ";
                 formater.format_unsigned(lineNum);
                 output.append(formater.data(), formater.size());
-                output += ']';
+                output += " - ";
             }
 
             inline void AddFormatedIterationCount(const u32 iterations, fmt::format_int PASS_REF formater, std::string PASS_REF output) const
@@ -374,10 +453,7 @@ namespace StaticLog
 
             inline void AddFormatedLevel(const u32 level, std::string PASS_REF output) const
             {
-                //TODO - add these together
-                output += '<';
                 output += StringLiteralArray::LevelMarkers[level];
-                output += '>';
             }
 
             inline void AddFormatedMsg(std::string_view msg, std::string PASS_REF output) const
@@ -403,10 +479,10 @@ namespace StaticLog
                 output += ">";
             }
 
-            template<typename FirstValueArgument>
-            inline void AddFormatedVariableAsListPart(const StringViewType name, const FirstValueArgument value, DataInterpretType PASS_REF interpret, std::string PASS_REF temp,  std::string PASS_REF output) const
+            template<typename FirstValueType>
+            inline void AddFormatedVariableAsListPart(const StringViewType name, FirstValueType RVALUE_REF value, DataInterpretType PASS_REF interpret, std::string PASS_REF temp,  std::string PASS_REF output) const
             {
-                interpret.InterpretArg(static_cast<FirstValueArgument>(value), temp);
+                interpret.InterpretArg(std::forward<FirstValueType>(value), temp);
                 this->AddFormatedVariable(name, temp, output);
             }
 

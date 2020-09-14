@@ -4,6 +4,15 @@
 #include "G_Defines.h"
 #include <type_traits>
 
+// =========================
+//  THIS FILE IS DEPRECATED
+//        DO NOT USE
+// =========================
+//
+// These functions are unsafe both at runtime and compile time
+//
+//
+//
 namespace G
 {
     ///Working with pointers
@@ -29,26 +38,6 @@ namespace G
     {
         return POINTER_VALUE(const_cast<NewDataType*>(ADDRESS(data)));
     }
-
-
-    ///Working with templates
-    //Returns true if two classes are derived from the same template
-    //Can be only used on classes with typename only template arguments
-    template<typename, typename>
-    constexpr bool is_same_type_template{false};
-
-
-    template<   template<typename...> class T, //typename T in C++17
-                typename... A,
-                typename... B>
-    constexpr bool is_same_type_template<
-        T<A...>,
-        T<B...>>
-    {true};
-
-
-    template<int N, typename... Ts> using NthTypeOf =
-            typename std::tuple_element<N, std::tuple<Ts...>>::type;
 }
 
 #endif // G_GENERALFUNCTIONS_H

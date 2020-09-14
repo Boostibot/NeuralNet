@@ -2,9 +2,7 @@
 #define G_COMMON_H
 
 #include "G_Defines.h"
-#include "G_StandartTypedefs.h"
-#include "G_GeneralFunctions.h"
-//#include "G_MemoryFunctions.h"
-#include "G_Pointer.h"
+#include "G_StandartTypedefs.h" //IS THERE REALLY A TYPO?
+#include "MetaPrograming.h"
 
 #endif // G_COMMON_H

@@ -52,7 +52,7 @@ class Logger
         {
             this->SetUp(operativeLogWriter, passiveLogWriter, StringBufferSize, TempStringSize);
         }
-        Logger(ThisType PASS_RVALUE_REF other) = default;
+        Logger(ThisType RVALUE_REF other) = default;
 
     public:
         //Nontemplated level argument
@@ -323,13 +323,13 @@ class Logger
         }
 
     private:
-        inline void ExchangeWriters(std::unique_ptr<LogWriterInterface> newWriter, std::unique_ptr<LogWriterInterface> PASS_REF oldWriter) const
+        inline void ExchangeWriters(std::unique_ptr<LogWriterInterface> newWriter, std::unique_ptr<LogWriterInterface> REF oldWriter) const
         {
             oldWriter = std::move(newWriter);
         }
 
         //IS NOT CONST! - Rebuilds the level pointer array
-        void ChangeUsedWriter(std::unique_ptr<LogWriterInterface> newWriter, std::unique_ptr<LogWriterInterface> PASS_REF oldWriter)
+        void ChangeUsedWriter(std::unique_ptr<LogWriterInterface> newWriter, std::unique_ptr<LogWriterInterface> REF oldWriter)
         {
             ExchangeWriters(std::move(newWriter), oldWriter);
             RebuildLevelPointerArray();
