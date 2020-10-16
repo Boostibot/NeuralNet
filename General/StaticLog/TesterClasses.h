@@ -46,32 +46,8 @@ namespace StaticLog
                     this->LineNum = lineNum;
                 }
 
-                /*
-                template<typename ... AdditionalTypes>
-                void AppendSourceOverload(StringViewType file, const u32 lineNum)
-                {
-                    this->LastFunctionCalled = "AppendSource";
-                    this->FileName = file;
-                    this->LineNum = lineNum;
-                }
-                */
                 template<typename ... TagTypes>
                 void AppendTagsOverload(TagTypes ...)                   {this->LastFunctionCalled = "AppendTags";}
-
-                /*
-                void OpenStreamOverload(StringType)                     {this->LastFunctionCalled = "OpenStream";  this->StreamState = true;}
-                void CloseStreamOverload()                              {this->LastFunctionCalled = "CloseStream"; this->StreamState = false;}
-                bool IsStreamOpenOverload()                             {this->LastFunctionCalled = "IsStreamOpen"; return this->StreamState;}
-                void FlushStreamOverload()                              {this->LastFunctionCalled = "FlushStream";}
-
-                void OnConstructionOverload()                           {this->LastFunctionCalled = "OnConstruction";}
-                void OnDestructionOverload()
-                {
-                    this->LastFunctionCalled = "OnDestruction";
-                    if(OnDestructionWriteLocation != nullptr)
-                        POINTER_VALUE(OnDestructionWriteLocation) = "OnDestruction";
-                }
-                */
 
             public:
                 TestingLogger1() = default;
@@ -135,8 +111,8 @@ namespace StaticLog
             TestingDataPackageMove(StringViewType str) : Str(str) {}
             TestingDataPackageMove(u32 lineNum, StringViewType str) : LineNum(lineNum), Str(str) {}
             TestingDataPackageMove() = delete;
-            TestingDataPackageMove(const TestingDataPackageMove PASS_REF) = delete;
-            TestingDataPackageMove(TestingDataPackageMove PASS_RVALUE_REF other)
+            TestingDataPackageMove(const TestingDataPackageMove REF) = delete;
+            TestingDataPackageMove(TestingDataPackageMove RVALUE_REF other)
             {
                 //Swapping is to make the fact that the move really happened visbible while testing
                 std::swap(this->LineNum, other.LineNum);
@@ -144,14 +120,14 @@ namespace StaticLog
             };
 
             //Assignment
-            TestingDataPackageMove REF operator=(TestingDataPackageMove PASS_RVALUE_REF other)
+            TestingDataPackageMove REF operator=(TestingDataPackageMove RVALUE_REF other)
             {
                 //Swapping is to make the fact that the move really happened visbible while testing
                 std::swap(this->LineNum, other.LineNum);
                 this->Str.swap(other.Str);
                 return POINTER_VALUE(this);
             }
-            TestingDataPackageMove REF operator=(const TestingDataPackageMove PASS_REF) = delete ;
+            TestingDataPackageMove REF operator=(const TestingDataPackageMove REF) = delete ;
 
         };
 
@@ -167,11 +143,11 @@ namespace StaticLog
                 void AppendSourceOverload() {}
                 void AppendTagsOverload() {}
                 TestingLoggerMove() = delete;
-                TestingLoggerMove(const TestingLoggerMove PASS_REF) = delete;
-                TestingLoggerMove(TestingLoggerMove PASS_RVALUE_REF) = default;
+                TestingLoggerMove(const TestingLoggerMove REF) = delete;
+                TestingLoggerMove(TestingLoggerMove RVALUE_REF) = default;
 
-                TestingLoggerMove REF operator=(TestingLoggerMove PASS_RVALUE_REF other) = default;
-                TestingLoggerMove REF operator=(const TestingLoggerMove PASS_REF) = delete ;
+                TestingLoggerMove REF operator=(TestingLoggerMove RVALUE_REF other) = default;
+                TestingLoggerMove REF operator=(const TestingLoggerMove REF) = delete ;
         };
 
         struct TestingDataPackageCopy
@@ -182,12 +158,12 @@ namespace StaticLog
             TestingDataPackageCopy(StringViewType str) : Str(str) {}
             TestingDataPackageCopy(u32 lineNum, StringViewType str) : LineNum(lineNum), Str(str) {}
             TestingDataPackageCopy() = delete;
-            TestingDataPackageCopy(const TestingDataPackageCopy PASS_REF) = default;
-            TestingDataPackageCopy(TestingDataPackageCopy PASS_RVALUE_REF) = delete;
+            TestingDataPackageCopy(const TestingDataPackageCopy REF) = default;
+            TestingDataPackageCopy(TestingDataPackageCopy RVALUE_REF) = delete;
 
             //Assignment
-            TestingDataPackageCopy REF operator=(TestingDataPackageCopy PASS_RVALUE_REF) = delete;
-            TestingDataPackageCopy REF operator=(const TestingDataPackageCopy PASS_REF) = default;
+            TestingDataPackageCopy REF operator=(TestingDataPackageCopy RVALUE_REF) = delete;
+            TestingDataPackageCopy REF operator=(const TestingDataPackageCopy REF) = default;
 
         };
 
@@ -203,11 +179,11 @@ namespace StaticLog
                 //void AppendSourceOverload() {}
                 void AppendTagsOverload() {}
                 TestingLoggerCopy() = delete;
-                TestingLoggerCopy(const TestingLoggerCopy PASS_REF) = default;
-                TestingLoggerCopy(TestingLoggerCopy PASS_RVALUE_REF) = delete;
+                TestingLoggerCopy(const TestingLoggerCopy REF) = default;
+                TestingLoggerCopy(TestingLoggerCopy RVALUE_REF) = delete;
 
-                TestingLoggerCopy REF operator=(TestingLoggerCopy PASS_RVALUE_REF) = delete;
-                TestingLoggerCopy REF operator=(const TestingLoggerCopy PASS_REF other) = default;
+                TestingLoggerCopy REF operator=(TestingLoggerCopy RVALUE_REF) = delete;
+                TestingLoggerCopy REF operator=(const TestingLoggerCopy REF other) = default;
         };
 
 
@@ -219,12 +195,12 @@ namespace StaticLog
             TestingDataPackageConstruct(StringViewType str) : Str(str) {}
             TestingDataPackageConstruct(u32 lineNum, StringViewType str) : LineNum(lineNum), Str(str) {}
             TestingDataPackageConstruct() = default;
-            TestingDataPackageConstruct(const TestingDataPackageConstruct PASS_REF) = default;
-            TestingDataPackageConstruct(TestingDataPackageConstruct PASS_RVALUE_REF) = delete;
+            TestingDataPackageConstruct(const TestingDataPackageConstruct REF) = default;
+            TestingDataPackageConstruct(TestingDataPackageConstruct RVALUE_REF) = delete;
 
             //Assignment
-            TestingDataPackageConstruct REF operator=(TestingDataPackageConstruct PASS_RVALUE_REF) = delete;
-            TestingDataPackageConstruct REF operator=(const TestingDataPackageConstruct PASS_REF) = default;
+            TestingDataPackageConstruct REF operator=(TestingDataPackageConstruct RVALUE_REF) = delete;
+            TestingDataPackageConstruct REF operator=(const TestingDataPackageConstruct REF) = default;
 
         };
 
@@ -240,11 +216,11 @@ namespace StaticLog
                 void AppendTagsOverload() {}
 
                 TestingLoggerConstruct() = default;
-                TestingLoggerConstruct(const TestingLoggerConstruct PASS_REF) = default;
-                TestingLoggerConstruct(TestingLoggerConstruct PASS_RVALUE_REF) = delete;
+                TestingLoggerConstruct(const TestingLoggerConstruct REF) = default;
+                TestingLoggerConstruct(TestingLoggerConstruct RVALUE_REF) = delete;
 
-                TestingLoggerConstruct REF operator=(TestingLoggerConstruct PASS_RVALUE_REF) = delete;
-                TestingLoggerConstruct REF operator=(const TestingLoggerConstruct PASS_REF other) = default;
+                TestingLoggerConstruct REF operator=(TestingLoggerConstruct RVALUE_REF) = delete;
+                TestingLoggerConstruct REF operator=(const TestingLoggerConstruct REF other) = default;
         };
 
     }
@@ -272,15 +248,15 @@ namespace StaticLog
 
             public:
                 DefaultLoggerPackageTester(const StringType filePath) : DefaultLoggerPackage(filePath) {}
-                DefaultLoggerPackageTester(DefaultLoggerPackageTester PASS_RVALUE_REF) = default;
-                DefaultLoggerPackageTester REF operator=(DefaultLoggerPackageTester PASS_RVALUE_REF) = default;
+                DefaultLoggerPackageTester(DefaultLoggerPackageTester RVALUE_REF) = default;
+                DefaultLoggerPackageTester REF operator=(DefaultLoggerPackageTester RVALUE_REF) = default;
 
-                DefaultLoggerPackageTester(const DefaultLoggerPackageTester PASS_REF) = delete;
-                void operator=(const DefaultLoggerPackageTester PASS_REF) = delete ;
+                DefaultLoggerPackageTester(const DefaultLoggerPackageTester REF) = delete;
+                void operator=(const DefaultLoggerPackageTester REF) = delete ;
 
         };
 
-        DefaultLoggerPackageTester REF GetDefPackageTester(DefaultLoggerPackage<> PASS_REF package)
+        DefaultLoggerPackageTester REF GetDefPackageTester(DefaultLoggerPackage<> REF package)
         {
             return static_cast<DefaultLoggerPackageTester REF>(package);
         }

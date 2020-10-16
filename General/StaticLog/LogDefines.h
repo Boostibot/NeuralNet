@@ -24,7 +24,7 @@
 
 
 ///General macro logic
-#include "GClasses/Common/G_Defines.h"
+#include "General/Common/Defines.h"
 
 ///Log logic
 //Checks DO_IF with the concatenated version of conditionVar and number

@@ -1,7 +1,7 @@
 #ifndef LOGGERINTERFACE_H
 #define LOGGERINTERFACE_H
 
-#include "GClasses/Common/G_Common.h"
+#include "General/Common/Common.h"
 
 struct LogWriterTraits
 {
@@ -31,31 +31,17 @@ struct LogTraits
         }
 };
 
-
-template<typename SameTo, typename ... ArgumentTypes>
-struct IsTypePresent
-{
-        template<bool indetifier, typename FirstType, typename ... OtherArgumentTypes>
-        constexpr static bool RecursiveCall()
-        {
-            if(std::is_same<FirstType, SameTo>::value)
-                return true;
-            else
-                return RecursiveCall<indetifier, OtherArgumentTypes...>();
-        }
-        template<bool indetifier>
-        constexpr static bool RecursiveCall()
-        {
-            return false;
-        }
-
-        static constexpr bool value = RecursiveCall<true, ArgumentTypes...>();
-
-};
-
-
-template<typename ... NameAndValueTypes>
-constexpr bool AreEven() {return (sizeof...(NameAndValueTypes) % 2) == 0; }
+namespace MetaPrograming 
+{  
+    template<typename ... NameAndValueTypes>
+    constexpr bool AreEven() {return (sizeof...(NameAndValueTypes) % 2) == 0; }
+    
+    template<typename OfType, typename ... Arguements>
+    constexpr bool IsConstructorWithArgumentsNotCopyConstructor() 
+    {
+        return NOT (MetaPrograming::IsTypePresent<OfType REF, Arguements...>::value && (sizeof...(Arguements) == 1)); 
+    }        
+}
 
 #include "Libraries/Fmt/fmt/compile.h"
 #include "Libraries/Fmt/fmt/core.h"
@@ -95,13 +81,13 @@ namespace StaticLog
             {
                 this->SetUp();
             }
-            LoggerInterface(const ThisType PASS_REF other) : DerivedDataPackage(other)
+            LoggerInterface(const ThisType REF other) : DerivedDataPackage(other)
             {
                 this->LevelLoggingStatus = other.LevelLoggingStatus;
                 this->LoggingStatus = other.LoggingStatus;
                 //this->GetWriter().OnConstruction();
             }
-            LoggerInterface(ThisType PASS_RVALUE_REF other) : DerivedDataPackage(std::move(other))
+            LoggerInterface(ThisType RVALUE_REF other) : DerivedDataPackage(std::move(other))
             {
                 //Move constructor just copies instead of swapping because its faster
                 this->LevelLoggingStatus = other.LevelLoggingStatus;
@@ -114,9 +100,9 @@ namespace StaticLog
                      //Checks assure that the ArgumentTypes are not identical to the ones of copy and move constructor
                      //This is to resolve the ambiguous function call
                      //Checks if any of the types arent same as the contructor types but only blocks the function if the type is alone (sizeof...(ArgumentTypes) == 1)
-                     std::enable_if_t<!(MetaPrograming::IsTypePresent<ThisType PASS_REF, ArgumentTypes...>::value && (sizeof...(ArgumentTypes) == 1)), int> = 0
+                     std::enable_if_t<MetaPrograming::IsConstructorWithArgumentsNotCopyConstructor<ThisType, ArgumentTypes...>(), int> = 0
                      >
-            LoggerInterface(ArgumentTypes PASS_RVALUE_REF ... args) : DerivedDataPackage(std::forward<ArgumentTypes>(args)...)
+            LoggerInterface(ArgumentTypes RVALUE_REF ... args) : DerivedDataPackage(std::forward<ArgumentTypes>(args)...)
             {
                 //TypeViewer(std::forward<ArgumentTypes>(args)...);
                 this->SetUp();
@@ -127,7 +113,7 @@ namespace StaticLog
             }
 
             //template<typename FirstType, typename... ArgTypes>
-            //void TypeViewer(FirstType PASS_RVALUE_REF first, ArgTypes PASS_RVALUE_REF... args)
+            //void TypeViewer(FirstType RVALUE_REF first, ArgTypes RVALUE_REF... args)
             //{
             //    (void)first;
             //    std::string name = typeid (FirstType).name();
@@ -137,8 +123,8 @@ namespace StaticLog
             //void TypeViewer(){}
 
         public:
-            ThisType REF operator=(ThisType PASS_RVALUE_REF) = default;
-            ThisType REF operator=(const ThisType PASS_REF) = default;
+            ThisType REF operator=(ThisType RVALUE_REF) = default;
+            ThisType REF operator=(const ThisType REF) = default;
 
 
             //Overloaded functions - begin
@@ -152,7 +138,7 @@ namespace StaticLog
             template<u32 level, typename ... NameAndValueTypes>
             void LogVars(NameAndValueTypes RVALUE_REF ... namesAndValues)
             {
-                static_assert (AreEven<NameAndValueTypes...>(), "LoggerInterface: LogVars requires even number of arguments, ie. name and value pairs");
+                static_assert (MetaPrograming::AreEven<NameAndValueTypes...>(), "LoggerInterface: LogVars requires even number of arguments, ie. name and value pairs");
 
                 if(this->IsLogEnabled<level>())
                     GetWriter().template LogVarsOverload<NameAndValueTypes...>(level, std::forward<NameAndValueTypes>(namesAndValues)...);
@@ -167,7 +153,7 @@ namespace StaticLog
             template<u32 level, typename ... NameAndValueTypes>
             void LogVarsSource(StringViewType file, const u32 lineNum, NameAndValueTypes RVALUE_REF ... namesAndValues)
             {
-                static_assert (AreEven<NameAndValueTypes...>(), "LoggerInterface: LogVars requires even number of arguments, ie. name and value pairs");
+                static_assert (MetaPrograming::AreEven<NameAndValueTypes...>(), "LoggerInterface: LogVars requires even number of arguments, ie. name and value pairs");
 
                 if(this->IsLogEnabled<level>())
                     GetWriter().template LogVarsSourceOverload<NameAndValueTypes...>(file, lineNum, level, std::forward<NameAndValueTypes>(namesAndValues)...);
@@ -302,12 +288,13 @@ namespace StaticLog
                 UnravelAndCheckLevel_Throw(levels...);
             }
             inline void UnravelAndCheckLevel_Throw() {}
-
+           
             //SetUp
             inline void SetUp()
             {
                 LevelLoggingStatus.fill(true);
             }
+            
     };
 }
 #endif // LOGGERINTERFACE_H

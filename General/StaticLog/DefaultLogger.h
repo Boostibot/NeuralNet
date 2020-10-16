@@ -26,21 +26,21 @@ namespace StaticLog
                     this->OpenFile(filePath);
                 }
 
-                inline AlwaysReadyFile(AlwaysReadyFile PASS_RVALUE_REF other) :
+                inline AlwaysReadyFile(AlwaysReadyFile RVALUE_REF other) :
                     File(std::move(other.File))
                 {
                     //Opens a new file to not leave the other in an invalid state
                     other.OpenFile("TempFile.txt");
                 }
 
-                inline AlwaysReadyFile REF operator=(AlwaysReadyFile PASS_RVALUE_REF other)
+                inline AlwaysReadyFile REF operator=(AlwaysReadyFile RVALUE_REF other)
                 {
                     this->File.swap(other.File);
                     return POINTER_VALUE(this);
                 }
 
-                AlwaysReadyFile(AlwaysReadyFile PASS_REF) = delete;
-                AlwaysReadyFile REF operator=(AlwaysReadyFile PASS_REF) = delete;
+                AlwaysReadyFile(AlwaysReadyFile REF) = delete;
+                AlwaysReadyFile REF operator=(AlwaysReadyFile REF) = delete;
 
             public:
                 inline void OpenFile(const StringViewType filePath)
@@ -75,11 +75,11 @@ namespace StaticLog
 
         public:
             DefaultLoggerPackage(const StringViewType filePath) : File(filePath) {this->SetUp();}
-            DefaultLoggerPackage(DefaultLoggerPackage PASS_RVALUE_REF other) = default;
-            DefaultLoggerPackage REF operator=(DefaultLoggerPackage PASS_RVALUE_REF other) = default;
+            DefaultLoggerPackage(DefaultLoggerPackage RVALUE_REF other) = default;
+            DefaultLoggerPackage REF operator=(DefaultLoggerPackage RVALUE_REF other) = default;
 
-            DefaultLoggerPackage(const DefaultLoggerPackage PASS_REF) = delete;
-            void operator=(const DefaultLoggerPackage PASS_REF) = delete ;
+            DefaultLoggerPackage(const DefaultLoggerPackage REF) = delete;
+            void operator=(const DefaultLoggerPackage REF) = delete ;
 
         protected:
             DataInterpretType Interpret;
@@ -143,8 +143,7 @@ namespace StaticLog
 
             struct StringLiteralArray
             {
-                    //Crashes debugger when part of the class
-                    //So its necessary to put it into unralated class
+                    //Crashes debugger when part of the class so its necessary to put it into unralated class
                     static constexpr char LevelMarkers[ThisType::LevelCount][8] {{"<00> : "}, {"<01> : "}, {"<02> : "}, {"<03> : "}, {"<04> : "}, {"<05> : "}, {"<06> : "}, {"<07> : "},
                                                                                  {"<08> : "}, {"<09> : "}, {"<10> : "}, {"<11> : "}, {"<12> : "}, {"<13> : "}, {"<14> : "}, {"<15> : "}};
             };
@@ -207,21 +206,21 @@ namespace StaticLog
 
         public:
             DefaultLogger() = delete;
-            DefaultLogger(const ThisType PASS_REF other)= delete;
-            DefaultLogger(ThisType PASS_RVALUE_REF other) : ThisLoggerInterfaceType(std::move(static_cast<ThisLoggerInterfaceType &&>(other))) {this->LogConstructionMessage();}
+            DefaultLogger(const ThisType REF other)= delete;
+            DefaultLogger(ThisType RVALUE_REF other) : ThisLoggerInterfaceType(std::move(static_cast<ThisLoggerInterfaceType &&>(other))) {this->LogConstructionMessage();}
 
             //Any other constructor for the DerivedDataPackage
             template<typename ... ArgumentTypes ,
                      //Checks assure that the ArgumentTypes are not identical to the ones of copy and move constructor
                      //This is to resolve the ambiguous function call
                      //Checks if any of the types arent same as the contructor types but only blocks the function if the type is alone (sizeof...(ArgumentTypes) == 1)
-                     std::enable_if_t<!(MetaPrograming::IsTypePresent<ThisType PASS_REF, ArgumentTypes...>::value && (sizeof...(ArgumentTypes) == 1)), int> = 0
+                     std::enable_if_t<MetaPrograming::IsConstructorWithArgumentsNotCopyConstructor<ThisType, ArgumentTypes...>(), int> = 0
                      >
-            DefaultLogger(ArgumentTypes PASS_RVALUE_REF ... args) : ThisLoggerInterfaceType(std::forward<ArgumentTypes>(args)...) {this->LogConstructionMessage();}
+            DefaultLogger(ArgumentTypes RVALUE_REF ... args) : ThisLoggerInterfaceType(std::forward<ArgumentTypes>(args)...) {this->LogConstructionMessage();}
             ~DefaultLogger() {this->LogDestructionMessage();}
 
-            DefaultLogger REF operator=(const DefaultLogger PASS_REF other) = delete;
-            DefaultLogger REF operator=(DefaultLogger PASS_RVALUE_REF) = default;
+            DefaultLogger REF operator=(const DefaultLogger REF other) = delete;
+            DefaultLogger REF operator=(DefaultLogger RVALUE_REF) = default;
 
         protected:
             void AddSource(const StringViewType file, const u32 lineNum)
@@ -261,7 +260,7 @@ namespace StaticLog
             inline void AddVars(FirstStringType RVALUE_REF firstString, FirstValueType RVALUE_REF firstValue,
                                                 NameAndValueTypes RVALUE_REF ... namesAndValues)
             {
-                static_assert (AreEven<NameAndValueTypes...>(), "DefaultLogger: AppendVars requires even number of arguments");
+                static_assert (MetaPrograming::AreEven<NameAndValueTypes...>(), "DefaultLogger: AppendVars requires even number of arguments");
 
                 this->AddFormatedVariableAsListPart<FirstValueType>(
                             std::forward<FirstStringType>(firstString),
@@ -420,7 +419,7 @@ namespace StaticLog
 
 
         protected:
-            inline void AddFormatedDate(const time_t rawTime, std::string PASS_REF output) const
+            inline void AddFormatedDate(const time_t rawTime, std::string REF output) const
             {
                 char str[26];
                 ctime_s(str, sizeof str, &rawTime);
@@ -430,14 +429,14 @@ namespace StaticLog
                 output += "] ";
             }
 
-            inline void AddFormatedTime(fmt::format_int PASS_REF formater, const clock_t clock, std::string PASS_REF output) const
+            inline void AddFormatedTime(fmt::format_int REF formater, const clock_t clock, std::string REF output) const
             {
                 output += '[';
                 this->PutNumIntoCharcterField(static_cast<unsigned long>(clock), this->LogClockFieldSize, formater, output);
                 output += "] ";
             }
 
-            inline void AddFormatedSource(const std::string_view file, const u32 lineNum, fmt::format_int PASS_REF formater, std::string PASS_REF output) const
+            inline void AddFormatedSource(const std::string_view file, const u32 lineNum, fmt::format_int REF formater, std::string REF output) const
             {
                 output += file;
                 output += " : ";
@@ -446,33 +445,33 @@ namespace StaticLog
                 output += " - ";
             }
 
-            inline void AddFormatedIterationCount(const u32 iterations, fmt::format_int PASS_REF formater, std::string PASS_REF output) const
+            inline void AddFormatedIterationCount(const u32 iterations, fmt::format_int REF formater, std::string REF output) const
             {
                 this->PutNumIntoCharcterField(iterations, ThisType::LogIterationFieldSize, formater, output);
             }
 
-            inline void AddFormatedLevel(const u32 level, std::string PASS_REF output) const
+            inline void AddFormatedLevel(const u32 level, std::string REF output) const
             {
                 output += StringLiteralArray::LevelMarkers[level];
             }
 
-            inline void AddFormatedMsg(std::string_view msg, std::string PASS_REF output) const
+            inline void AddFormatedMsg(std::string_view msg, std::string REF output) const
             {
                 AddFormatedMsgHeader(output);
                 output += msg;
             }
 
-            inline void AddFormatedMsgHeader(std::string PASS_REF output) const
+            inline void AddFormatedMsgHeader(std::string REF output) const
             {
                 output += "msg = ";
             }
 
-            inline void AddUnformatedMsgPart(std::string_view msg, std::string PASS_REF output) const
+            inline void AddUnformatedMsgPart(std::string_view msg, std::string REF output) const
             {
                 output += msg;
             }
 
-            inline void AddFormatedTag(std::string_view tag, std::string PASS_REF output) const
+            inline void AddFormatedTag(std::string_view tag, std::string REF output) const
             {
                 output += "<";
                 output += tag;
@@ -480,37 +479,37 @@ namespace StaticLog
             }
 
             template<typename FirstValueType>
-            inline void AddFormatedVariableAsListPart(const StringViewType name, FirstValueType RVALUE_REF value, DataInterpretType PASS_REF interpret, std::string PASS_REF temp,  std::string PASS_REF output) const
+            inline void AddFormatedVariableAsListPart(const StringViewType name, FirstValueType RVALUE_REF value, DataInterpretType REF interpret, std::string REF temp,  std::string REF output) const
             {
                 interpret.InterpretArg(std::forward<FirstValueType>(value), temp);
                 this->AddFormatedVariable(name, temp, output);
             }
 
-            inline void AddFormatedVariable(const std::string_view varName, const std::string_view varValue, std::string PASS_REF output) const
+            inline void AddFormatedVariable(const std::string_view varName, const std::string_view varValue, std::string REF output) const
             {
                 output += varName;
                 output += " = ";
                 output += varValue;
             }
 
-            inline void AddSeparator(std::string PASS_REF output) const
+            inline void AddSeparator(std::string REF output) const
             {
                 output += ThisType::Separator;
             }
 
-            inline void AddListSeparator(std::string PASS_REF output) const
+            inline void AddListSeparator(std::string REF output) const
             {
                 output += ThisType::ListSeparator;
             }
 
-            inline void AddNewline(std::string PASS_REF output) const
+            inline void AddNewline(std::string REF output) const
             {
                 output += ThisType::Newline;
             }
 
 
         protected:
-            inline void PutNumIntoCharcterField(const unsigned long num, const u32 fieldLenght, fmt::format_int PASS_REF formater, std::string PASS_REF output) const
+            inline void PutNumIntoCharcterField(const unsigned long num, const u32 fieldLenght, fmt::format_int REF formater, std::string REF output) const
             {
                 formater.format_unsigned(num);
                 auto formatedSize = formater.size();
@@ -522,7 +521,7 @@ namespace StaticLog
                 output.append(static_cast<u32>(fieldLenght > formatedSize) * (fieldLenght - formatedSize), '0');
                 output.append(formater.data(), formatedSize);
             }
-            inline void ResetString(std::string PASS_REF temp) const noexcept {temp.clear();}
+            inline void ResetString(std::string REF temp) const noexcept {temp.clear();}
     };
 
 

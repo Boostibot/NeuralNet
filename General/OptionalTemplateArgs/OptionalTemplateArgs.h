@@ -1,7 +1,7 @@
 #ifndef OPTIONALTEMPLATEARGUMENTS_H
 #define OPTIONALTEMPLATEARGUMENTS_H
 
-#include "GClasses/Common/G_Common.h"
+#include "General/Common/Common.h"
 
 namespace MetaPrograming
 {
@@ -71,7 +71,7 @@ namespace MetaPrograming
             constexpr LookingForType GetTypeIfPresentOr() {}
 
             template<typename LookingForType, typename OrType, typename ... Types,
-                     std::enable_if_t<!IsTypePresent<LookingForType, Types...>::value, int> = 0>
+                     std::enable_if_t<NOT IsTypePresent<LookingForType, Types...>::value, int> = 0>
             constexpr OrType GetTypeIfPresentOr() {}
 
 
@@ -81,7 +81,7 @@ namespace MetaPrograming
             constexpr auto GetTypeTemplateIfPresentOr() -> GetTypeOnIndex<GetTypeTemplateIndex<LookingForType, Types...>(), Types...> {}
 
             template<typename LookingForType, typename OrType, typename ... Types,
-                     std::enable_if_t<!IsTypeTemplatePresent<LookingForType, Types...>(), int> = 0>
+                     std::enable_if_t<NOT IsTypeTemplatePresent<LookingForType, Types...>(), int> = 0>
             constexpr auto GetTypeTemplateIfPresentOr() -> OrType {}
 
             //Retrieve

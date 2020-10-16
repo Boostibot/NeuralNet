@@ -4,4 +4,5 @@
 #include "DynamicLog.h"
 #include "StaticLog.h"
 #include "CFileManager.h"
+#include "File.h"
 

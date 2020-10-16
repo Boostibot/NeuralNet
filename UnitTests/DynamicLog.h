@@ -2,7 +2,7 @@
 #define DYNAMICLOG_H
 
 #include "Catch2/Catch.hpp"
-#include "GClasses/Common/DynamicLog/Log.h"
+#include "General/DynamicLog/Log.h"
 
 namespace DynamicLogger
 {

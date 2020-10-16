@@ -15,11 +15,13 @@
 #define REF                     REFERENCE
 #define RVALUE_REFERENCE        &&
 #define RVALUE_REF              RVALUE_REFERENCE
-#define PASS_BY_REFERENCE       REFERENCE
-#define PASS_REF                PASS_BY_REFERENCE
-#define PASS_RVALUE_REFERENCE   &&
-#define PASS_RVALUE_REF         PASS_RVALUE_REFERENCE
 #define MUST_OVERRIDE           0
+
+#define IN const REF
+#define OUT REF
+#define INOUT REF
+#define FORWARD RVALUE_REF
+#define MOVE RVALUE_REF
 
 ///Logic
 #define AND                     &&
@@ -31,6 +33,7 @@
 ///Pointer readablity define functions
 #define ADDRESS(item)           (std::addressof(item))
 #define POINTER                 *
+#define PTR                     POINTER
 #define POINTER_VALUE(pointer)  (*pointer)
 #define PTR_VAL(pointer)        (*pointer)
 

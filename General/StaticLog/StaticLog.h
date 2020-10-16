@@ -1,11 +1,11 @@
 #ifndef STATICLOG_H
 #define STATICLOG_H
 
-#include "GClasses/Common/G_Common.h"
-#include "GClasses/Common/StaticLog/LoggerInterface.h"
-#include "GClasses/Common/StaticLog/DefaultDataInterpret.h"
-#include "GClasses/Common/StaticLog/DefaultLogger.h"
-#include "GClasses/Common/StaticLog/LogDefines.h"
+#include "General/Common/Common.h"
+#include "General/StaticLog/LoggerInterface.h"
+#include "General/StaticLog/DefaultDataInterpret.h"
+#include "General/StaticLog/DefaultLogger.h"
+#include "General/StaticLog/LogDefines.h"
 
 //TODO - Put this into an example file
 /*

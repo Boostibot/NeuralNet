@@ -9,19 +9,25 @@ CONFIG -= qt
 INCLUDEPATH += \
         ../
 
+
+#User files
+HEADERS += \
+        DynamicLog.h \
+        File.h \
+        StaticLog.h \
+        AllocatorFramework.h \
+        CFileManager.h
+
+SOURCES += \
+
+
 #Prerequisites
 HEADERS += Catch2/Catch.hpp \
-    AllocatorFramework.h \
-    CFileManager.h \
-    UnbufferedFile.h
+
 SOURCES += UnitTestsMain.cpp
 
 
 #FMT
-SOURCES +=\
-    ../Libraries/Fmt/format.cc \
-    ../Libraries/Fmt/os.cc \
-
 HEADERS += \
     ../Libraries/Fmt/fmt/chrono.h \
     ../Libraries/Fmt/fmt/color.h \
@@ -35,14 +41,10 @@ HEADERS += \
     ../Libraries/Fmt/fmt/posix.h \
     ../Libraries/Fmt/fmt/printf.h \
     ../Libraries/Fmt/fmt/ranges.h \
-    #Libraries/Fmt/fmt/.h \
 
-#User files
-HEADERS += \
-        DynamicLog.h \
-        StaticLog.h
-
-SOURCES += \
+SOURCES +=\
+    ../Libraries/Fmt/format.cc \
+    ../Libraries/Fmt/os.cc \
 
 
 

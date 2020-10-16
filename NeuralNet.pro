@@ -15,16 +15,59 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+
+
+#User defined
+SOURCES += \
+    Main/main.cpp \
+    Main/mainwindow.cpp
+
+HEADERS += \
+    General/Common/Common.h \
+    General/Common/MetaPrograming.h \
+    General/Common/Typedefs.h \
+    General/Common/Defines.h \
+    General/File/CFileManager.h \
+    General/File/CharSupport.h \
+    General/File/CompilerSupport.h \
+    General/File/File.h \
+    General/File/OpenMode.h \
+    General/File/OsSupport.h \
+    General/File/UniversalString.h \
+    General/File/UnsafeFile.h \
+    General/File/UtfConversion.h \
+    \
+    General/ConstexprNumConversion/ConstexprNumConversion.h \
+    \
+    General/DynamicLog/Log.h \
+    General/DynamicLog/LogDataInterpret.h \
+    General/DynamicLog/LogDefines.h \
+    General/DynamicLog/LogTests.h \
+    General/DynamicLog/LogWriter.h \
+    \
+    General/OptionalTemplateArgs/OptionalTemplateArgs.h \
+    \
+    General/StaticLog/StaticLog.h \
+    General/StaticLog/DefaultDataInterpret.h \
+    General/StaticLog/DefaultLogger.h \
+    General/StaticLog/LoggerInterface.h \
+    General/StaticLog/TesterClasses.h \
+    General/StaticLog/LogDefines.h \
+    General/StaticLog/SpeedTests.h \
+    \
+    Main/NeuralNetwork.h \
+    Main/Temp.h \
+    Main/mainwindow.h
+
+FORMS += \
+    Main/mainwindow.ui
+
 #FMT
 SOURCES +=\
     Libraries/Fmt/format.cc \
     Libraries/Fmt/os.cc \
 
 HEADERS += \
-    GClasses/Common/ConstexprNumConversion.h \
-    GClasses/Common/MetaPrograming.h \
-    GClasses/Common/OptionalTemplateArgs.h \
-    GClasses/Common/StaticLog/SpeedTests.h \
     Libraries/Fmt/fmt/chrono.h \
     Libraries/Fmt/fmt/color.h \
     Libraries/Fmt/fmt/compile.h \
@@ -38,34 +81,6 @@ HEADERS += \
     Libraries/Fmt/fmt/printf.h \
     Libraries/Fmt/fmt/ranges.h \
     Main/UnbufferedFile.h
-
-#User defined
-SOURCES += \
-    Main/main.cpp \
-    Main/mainwindow.cpp
-
-HEADERS += \
-    GClasses/Common/G_Common.h \
-    GClasses/Common/DynamicLog/Log.h \
-    GClasses/Common/DynamicLog/LogDataInterpret.h \
-    GClasses/Common/DynamicLog/LogDefines.h \
-    GClasses/Common/DynamicLog/LogTests.h \
-    GClasses/Common/DynamicLog/LogWriter.h \
-    \
-    GClasses/Common/StaticLog/StaticLog.h \
-    GClasses/Common/StaticLog/DefaultDataInterpret.h \
-    GClasses/Common/StaticLog/DefaultLogger.h \
-    GClasses/Common/StaticLog/LoggerInterface.h \
-    GClasses/Common/StaticLog/TesterClasses.h \
-    GClasses/Common/StaticLog/LogDefines.h \
-    \
-    Main/NeuralNetwork.h \
-    Main/Temp.h \
-    Main/mainwindow.h
-
-FORMS += \
-    Main/mainwindow.ui
-
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

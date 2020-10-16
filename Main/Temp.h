@@ -4,6 +4,7 @@
 #include <iostream>
 
 
+
 void* operator new (size_t size)
 {
     std::cout << "Allocation: " << size << std::endl;
@@ -63,8 +64,8 @@ void FmtTesting()
     std::cout << buffer << std::endl;
 }
 
-#include "GClasses/Common/StaticLog/StaticLog.h"
-#include "GClasses/Common/StaticLog/TesterClasses.h"
+#include "General/StaticLog/StaticLog.h"
+#include "General/StaticLog/TesterClasses.h"
 
 void StaticLogInterpretTesting()
 {
@@ -309,81 +310,6 @@ void StringAdditionSpeedTesting()
     std::cout << "Control loop: " << control << "ms\n";
 }
 
-void FileOutputSpeedTesting()
-{
-    using MicrosecondsChronoDurations = std::chrono::duration<double, std::ratio<1, 1000>>;
-
-    auto tempTimePoint = std::chrono::high_resolution_clock::now();
-
-    std::fstream fstream;
-
-    std::vector<MicrosecondsChronoDurations> duartions(15);
-
-    std::string str1 = "Hello ";
-    std::string str2 = "";
-
-    for(u32 rotations = 0; rotations < 5; rotations ++)
-    {
-        tempTimePoint = std::chrono::high_resolution_clock::now();
-        for(u32 i = 0; i < 100000000; i++)
-        {
-            str1.append(str2);
-        }
-        duartions[0 + rotations] = std::chrono::high_resolution_clock::now() - tempTimePoint;
-    }
-
-    for(u32 rotations = 0; rotations < 5; rotations ++)
-    {
-        tempTimePoint = std::chrono::high_resolution_clock::now();
-        for(u32 i = 0; i < 100000000; i++)
-        {
-            if(NOT(str2.empty()))
-                str1.append(str2);
-        }
-        duartions[5 + rotations] = std::chrono::high_resolution_clock::now() - tempTimePoint;
-    }
-
-    for(u32 rotations = 0; rotations < 5; rotations ++)
-    {
-        tempTimePoint = std::chrono::high_resolution_clock::now();
-        for(u32 i = 0; i < 100000000; i++)
-        {
-            //str1.append(str2);
-        }
-        duartions[10 + rotations] = std::chrono::high_resolution_clock::now() - tempTimePoint;
-    }
-
-    u64 append = 0;
-    u64 emptySwitch = 0;
-    u64 control = 0;
-
-    for(u32 rotations = 0; rotations < 5; rotations ++)
-    {
-        append += duartions[0 + rotations].count();
-        emptySwitch += duartions[5 + rotations].count();
-        control += duartions[10 + rotations].count();
-    }
-
-    append /= 5;
-    emptySwitch /= 5;
-    control /= 5;
-
-    std::cout << "Simple append: " << append << "ms\n";
-    std::cout << "Empty switch: " << emptySwitch << "ms\n";
-    std::cout << "Control loop: " << control << "ms\n";
-}
-
-
-struct CrashDebugger
-{
-        static constexpr const char MyString[6] = {"Hello"};
-};
-
-struct DontCrashDebugger
-{
-        const char MyString[6] = {"Hello"};
-};
-
 namespace PassingSupport
 {
     struct ClassData
@@ -403,12 +329,12 @@ namespace PassingSupport
             ClassRef(ClassData && data) : Data(data) {}
 
             ClassRef() = delete;
-            ClassRef(const ClassRef PASS_REF other) : Data(other.Data)
+            ClassRef(const ClassRef REF other) : Data(other.Data)
             {
                 Data.PassCount++;
 
             }
-            ClassRef(ClassRef PASS_RVALUE_REF) = delete;
+            ClassRef(ClassRef RVALUE_REF) = delete;
             ~ClassRef()
             {
                 Data.PassCount--;
@@ -476,7 +402,45 @@ void PassingSupportTesting()
     PassingSupport::Function3(data);
 }
 
-#include "GClasses/Common/StaticLog/SpeedTests.h"
+using prevdefined = int;
+
+#include "UnbufferedFile.h"
+#include "General/StaticLog/SpeedTests.h"
+
+//
+// #define OS_NATIVE_UNICODE_SUPPORT utf8 / utf16 // utf32
+// #define INTERNAL_OS_SUPPORT_     -1
+// #define INTERNAL_OS_SUPPORT_utf8  1
+// #define INTERNAL_OS_SUPPORT_utf16 2
+// #define INTERNAL_OS_SUPPORT_utf32 3
+
+// #define INTERNAL_OS_SUPPORT CONCAT(OS_NATIVE_, OS_NATIVE_UNICODE_SUPPORT)
+
+#include "General/File/UniversalString.h"
+
+void WideCharTesting()
+{
+    std::string str = "hello";
+    std::wstring wstr = L"hello";
+    //std::string REF strRef = str;
+    //std::string_view strView = "hello";
+
+    int result;
+    result = fooFunctor(str);
+    result = fooFunctor(wstr);
+    result = fooFunctor("hello");
+    result = fooFunctor(U"hello");
+    (void)result;
+
+    //foo("hello");
+    //foo(str);
+    //foo(wstr);
+    //foo(strRef);
+    //foo(strView);
+    //foo(1);
+}
+
+
 void RunTemp()
 {
     //FmtTesting();
@@ -488,8 +452,9 @@ void RunTemp()
     //UnorderedArgumentChainTesting();
     //ConstexprNumConversion();
     //StringAdditionSpeedTesting();
-    GenericProgramingTests();
-    PassingSupportTesting();
+    //GenericProgramingTests();
+    //PassingSupportTesting();
+    WideCharTesting();
 
     //SpeedTests();
     //AllocationTests();

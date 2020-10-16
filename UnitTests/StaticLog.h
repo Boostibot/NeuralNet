@@ -2,8 +2,8 @@
 #define STATICLOG2_H
 
 #include "Catch2/Catch.hpp"
-#include "GClasses/Common/StaticLog/StaticLog.h"
-#include "GClasses/Common/StaticLog/TesterClasses.h"
+#include "General/StaticLog/StaticLog.h"
+#include "General/StaticLog/TesterClasses.h"
 
 
 //#include "gtest/gtest.h"
@@ -15,7 +15,6 @@ namespace StaticLog
     {
         TEST_CASE("CRTP overloading", "[LoggerInterface]")
         {
-            //StaticLogger::LoggerInterface<StaticLogger::TestingLogger1>  logWriter1;
             LoggerInterface<TestingLogger1> logWriter1;
             REQUIRE(logWriter1.Identifier == "TestingDataPackage");
             REQUIRE(logWriter1.LastFunctionCalled.empty() == true);
@@ -201,21 +200,6 @@ namespace StaticLog
                 REQUIRE(logWriter1.LastFunctionCalled == "LogVarsSource");
             }
 
-            /*
-            SECTION("Calling func: AppendSource", "[LoggerInterface]")
-            {
-
-                LoggerInterface<TestingLogger1> logWriter1;
-                StringType file = "File";
-                u32 lineNum = 32;
-                //logWriter1.AppendSource(file, 32, "Value"); //Compiler error - no function overload
-                logWriter1.AppendSource<2>(file, 32);
-                REQUIRE(logWriter1.LastFunctionCalled == "AppendSource");
-                REQUIRE(logWriter1.FileName == file);
-                REQUIRE(logWriter1.LineNum == lineNum);
-            }
-            */
-
             SECTION("Calling func: AppendTags", "[LoggerInterface]")
             {
 
@@ -223,69 +207,6 @@ namespace StaticLog
                 logWriter.AppendTags<2>("tag", "tag1");
                 REQUIRE(logWriter.LastFunctionCalled == "AppendTags");
             }
-
-            /*
-            SECTION("Calling func: OpenStream", "[LoggerInterface]")
-            {
-                LoggerInterface<TestingLogger1> logWriter;
-                //logWriter.OpenStream("path", "path"); //Compiler error - no function overload
-                REQUIRE(logWriter.StreamState == false);
-                logWriter.OpenStream("path");
-                REQUIRE(logWriter.LastFunctionCalled == "OpenStream");
-                REQUIRE(logWriter.StreamState == true);
-            }
-
-            SECTION("Calling func: CloseStream", "[LoggerInterface]")
-            {
-
-                LoggerInterface<TestingLogger1> logWriter;
-                REQUIRE(logWriter.StreamState == false);
-                logWriter.CloseStream();
-                REQUIRE(logWriter.LastFunctionCalled == "CloseStream");
-                REQUIRE(logWriter.StreamState == false);
-            }
-
-            SECTION("Calling func: IsStreamOpen", "[LoggerInterface]")
-            {
-
-                LoggerInterface<TestingLogger1> logWriter;
-                logWriter.IsStreamOpen();
-                REQUIRE(logWriter.IsStreamOpen() == false);
-                REQUIRE(logWriter.LastFunctionCalled == "IsStreamOpen");
-
-                logWriter.OpenStream("path");
-                REQUIRE(logWriter.IsStreamOpen() == true);
-                logWriter.CloseStream();
-                REQUIRE(logWriter.IsStreamOpen() == false);
-            }
-
-            SECTION("Calling func: FlushStream", "[LoggerInterface]")
-            {
-                LoggerInterface<TestingLogger1> logWriter;
-                logWriter.FlushStream();
-                REQUIRE(logWriter.LastFunctionCalled == "FlushStream");
-            }
-
-            SECTION("Calling func: OnConstruction", "[LoggerInterface]")
-            {
-                LoggerInterface<TestingLogger1> logWriter;
-                //OnConstruction gets called automatically
-                REQUIRE(logWriter.LastFunctionCalled == "OnConstruction");
-            }
-
-            SECTION("Calling function: OnDestruction", "[LoggerInterface]")
-            {
-                //Used to save the msg - the data from the logger will get destroyed
-                //  along with it so its necessary to write them somwhre else
-                StringType onDestructionMsg;
-                {
-                    LoggerInterface<TestingLogger1> logWriter;
-                    logWriter.OnDestructionWriteLocation = &(onDestructionMsg);
-                }
-                REQUIRE(onDestructionMsg == "OnDestruction");
-            }
-            */
-
         }
 
         TEST_CASE("Enabling and disabling logging LoggerInterface", "[LoggerInterface]")
@@ -454,9 +375,8 @@ namespace StaticLog
 
     namespace DefaultDataInterpretTesting
     {
-
         template<typename T, typename valType>
-        void TestConversion(valType val, std::string PASS_REF output, DefaultDataInterpret PASS_REF interpret, std::string expectedResult)
+        void TestConversion(valType val, std::string REF output, DefaultDataInterpret REF interpret, std::string expectedResult)
         {
             interpret.InterpretArg(static_cast<T>(val), output);
             REQUIRE(output == expectedResult);
@@ -1236,7 +1156,7 @@ namespace StaticLog
                     REQUIRE(GetDefLoggerTester(writer).CollectionString == "00000123 ");
                 }
 
-                //SECTION("AddTime") {} //Badly testable
+                //SECTION("AddTime") {} //Poorly testable - testing not that important since the inner function is fully tested
 
                 SECTION("AddLvl")
                 {

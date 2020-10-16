@@ -1,7 +1,7 @@
 #ifndef COMPILETIMENUMERICCONVERSION_H
 #define COMPILETIMENUMERICCONVERSION_H
 
-#include "GClasses/Common/G_Common.h"
+#include "General/Common/Common.h"
 #include <iostream>
 
 namespace  CompileTimeNumericConversion

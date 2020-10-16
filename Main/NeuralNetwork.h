@@ -9,7 +9,7 @@
 #include <math.h>
 #include <chrono>
 
-#include "GClasses/Common/G_Common.h"
+#include "General/Common/Common.h"
 
 #define ANN_Testing
 
@@ -17,7 +17,6 @@ using DecimalNum = double;
 using WholeNum = i32;
 using UnsignedNum = u32;
 using ErrorState = u8;
-using ReturnState = bool;
 
 
 class RNGGenetartor
@@ -74,7 +73,7 @@ class Neuron
         }
 
 
-        void ComputeOutput(const std::vector<Neuron> PASS_BY_REFERENCE prevLayer)
+        void ComputeOutput(const std::vector<Neuron> REFERENCE prevLayer)
         {
             //Updates the NetValue value
             UpdateNetValue(prevLayer);
@@ -82,7 +81,7 @@ class Neuron
             //Sets the output value
             OutputValue = SigmoidFunction(NetValue);
         }
-        void CalculateErrorTermHiddenLayer(const std::vector<Neuron> PASS_BY_REFERENCE nextLayer)
+        void CalculateErrorTermHiddenLayer(const std::vector<Neuron> REFERENCE nextLayer)
         {
             ErrorTerm = GetCumulativeErrorTerm(nextLayer) * SigmoidFunctionDerivative();
         }
@@ -90,7 +89,7 @@ class Neuron
         {
             ErrorTerm = (targetValue - OutputValue) * SigmoidFunctionDerivative();
         }
-        void UpdateWeights(const std::vector<Neuron> PASS_BY_REFERENCE prevLayer, const DecimalNum eta, const DecimalNum alpha)
+        void UpdateWeights(const std::vector<Neuron> REFERENCE prevLayer, const DecimalNum eta, const DecimalNum alpha)
         {
             //Cycles through the weights and updates each of them
             for(UnsignedNum i = WeightCount; i-- > 0;)
@@ -160,7 +159,7 @@ class Neuron
             IndexOfThis = indexOfThis;
         }
 
-        inline void UpdateWeight(DecimalNum PASS_BY_REFERENCE weight, DecimalNum PASS_BY_REFERENCE deltaWeight, const DecimalNum currInput, const DecimalNum eta, const DecimalNum alpha)
+        inline void UpdateWeight(DecimalNum REFERENCE weight, DecimalNum REFERENCE deltaWeight, const DecimalNum currInput, const DecimalNum eta, const DecimalNum alpha)
         {
             //Saves last delta weight for momentum calculation
             DecimalNum lastDeltaWeight = deltaWeight;
@@ -175,7 +174,7 @@ class Neuron
             //Updates the weight
             weight += deltaWeight;
         }
-        inline void UpdateNetValue(const std::vector<Neuron> PASS_BY_REFERENCE prevLayer)
+        inline void UpdateNetValue(const std::vector<Neuron> REFERENCE prevLayer)
         {
             //resets the values
             NetValue = 0.0;
@@ -190,7 +189,7 @@ class Neuron
             //Adds the bias weight //(* 1) - is not needed for obvious reasons
             NetValue += Weights.back(); // * 1
         }
-        inline DecimalNum GetCumulativeErrorTerm(const std::vector<Neuron> PASS_BY_REFERENCE nextLayer)
+        inline DecimalNum GetCumulativeErrorTerm(const std::vector<Neuron> REFERENCE nextLayer)
         {
             DecimalNum sum = 0;
 
@@ -226,7 +225,7 @@ class NeuronLayer
         }
 
     public:
-        void PropagateForward(const NeuronLayer PASS_BY_REFERENCE lastLayer)
+        void PropagateForward(const NeuronLayer REFERENCE lastLayer)
         {
             //Calls the ComputeOutput on each of the neurons
             for(UnsignedNum i = 0; i < Neurons.size(); i ++)
@@ -234,7 +233,7 @@ class NeuronLayer
                 Neurons[i].ComputeOutput(lastLayer.Neurons);
             }
         }
-        void PropagateBackward(const NeuronLayer PASS_BY_REFERENCE nextLayer)
+        void PropagateBackward(const NeuronLayer REFERENCE nextLayer)
         {
             //Calls the CalculateErrorTermHiddenLayer on each of the neurons
             for(UnsignedNum i = 0; i < Neurons.size(); i ++)
@@ -243,7 +242,7 @@ class NeuronLayer
             }
         }
 
-        void CalculateOutputLayerErrorTerm(const std::vector<DecimalNum> PASS_BY_REFERENCE targetValues)
+        void CalculateOutputLayerErrorTerm(const std::vector<DecimalNum> REFERENCE targetValues)
         {
             //Calls the CalculateErrorTermOutputLayer on each of the neurons
             for(UnsignedNum i = 0; i < Neurons.size(); i++)
@@ -251,7 +250,7 @@ class NeuronLayer
                 Neurons[i].CalculateErrorTermOutputLayer(targetValues[i]);
             }
         }
-        void UpdateWeights(const NeuronLayer PASS_BY_REFERENCE prevLayer, const DecimalNum eta, const DecimalNum alpha)
+        void UpdateWeights(const NeuronLayer REFERENCE prevLayer, const DecimalNum eta, const DecimalNum alpha)
         {
             for(UnsignedNum i = 0; i < Neurons.size(); i++)
             {
@@ -260,14 +259,14 @@ class NeuronLayer
         }
 
         //Is used for setting the intputs into the network
-        void SetOutputs(const std::vector<DecimalNum> PASS_BY_REFERENCE inputs)
+        void SetOutputs(const std::vector<DecimalNum> REFERENCE inputs)
         {
             //Sets the inputs
             for(size_t i = Neurons.size(); i-- > 0;)
                 Neurons[i].OutputValue = inputs[i];
         }
         //Is used for retrieving of the outputs of the network
-        void GetOutputs(std::vector<DecimalNum> PASS_BY_REFERENCE outputs)
+        void GetOutputs(std::vector<DecimalNum> REFERENCE outputs)
         {
             //Sets the outputs
             for(size_t i = Neurons.size(); i-- > 0;)
@@ -275,7 +274,7 @@ class NeuronLayer
         }
 
     public:
-        DecimalNum GetErrorRMS(const std::vector<DecimalNum> PASS_BY_REFERENCE targetValues)
+        DecimalNum GetErrorRMS(const std::vector<DecimalNum> REFERENCE targetValues)
         {
             DecimalNum sum = 0;
             for(UnsignedNum i = 0; i < Neurons.size(); i++)
@@ -357,7 +356,7 @@ class NeuralNetStatistics
         {
             Statistics.push_back(container);
         }
-        inline void PopulateContainerTime(NeuralNetStatisticContainer PASS_BY_REFERENCE cont) const
+        inline void PopulateContainerTime(NeuralNetStatisticContainer REFERENCE cont) const
         {
             cont.Time = TempDuration;
         }
@@ -373,14 +372,14 @@ class NeuralNet
 
 
     public:
-        NeuralNet(const std::vector<UnsignedNum> PASS_BY_REFERENCE neuronCounts)
+        NeuralNet(const std::vector<UnsignedNum> REFERENCE neuronCounts)
         {
             this->BuildNet(neuronCounts);
             SetEtaAlpha(0.15, 0.3);
         }
 
     public:
-        void BuildNet(const std::vector<UnsignedNum> PASS_BY_REFERENCE neuronCounts)
+        void BuildNet(const std::vector<UnsignedNum> REFERENCE neuronCounts)
         {
             //Clears the current NetValue
             Layers.clear();
@@ -411,7 +410,7 @@ class NeuralNet
         }
 
     public:
-        void SetInput(const std::vector<DecimalNum> PASS_BY_REFERENCE inputs)
+        void SetInput(const std::vector<DecimalNum> REFERENCE inputs)
         {
             //checks the inputs
             {
@@ -434,7 +433,7 @@ class NeuralNet
                 Layers.front().SetOutputs(inputs);
             }
         }
-        void GetOutput(std::vector<DecimalNum> PASS_BY_REFERENCE outputs)
+        void GetOutput(std::vector<DecimalNum> REFERENCE outputs)
         {
             //checks the output
             {
@@ -457,7 +456,7 @@ class NeuralNet
                 }
             }
         }
-        void PropagateBackward(const std::vector<DecimalNum> PASS_BY_REFERENCE targetValues)
+        void PropagateBackward(const std::vector<DecimalNum> REFERENCE targetValues)
         {
             //Calculates the last layer error term
             Layers.back().CalculateOutputLayerErrorTerm(targetValues);
@@ -477,8 +476,8 @@ class NeuralNet
             }
         }
 
-        void TrainSingle(const std::vector<DecimalNum> PASS_BY_REFERENCE inputs,
-                         const std::vector<DecimalNum> PASS_BY_REFERENCE targetValues)
+        void TrainSingle(const std::vector<DecimalNum> REFERENCE inputs,
+                         const std::vector<DecimalNum> REFERENCE targetValues)
         {
             //Sets the inputs
             SetInput(inputs);
@@ -492,10 +491,10 @@ class NeuralNet
             //Updates the weights
             UpdateWeights(Eta, Alpha);
         }
-        void TrainSingle(const std::vector<DecimalNum> PASS_BY_REFERENCE inputs,
-                         const std::vector<DecimalNum> PASS_BY_REFERENCE targetValues,
-                         std::vector<DecimalNum> PASS_BY_REFERENCE outputs,
-                         NeuralNetStatistics PASS_BY_REFERENCE stats)
+        void TrainSingle(const std::vector<DecimalNum> REFERENCE inputs,
+                         const std::vector<DecimalNum> REFERENCE targetValues,
+                         std::vector<DecimalNum> REFERENCE outputs,
+                         NeuralNetStatistics REFERENCE stats)
         {
             //Starts the timer
             stats.StartMeasureTime();
@@ -511,7 +510,7 @@ class NeuralNet
         }
 
     public:
-        void FillStatistics(NeuralNetStatistics PASS_BY_REFERENCE stats, const std::vector<DecimalNum> PASS_BY_REFERENCE targetValues)
+        void FillStatistics(NeuralNetStatistics REFERENCE stats, const std::vector<DecimalNum> REFERENCE targetValues)
         {
             NeuralNetStatisticContainer cont;
             CalculateAverageDeltaWeight(cont);
@@ -526,7 +525,7 @@ class NeuralNet
         }
 
     private:
-        void CalculateAverageDeltaWeight(NeuralNetStatisticContainer PASS_BY_REFERENCE cont)
+        void CalculateAverageDeltaWeight(NeuralNetStatisticContainer REFERENCE cont)
         {
             DecimalNum sum = 0;
 
@@ -537,7 +536,7 @@ class NeuralNet
 
             cont.AverageDeltaWeight = sum / (Layers.size()-1);
         }
-        void CalculateErrorRMS(NeuralNetStatisticContainer PASS_BY_REFERENCE cont, const std::vector<DecimalNum> PASS_BY_REFERENCE targetValues)
+        void CalculateErrorRMS(NeuralNetStatisticContainer REFERENCE cont, const std::vector<DecimalNum> REFERENCE targetValues)
         {
             cont.ErrorRMS = Layers.back().GetErrorRMS(targetValues);
         }

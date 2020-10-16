@@ -7,8 +7,7 @@ namespace CFileManagerTesting
 {
     struct CFileManagerTester : public CFileManager
     {
-            using CFileManager::File;
-            using CFileManager::DisableBuffering;
+            using CFileManager::FilePtr;
             using CFileManager::CloseFile;
     };
 
@@ -16,6 +15,7 @@ namespace CFileManagerTesting
     {
         return static_cast<CFileManagerTester REF>(file);
     }
+
 }
 
 namespace CFileManagerTesting
@@ -25,7 +25,7 @@ namespace CFileManagerTesting
         CFileManager file;
 
         //The pointer should be set to null
-        REQUIRE(ToTester(file).File == nullptr);
+        REQUIRE(ToTester(file).FilePtr == nullptr);
         REQUIRE(file.IsOpen() == false);
     }
 
@@ -41,7 +41,7 @@ namespace CFileManagerTesting
         REQUIRE(file2.IsOpen() == false);
     }
 
-    TEST_CASE("Movec constructing")
+    TEST_CASE("Move constructing")
     {
         CFileManager file0;
         CFileManager file1("temp.txt", "wb");
@@ -80,6 +80,10 @@ namespace CFileManagerTesting
         fileMove = std::move(file2);
         REQUIRE(file1.IsOpen() == false);
         REQUIRE(fileMove.IsOpen() == true);
+
+        //Moving into itself should do nothing
+        fileMove = std::move(fileMove);
+        REQUIRE(fileMove.IsOpen() == true);
     }
 
     TEST_CASE("bool conversion operator")
@@ -107,43 +111,43 @@ namespace CFileManagerTesting
         REQUIRE(file1.IsOpen() == false);
         REQUIRE(fileMove.IsOpen() == true);
 
-        FILE POINTER temp1 = ToTester(fileMove).File;
-        FILE POINTER temp2 = ToTester(file2).File;
+        FILE POINTER temp1 = ToTester(fileMove).FilePtr;
+        FILE POINTER temp2 = ToTester(file2).FilePtr;
 
         fileMove.Swap(file2);
-        REQUIRE(temp1 == ToTester(file2).File);
-        REQUIRE(temp2 == ToTester(fileMove).File);
+        REQUIRE(temp1 == ToTester(file2).FilePtr);
+        REQUIRE(temp2 == ToTester(fileMove).FilePtr);
 
         file2.Swap(fileMove);
-        REQUIRE(temp1 == ToTester(fileMove).File);
-        REQUIRE(temp2 == ToTester(file2).File);
+        REQUIRE(temp1 == ToTester(fileMove).FilePtr);
+        REQUIRE(temp2 == ToTester(file2).FilePtr);
     }
 
     TEST_CASE("ReOpening files")
     {
         CFileManager file0;
-        CFileManager file1("temp.txt", "wb");
+        CFileManager file1("temp1.txt", "wb");
 
         REQUIRE(file0.ReOpen("temp.txt", "wb") == true);
         REQUIRE(file0.IsOpen() == true);
 
-        REQUIRE(file1.ReOpen("temp.txt", "wb") == true);
+        REQUIRE(file1.ReOpen("temp1.txt", "wb") == true);
         REQUIRE(file1.IsOpen() == true);
 
         //Opening the same file should result in the same output
-        REQUIRE(file1.ReOpen("temp.txt", "wb") == true);
+        REQUIRE(file1.ReOpen("temp1.txt", "wb") == true);
         REQUIRE(file1.IsOpen() == true);
 
         //This should fail if the other opening succeeded
         //  due to the x in the argument list
-        REQUIRE(file1.ReOpen("temp.txt", "wbx") == false);
+        REQUIRE(file1.ReOpen("temp1.txt", "wbx") == false);
         REQUIRE(file1.IsOpen() == false);
     }
 
     TEST_CASE("IsOpen and IsClosed testing")
     {
         CFileManager file;
-        ToTester(file).File = nullptr;
+        ToTester(file).FilePtr = nullptr;
         REQUIRE(file.IsOpen() == false);
         REQUIRE(file.IsClosed() == true);
 
