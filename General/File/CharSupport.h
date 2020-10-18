@@ -4,28 +4,27 @@
 #include "OsSupport.h"
 #include "CompilerSupport.h"
 
+template<typename OsCharTpeArg>
 struct CharTypeSupport
 {
-        using OsCharType    = OsCharType;
+        using OsCharType    = OsCharTpeArg;
 
     public:
-        #ifdef FILE_OS_INTERACTON_UTF_WIDE
-        static constexpr int EndOfFile = WEOF;
-        #else
-        static constexpr int EndOfFile = EOF;
-        #endif
+        static constexpr bool IsUtf8{std::is_same_v<OsCharType, char8>};
+        static constexpr bool IsUtfW{std::is_same_v<OsCharType, charW>};
+        static constexpr bool IsValid{IsUtf8 || IsUtfW};
 
+        static_assert (IsValid, "Invalid OsCharType; Only char and wchar_t allowed; (No posix function takes other char types)");
+
+        static constexpr auto EndOfFile = IsUtf8 ? EOF : WEOF;
 
     public:
         static auto fopen(const OsCharType * fileName, const OsCharType * arguments) noexcept
         {
-            #ifdef FILE_OS_INTERACTON_UTF_WIDE
-            return CompilerSpecific::wfopen(fileName, arguments);
-
-            #else
-            return CompilerSpecific::fopen(fileName, arguments);
-
-            #endif
+            if constexpr (IsUtf8)
+                    return CompilerSpecific::fopen(fileName, arguments);
+            else
+                return CompilerSpecific::wfopen(fileName, arguments);
         }
         static inline auto fclose(FILE POINTER ptr) noexcept
         {
@@ -33,97 +32,70 @@ struct CharTypeSupport
         }
         static inline auto fgetc(FILE POINTER ptr) noexcept
         {
-            #ifdef FILE_OS_INTERACTON_UTF_WIDE
-            return ::fgetwc(ptr);
-
-            #else
-            return ::fgetc(ptr);
-
-            #endif
+            if constexpr (IsUtf8)
+                    return ::fgetc(ptr);
+            else
+                return ::fgetwc(ptr);
         }
         static inline auto fgets(OsCharType * str, int numChars, FILE POINTER ptr)  noexcept
         {
-            #ifdef FILE_OS_INTERACTON_UTF_WIDE
-            return ::fgetws(str, numChars, ptr);
-
-            #else
-            return ::fgets(str, numChars, ptr);
-
-            #endif
+            if constexpr (IsUtf8)
+                    return ::fgets(str, numChars, ptr);
+            else
+                return ::fgetws(str, numChars, ptr);
         }
         static inline auto fputc(OsCharType c, FILE POINTER ptr) noexcept
         {
-            #ifdef FILE_OS_INTERACTON_UTF_WIDE
-            return ::fputwc(c, ptr);
-
-            #else
-            return ::fputc(static_cast<int>(c), ptr);
-
-            #endif
+            if constexpr (IsUtf8)
+                    return ::fputc(static_cast<int>(c), ptr);
+            else
+                return ::fputwc(c, ptr);
         }
         static inline auto fputs(const OsCharType * str, FILE POINTER ptr)  noexcept
         {
-            #ifdef FILE_OS_INTERACTON_UTF_WIDE
-            return ::fputws(str, ptr);
-
-            #else
-            return ::fputs(str, ptr);
-
-            #endif
+            if constexpr (IsUtf8)
+                    return ::fputs(str, ptr);
+            else
+                return ::fputws(str, ptr);
         }
 
     public:
         static inline auto tmpnam_s(OsCharType * dirName, size_t sizeInChars) noexcept
         {
-            #ifdef FILE_OS_INTERACTON_UTF_WIDE
-            return ::_wtmpnam_s(dirName, sizeInChars);
-
-            #else
-            return ::tmpnam_s(dirName, sizeInChars);
-
-            #endif
+            if constexpr (IsUtf8)
+                    return ::tmpnam_s(dirName, sizeInChars);
+            else
+                return ::_wtmpnam_s(dirName, sizeInChars);
         }
         static inline auto mkdir(const OsCharType * dirName) noexcept
         {
-            #ifdef FILE_OS_INTERACTON_UTF_WIDE
-            return ::_wmkdir(dirName);
-
-            #else
-            return ::_mkdir(dirName);
-
-            #endif
+            if constexpr (IsUtf8)
+                    return ::_mkdir(dirName);
+            else
+                return ::_wmkdir(dirName);
         }
         static inline auto rename(const OsCharType * oldName, const OsCharType * newName) noexcept
         {
-            #ifdef FILE_OS_INTERACTON_UTF_WIDE
-            return ::_wrename(oldName, newName);
-
-            #else
-            return ::rename(oldName, newName);
-
-            #endif
+            if constexpr (IsUtf8)
+                    return ::rename(oldName, newName);
+            else
+                return ::_wrename(oldName, newName);
         }
         static inline auto remove(const OsCharType * name) noexcept
         {
-            #ifdef FILE_OS_INTERACTON_UTF_WIDE
-            return ::_wremove(name);
-
-            #else
-            return ::remove(name);
-
-            #endif
+            if constexpr (IsUtf8)
+                    return ::remove(name);
+            else
+                return ::_wremove(name);
         }
 
     public:
         static inline auto _stat64(const OsCharType * fileName, struct _stat64 * stats) noexcept
         {
-            #ifdef FILE_OS_INTERACTON_UTF_WIDE
-            return ::_wstat64(fileName, stats);
-
-            #else
-
-            return ::_stat64(fileName, stats);
-            #endif
+            if constexpr (IsUtf8)
+                    return ::_stat64(fileName, stats);
+            else
+                return ::_wstat64(fileName, stats);
         }
 };
 

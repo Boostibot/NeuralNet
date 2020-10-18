@@ -136,17 +136,17 @@ namespace FileInternal
         else if constexpr(FileInternal::IsSameType<WideCharEquivalent, utf16>)
         {
             std::wstring_convert<std::codecvt_utf8<utf16>, utf16> cvt;
-            BasicString<utf16> utf16 = cvt.from_bytes(convertFrom.data());
+            BasicString<utf16> utf16Str = cvt.from_bytes(convertFrom.data());
 
-            FileInternal::CopyStringDataDisregardType<utf16>(utf16, returnStr);
+            FileInternal::CopyStringDataDisregardType<utf16>(utf16Str, returnStr);
             return returnStr;
         }
         else if constexpr(FileInternal::IsSameType<WideCharEquivalent, utf32>)
         {
             std::wstring_convert<std::codecvt_utf8<utf32>, utf32> cvt;
-            BasicString<utf32> utf32 = cvt.from_bytes(convertFrom.data());
+            BasicString<utf32> utf32Str = cvt.from_bytes(convertFrom.data());
 
-            FileInternal::CopyStringDataDisregardType<utf32>(utf32, returnStr);
+            FileInternal::CopyStringDataDisregardType<utf32>(utf32Str, returnStr);
             return returnStr;
         }
 
@@ -155,6 +155,7 @@ namespace FileInternal
 
 }
 
+//TODO - incorporate universal string argument
 template<typename CharType>
 inline BasicString<utf8> ConverToUtf8(BasicStringView<CharType> convertFrom)
 {

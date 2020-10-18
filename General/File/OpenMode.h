@@ -12,6 +12,8 @@
 //Is in this struct to separate the declarations into multiple "namespace" structs
 //This holder is ment to be inherited into other classes using OpenMode to ensure
 // the fucntions are distributed to the correct namespace levels
+
+template<typename OsCharTpeArg>
 struct OpenModeHolder
 {
         //The OpenModeFlag should be directly below the class which inherits this type (File)
@@ -59,7 +61,7 @@ struct OpenModeHolder
             //***************************************//
             //This is to not bother the user with the count option
         };
-    private:
+    protected:
         static constexpr int OpenModeOptionsCount = 17;
 
     public:
@@ -76,7 +78,7 @@ struct OpenModeHolder
     public:
         struct OpenMode
         {
-            private:
+            protected:
                 enum class OpenModeVality : OpenModeFlagUnderlyingType
                 {
                     Valid,              //Arguemnts are valid
@@ -85,7 +87,7 @@ struct OpenModeHolder
                                         // ie. all combinations containing Append && MustExist
                 };
 
-            private:
+            protected:
                 static constexpr u32 OpenModeMaxChars = 26;
                 static constexpr CFileOpenMode DefaultOpenMode = CFileOpenMode::ReadWrite;
                 using OpenModeString = MetaPrograming::ConstexprCStr<OpenModeMaxChars>;
@@ -104,11 +106,13 @@ struct OpenModeHolder
                 };
 
             public:
-                using CharType = char;
-                using StringView = std::string_view;
                 using ThisType = OpenMode;
 
-            private:
+            public:
+                using CharType = OsCharTpeArg;
+                using StringView = std::basic_string_view<CharType>;
+
+            protected:
                 OpenModeString OpenModeStr;
                 CFileOpenMode COpenMode;
                 OpenModeVality Validity;
@@ -127,8 +131,8 @@ struct OpenModeHolder
                     AssignCOpenMode(openMode, OpenModeVality::Valid);
                 }
 
-            private:
-                //Is private becaus ethe user should have no direct control over validity
+            protected:
+                //Is protected because the user should have no direct control over validity
                 constexpr OpenMode(OpenModeVality validity) noexcept
                     : OpenModeStr(), COpenMode(), Validity(validity)
                 {
@@ -202,18 +206,18 @@ struct OpenModeHolder
                     return NOT(this->Validity == OpenModeVality::Unsupported);
                 }
 
-                inline StringView GetStr() const noexcept
+                inline constexpr StringView GetStr() const noexcept
                 {
-                    return std::string_view(this->OpenModeStr.String, this->OpenModeStr.Size);
+                    return StringView(this->OpenModeStr.String, this->OpenModeStr.Size);
                 }
-                inline operator StringView() const noexcept
+                inline constexpr operator StringView() const noexcept
                 {
                     return this->GetStr();
                 }
 
 
                 //Helpers
-            private:
+            protected:
                 template<MetaPrograming::Indetifier identifier>
                 static constexpr bool IsOpenModePresentInternal(OpenModeFlag) noexcept {return false;}
 
@@ -226,7 +230,7 @@ struct OpenModeHolder
                         return ThisType::IsOpenModePresentInternal<MetaPrograming::Indetifier::Indentify, OpenModeTypes...>(lookingForMode, openModes...);
                 }
 
-            private:
+            protected:
                 template<typename ... OpenModeTypes>
                 static constexpr bool IsOpenModePresent(OpenModeFlag lookingForMode, OpenModeTypes ... openModes) noexcept
                 {
@@ -324,7 +328,7 @@ struct OpenModeHolder
                 {
                     OpenMode additionalMode;
                     //For some reason the constructor declaring validty cannot be used here
-                    //"Cannot acccess private constrcor of class"
+                    //"Cannot acccess protected constrcor of class"
                     additionalMode.Validity = OpenModeVality::Valid;
                     if(presenceArray[OpenModeFlag::Text])                       additionalMode.OpenModeStr += "t";
                     if(presenceArray[OpenModeFlag::Binary])                     additionalMode.OpenModeStr += "b";
@@ -347,13 +351,13 @@ struct OpenModeHolder
         template<typename ... OpenModeTypes>
         static constexpr OpenMode GetOpenMode(OpenModeTypes ... openModes)
         {
-            return OpenMode::GetOpenMode<OpenModeTypes...>(openModes...);
+            return OpenMode::template GetOpenMode<OpenModeTypes...>(openModes...);
         }
 
         template<OpenModeFlag ... openModeArguments>
         static inline constexpr OpenMode GetOpenMode()
         {
-            return OpenMode::GetOpenMode<openModeArguments...>();
+            return OpenMode::template GetOpenMode<openModeArguments...>();
         }
 
 };

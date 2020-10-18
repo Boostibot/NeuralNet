@@ -123,6 +123,7 @@ namespace CFileManagerTesting
         REQUIRE(temp2 == ToTester(file2).FilePtr);
     }
 
+    /*
     TEST_CASE("ReOpening files")
     {
         CFileManager file0;
@@ -168,6 +169,7 @@ namespace CFileManagerTesting
         REQUIRE(file.Close() == true);
         REQUIRE(file.IsOpen() == false);
     }
+    */
 }
 
 #endif // CFILEMANAGER_H

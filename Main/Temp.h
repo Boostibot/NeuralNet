@@ -3,8 +3,7 @@
 
 #include <iostream>
 
-
-
+/*
 void* operator new (size_t size)
 {
     std::cout << "Allocation: " << size << std::endl;
@@ -20,7 +19,7 @@ void operator delete(void* ptr, size_t size)
     std::cout << "Deleting: " << size << std::endl;
     free(ptr);
 }
-
+*/
 
 #include "Libraries/Fmt/fmt/core.h"
 #include "Libraries/Fmt/fmt/os.h"
@@ -402,44 +401,14 @@ void PassingSupportTesting()
     PassingSupport::Function3(data);
 }
 
-using prevdefined = int;
-
-#include "UnbufferedFile.h"
 #include "General/StaticLog/SpeedTests.h"
+#include "General/File/File.h"
 
 //
-// #define OS_NATIVE_UNICODE_SUPPORT utf8 / utf16 // utf32
-// #define INTERNAL_OS_SUPPORT_     -1
-// #define INTERNAL_OS_SUPPORT_utf8  1
-// #define INTERNAL_OS_SUPPORT_utf16 2
-// #define INTERNAL_OS_SUPPORT_utf32 3
-
-// #define INTERNAL_OS_SUPPORT CONCAT(OS_NATIVE_, OS_NATIVE_UNICODE_SUPPORT)
-
-#include "General/File/UniversalString.h"
-
 void WideCharTesting()
 {
-    std::string str = "hello";
-    std::wstring wstr = L"hello";
-    //std::string REF strRef = str;
-    //std::string_view strView = "hello";
 
-    int result;
-    result = fooFunctor(str);
-    result = fooFunctor(wstr);
-    result = fooFunctor("hello");
-    result = fooFunctor(U"hello");
-    (void)result;
-
-    //foo("hello");
-    //foo(str);
-    //foo(wstr);
-    //foo(strRef);
-    //foo(strView);
-    //foo(1);
 }
-
 
 void RunTemp()
 {

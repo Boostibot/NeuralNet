@@ -3,7 +3,7 @@
 
 #include "General/Common/Common.h"
 
-//#define FILE_OS_INTERACTON_UTF_WIDE
+#define FILE_OS_INTERACTON_UTF_WIDE
 //#define FILE_OS_INTERACTON_UTF_8
 //#define FILE_OS_INTERACTON_UTF_16
 //#define FILE_OS_INTERACTON_UTF_32

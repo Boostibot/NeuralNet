@@ -10,16 +10,34 @@
 
 //A full wrapper class which should implemnt a wrapper function for all c FILE functions
 //It should also ease the use of c FILE and be the base for more specific classes
-class UnsafeFile : public CFileManager
+template<typename OsCharTypeArg>
+class BasicUnsafeFile : public BasicCFileManager<OsCharTypeArg>
 {
     protected:
-        using ThisType          = UnsafeFile;
-        using CFileManager      = CFileManager;
+        using ThisType          = BasicUnsafeFile;
+        using CFileManager      = BasicCFileManager<OsCharTypeArg>;
+        using CharSupport       = typename CFileManager::CharSupport;
+        using OpenModeHolder    = typename CFileManager::OpenModeHolder;
 
     public:
         using SizeType          = size_t;
         using FileSizeType      = decltype (::_stat64::st_size);
         using PosType           = CompilerSpecific::OffsetType;
+
+        using OpenMode          = typename OpenModeHolder::OpenMode;
+
+        template<typename CharType>
+        using String        = typename CFileManager:: template String<CharType>;
+        template<typename CharType>
+        using StringView    = typename CFileManager:: template StringView<CharType>;
+        template<typename CharType>
+        using CString       = typename CFileManager:: template CString<CharType>;
+
+        using OsCharType    = typename CFileManager::OsCharType;
+        using OsString      = typename CFileManager::OsString;
+        using OsStringView  = typename CFileManager::OsStringView;
+        using OsCString     = typename CFileManager::OsCString;
+
 
     public:
         static constexpr int EndOfFile              = CharSupport::EndOfFile;
@@ -76,28 +94,28 @@ class UnsafeFile : public CFileManager
         };
 
         //Should the user not have acces to the file pointer?
-        //After all this class is called UnsafeFile
+        //After all this class is called BasicUnsafeFile
     protected:
         using CFileManager::FilePtr;
 
     public:
-        UnsafeFile() = default;
-        UnsafeFile(const ThisType REF) = delete;
-        UnsafeFile(ThisType RVALUE_REF) = default;
+        BasicUnsafeFile() = default;
+        BasicUnsafeFile(const ThisType REF) = delete;
+        BasicUnsafeFile(ThisType RVALUE_REF) = default;
         ThisType REF operator=(const ThisType REF) = delete;
         ThisType REF operator=(ThisType RVALUE_REF) = default;
 
     public:
-        inline UnsafeFile(const OsStringView path, const OsStringView openMode) noexcept : CFileManager(path, openMode)
+        inline BasicUnsafeFile(const OsStringView path, const OsStringView openMode) noexcept : CFileManager(path, openMode)
         {}
         template<typename ... OpenModeTypes,
                  std::enable_if_t<MetaPrograming::AreTypesSameTo<typename CFileManager::OpenModeFlag, OpenModeTypes...>::value, int> = 0>
-        UnsafeFile(const OsStringView path, OpenModeTypes ... openModes) noexcept : CFileManager(path, openModes...)
+        BasicUnsafeFile(const OsStringView path, OpenModeTypes ... openModes) noexcept : CFileManager(path, openModes...)
         {}
 
 
     public:
-        ~UnsafeFile() = default;
+        ~BasicUnsafeFile() = default;
 
 
     public:
@@ -130,7 +148,7 @@ class UnsafeFile : public CFileManager
 
         //struct PosInFileition
         //{
-        //        friend UnsafeFile;
+        //        friend BasicUnsafeFile;
         //    private:
         //        [[maybe_unused]] fpos_t InnerPos;
         //};
@@ -263,13 +281,12 @@ class UnsafeFile : public CFileManager
 
     public:
         template <typename T,
-                  std::enable_if_t<IsSupportedString<T>::value, int> = 0>
+                  std::enable_if_t<IsAnyString_v<T>, int> = 0>
         [[nodiscard]] inline bool WriteString(T RVALUE_REF str)
         {
-            //using CharT = typename GetStringCharType<T>::type;
-            (void)str;
-            return true;
-            //return WriteStringImpl<CharT>(str);
+            using CharT = GetAnyStringType_t<T>;
+
+            return WriteStringImpl<CharT>(str);
         }
         //Formated IO is not supported since the formating is slow
         // and there are faster and more robust ways of formating
@@ -357,7 +374,14 @@ class UnsafeFile : public CFileManager
         {
             return ThisType::GetFileStatics(stats, this->GetFileDescriptor());
         }
+        static bool GetFileSize(const OsStringView filename) noexcept
+        {
+            Stats stats;
+            if(NOT ThisType::GetFileStatics(stats, filename))
+                return 0;
 
+            return stats.Size();
+        }
         FileSizeType GetFileSize() const noexcept
         {
             Stats stats;
@@ -374,6 +398,7 @@ class UnsafeFile : public CFileManager
         inline static FileDescriptor GetErrorFileDescriptor() noexcept {return  static_cast<FileDescriptor>(-1);}
 
 };
+
 
 namespace
 {

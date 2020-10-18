@@ -5,9 +5,18 @@
 #include "OpenMode.h"
 
 //Class responsible for safe management of the FILE pointer
-class CFileManager : public OpenModeHolder
+template<typename OsCharTypeArg>
+class BasicCFileManager : public OpenModeHolder<OsCharTypeArg>
 {
+
+    protected:
+        using ThisType      = BasicCFileManager;
+        using CharSupport   = CharTypeSupport<OsCharTypeArg>;
+        using OpenModeHolder = OpenModeHolder<OsCharTypeArg>;
+
     public:
+        using OpenMode = typename OpenModeHolder::OpenMode;
+
         template<typename CharType>
         using String        = std::basic_string<CharType>;
         template<typename CharType>
@@ -15,14 +24,12 @@ class CFileManager : public OpenModeHolder
         template<typename CharType>
         using CString       = CharType *;
 
-        using OsCharType    = ::OsCharType;
+        using OsCharType    = OsCharTypeArg;
         using OsString      = String<OsCharType>;
         using OsStringView  = StringView<OsCharType>;
         using OsCString     = CString<OsCharType>;
 
-    protected:
-        using ThisType      = CFileManager;
-        using CharSupport   = CharTypeSupport;
+
 
         //static_assert (CharSupport::Is8bit OR CharSupport::Is16bit OR CharSupport::Is32bit OR CharSupport::IsWide, "CharTypeDependendt : Unsupported char type; only 8bit, 16bit and 32bit characters allowed");
 
@@ -30,23 +37,23 @@ class CFileManager : public OpenModeHolder
         FILE POINTER FilePtr;
 
     public:
-        CFileManager() noexcept : FilePtr(nullptr) {}
+        BasicCFileManager() noexcept : FilePtr(nullptr) {}
 
-        CFileManager(const OsStringView path, const OsStringView openMode) noexcept : FilePtr(nullptr)
+        BasicCFileManager(const OsStringView path, const OsStringView openMode) noexcept : FilePtr(nullptr)
         {
             OpenNew(path, openMode);
         }
 
         template<typename ... OpenModeTypes,
-                 std::enable_if_t<MetaPrograming::AreTypesSameTo<OpenModeFlag, OpenModeTypes...>::value, int> = 0>
-        CFileManager(const OsStringView path, OpenModeTypes ... openModes) noexcept : FilePtr(nullptr)
+                 std::enable_if_t<MetaPrograming::AreTypesSameTo<typename OpenModeHolder::OpenModeFlag, OpenModeTypes...>::value, int> = 0>
+        BasicCFileManager(const OsStringView path, OpenModeTypes ... openModes) noexcept : FilePtr(nullptr)
         {
             OpenNew(path, openModes...);
         }
 
     public:
-        CFileManager(const ThisType REF) = delete;
-        CFileManager(ThisType RVALUE_REF other) noexcept
+        BasicCFileManager(const ThisType REF) = delete;
+        BasicCFileManager(ThisType RVALUE_REF other) noexcept
         {
             this->FilePtr = other.FilePtr;
             other.FilePtr = nullptr;
@@ -57,7 +64,7 @@ class CFileManager : public OpenModeHolder
         ThisType REF operator=(ThisType RVALUE_REF other) noexcept
         {
             //TODO - test speed and compiled code
-            CFileManager temp(std::move(other));
+            BasicCFileManager temp(std::move(other));
 
             this->Swap(temp);
 
@@ -82,7 +89,7 @@ class CFileManager : public OpenModeHolder
         }
 
     public:
-        ~CFileManager() noexcept
+        ~BasicCFileManager() noexcept
         {
             Close();
         }
@@ -127,10 +134,10 @@ class CFileManager : public OpenModeHolder
         }
 
         template<typename ... OpenModeTypes,
-                 std::enable_if_t<MetaPrograming::AreTypesSameTo<OpenModeFlag, OpenModeTypes...>::value, int> = 0>
+                 std::enable_if_t<MetaPrograming::AreTypesSameTo<typename OpenModeHolder::OpenModeFlag, OpenModeTypes...>::value, int> = 0>
         inline bool OpenNew(const OsStringView path, OpenModeTypes ... openModes)
         {
-            return OpenNew(path, OpenMode::GetOpenMode(openModes...));
+            return OpenNew(path, OpenModeHolder::OpenMode::GetOpenMode(openModes...));
         }
 
     public:
@@ -160,12 +167,11 @@ class CFileManager : public OpenModeHolder
 
 };
 
-
 namespace std
 {
     //Reimplementation of the swap inside std namespsace
-    template <>
-    void swap (CFileManager REF file1, CFileManager REF file2) noexcept
+    template <typename OsCharT>
+    void swap (BasicCFileManager<OsCharT> REF file1, BasicCFileManager<OsCharT> REF file2) noexcept
     {
         file1.Swap(file2);
     }

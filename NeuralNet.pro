@@ -31,10 +31,12 @@ HEADERS += \
     General/File/CharSupport.h \
     General/File/CompilerSupport.h \
     General/File/File.h \
+    General/File/LegacyUniversalString.h \
     General/File/OpenMode.h \
     General/File/OsSupport.h \
     General/File/UniversalString.h \
     General/File/UnsafeFile.h \
+    General/File/UseExamples.h \
     General/File/UtfConversion.h \
     \
     General/ConstexprNumConversion/ConstexprNumConversion.h \

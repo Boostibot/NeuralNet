@@ -3,17 +3,16 @@
 
 #include "UnsafeFile.h"
 
-//TODO - decide if inline is needed
-class File : public UnsafeFile
+template<typename OsCharTypeArg>
+class BasicFile : public BasicUnsafeFile<OsCharTypeArg>
 {
     private:
-        using ThisType          = File;
+        using ThisType          = BasicFile;
 
     public:
-        using UnsafeFile        = UnsafeFile;
-        using CFileManager      = CFileManager;
+        using UnsafeFile        = BasicUnsafeFile<OsCharTypeArg>;
+        using CFileManager      = typename UnsafeFile::CFileManager;
 
-        /*
     public:
         using SizeType          = typename UnsafeFile::SizeType;
         using FileSizeType      = typename UnsafeFile::FileSizeType;
@@ -22,24 +21,41 @@ class File : public UnsafeFile
         using BufferingCode     = typename UnsafeFile::BufferingCode;
         using FileDescriptor    = typename UnsafeFile::FileDescriptor;
         using Stats             = typename UnsafeFile::Stats;
-        */
+
+        using SizeType          = size_t;
+        using FileSizeType      = decltype (::_stat64::st_size);
+        using PosType           = CompilerSpecific::OffsetType;
+
+        using OpenMode          = typename UnsafeFile::OpenMode;
+
+        template<typename CharType>
+        using String        = typename CFileManager:: template String<CharType>;
+        template<typename CharType>
+        using StringView    = typename CFileManager:: template StringView<CharType>;
+        template<typename CharType>
+        using CString       = typename CFileManager:: template CString<CharType>;
+
+        using OsCharType    = typename CFileManager::OsCharType;
+        using OsString      = typename CFileManager::OsString;
+        using OsStringView  = typename CFileManager::OsStringView;
+        using OsCString     = typename CFileManager::OsCString;
 
     private:
         using UnsafeFile::FilePtr;
 
     public:
-        File() = default;
-        File(const ThisType REF) = delete;
-        File(ThisType RVALUE_REF) = default;
+        BasicFile() = default;
+        BasicFile(const ThisType REF) = delete;
+        BasicFile(ThisType RVALUE_REF) = default;
         ThisType REF operator=(const ThisType REF) = delete;
         ThisType REF operator=(ThisType RVALUE_REF) = default;
 
     public:
-        inline File(const OsStringView path, const OsStringView openMode) : UnsafeFile(path, openMode)
+        inline BasicFile(const OsStringView path, const OsStringView openMode) : UnsafeFile(path, openMode)
         {}
         template<typename ... OpenModeTypes,
                  std::enable_if_t<MetaPrograming::AreTypesSameTo<typename UnsafeFile::CFileManager::OpenModeFlag, OpenModeTypes...>::value, int> = 0>
-        inline File(const OsStringView path, OpenModeTypes ... openModes) noexcept : UnsafeFile(path, openModes...)
+        inline BasicFile(const OsStringView path, OpenModeTypes ... openModes) noexcept : UnsafeFile(path, openModes...)
         {}
 
 
@@ -50,12 +66,12 @@ class File : public UnsafeFile
         }
         inline const UnsafeFile REF GetUnsafeFile() const noexcept
         {
-            return static_cast<const UnsafeFile  REF>(PTR_VAL(this));
+            return static_cast<const UnsafeFile REF>(PTR_VAL(this));
         }
 
 
     public:
-        inline bool WasLastErrorEndOfFile() const noexcept
+         bool WasLastErrorEndOfFile() const noexcept
         {
             if(this->IsClosed())
                 return false;
@@ -65,7 +81,7 @@ class File : public UnsafeFile
 
 
     public:
-        inline PosType GetPosInFile() noexcept
+        PosType GetPosInFile() noexcept
         {
             if(this->IsClosed())
                 return static_cast<PosType>(0);
@@ -73,28 +89,28 @@ class File : public UnsafeFile
             return this->GetUnsafeFile().GetPosInFile();
         }
 
-        inline bool SetPosInFile(PosType pos, OriginPosition from = OriginPosition::Beggining) noexcept
+        bool SetPosInFile(PosType pos, OriginPosition from = OriginPosition::Beggining) noexcept
         {
             if(this->IsClosed())
                 return false;
 
             return this->GetUnsafeFile().SetPosInFile(pos, from);
         }
-        inline void MoveToBegging() noexcept
+        void MoveToBegging() noexcept
         {
             if(this->IsClosed())
                 return;
 
             this->GetUnsafeFile().MoveToBegging();
         }
-        inline void MoveToEnd() noexcept
+        void MoveToEnd() noexcept
         {
             if(this->IsClosed())
                 return;
 
             return this->GetUnsafeFile().MoveToEnd();
         }
-        inline bool MoveBy(PosType by) noexcept
+        bool MoveBy(PosType by) noexcept
         {
             if(this->IsClosed())
                 return false;
@@ -102,44 +118,9 @@ class File : public UnsafeFile
             return this->GetUnsafeFile().MoveBy(by);
         }
 
-
     public:
         template<typename PointerType>
-        [[nodiscard]] inline bool Write(PointerType POINTER ptrToData, SizeType count) noexcept
-        {
-            if(this->IsClosed())
-                return false;
-
-            return this->GetUnsafeFile().Write(ptrToData, count);
-        }
-        template<typename PointerType>
-        [[nodiscard]] inline SizeType WriteAndCount(PointerType POINTER ptrToData, SizeType count) noexcept
-        {
-            if(this->IsClosed())
-                return false;
-
-            return this->GetUnsafeFile().WriteAndCount(ptrToData, count);
-        }
-        template<typename ObjectType>
-        [[nodiscard]] inline bool WriteObject(ObjectType RVALUE_REF object) noexcept
-        {
-            if(this->IsClosed())
-                return false;
-
-            return this->GetUnsafeFile().WriteObject(object);
-        }
-        [[nodiscard]] inline bool WriteString(const OsStringView str) noexcept
-        {
-            if(this->IsClosed())
-                return false;
-
-            return this->GetUnsafeFile().WriteString(str);
-        }
-
-
-    public:
-        template<typename PointerType>
-        [[nodiscard]] inline bool Read(PointerType POINTER ptrToBuffer, SizeType count) noexcept
+        [[nodiscard]] bool Read(PointerType POINTER ptrToBuffer, SizeType count) noexcept
         {
             if(this->IsClosed())
                 return false;
@@ -148,14 +129,25 @@ class File : public UnsafeFile
         }
 
         template<typename PointerType>
-        [[nodiscard]] inline SizeType ReadAndCount(PointerType POINTER ptrToBuffer, SizeType count) noexcept
+        [[nodiscard]] SizeType ReadAndCount(PointerType POINTER ptrToBuffer, SizeType count) noexcept
         {
             if(this->IsClosed())
                 return false;
 
             return this->GetUnsafeFile().ReadAndCount(ptrToBuffer, count);
         }
-        [[nodiscard]] inline bool ReadString(OsString REF to, u32 lenght) noexcept
+
+        template<typename CharT>
+        [[nodiscard]] bool ReadString(OsString REF to) noexcept
+        {
+            if(this->IsClosed())
+                return false;
+
+            return this->GetUnsafeFile().ReadString(to);
+        }
+
+        template<typename CharT>
+        [[nodiscard]] bool ReadString(OsString REF to, const SizeType lenght) noexcept
         {
             if(this->IsClosed())
                 return false;
@@ -163,9 +155,8 @@ class File : public UnsafeFile
             return this->GetUnsafeFile().ReadString(to, lenght);
         }
 
-    public:
         template<typename ObjectType>
-        [[nodiscard]] inline bool ReadObject(ObjectType RVALUE_REF object) noexcept
+        [[nodiscard]] bool ReadObject(ObjectType RVALUE_REF object) noexcept
         {
             if(this->IsClosed())
                 return false;
@@ -173,23 +164,59 @@ class File : public UnsafeFile
             return this->GetUnsafeFile().ReadObject(object);
         }
 
+    public:
+        template<typename PointerType>
+        [[nodiscard]] bool Write(PointerType POINTER ptrToData, SizeType count) noexcept
+        {
+            if(this->IsClosed())
+                return false;
+
+            return this->GetUnsafeFile().Write(ptrToData, count);
+        }
+        template<typename PointerType>
+        [[nodiscard]] SizeType WriteAndCount(PointerType POINTER ptrToData, SizeType count) noexcept
+        {
+            if(this->IsClosed())
+                return false;
+
+            return this->GetUnsafeFile().WriteAndCount(ptrToData, count);
+        }
+        template<typename ObjectType>
+        [[nodiscard]] bool WriteObject(ObjectType RVALUE_REF object) noexcept
+        {
+            if(this->IsClosed())
+                return false;
+
+            return this->GetUnsafeFile().WriteObject(object);
+        }
+
+        template <typename T,
+                  std::enable_if_t<IsAnyString_v<T>, int> = 0>
+        [[nodiscard]] bool WriteString(T RVALUE_REF str) noexcept
+        {
+            if(this->IsClosed())
+                return false;
+
+            return this->GetUnsafeFile().WriteString(std::forward<T>(str));
+        }
+
 
     public:
-        inline bool SetBuffer(void POINTER bufferPtr, SizeType bufferSize, BufferingCode mode) noexcept
+        bool SetBuffer(void POINTER bufferPtr, SizeType bufferSize, BufferingCode mode) noexcept
         {
             if(this->IsClosed())
                 return false;
 
             return this->GetUnsafeFile().SetBuffer(bufferPtr, bufferSize, mode);
         }
-        inline void Flush() noexcept
+        void Flush() noexcept
         {
             if(this->IsClosed())
                 return;
 
             return this->GetUnsafeFile().Flush();
         }
-        inline void SwitchBetweenReadAndWrite() noexcept
+        void SwitchBetweenReadAndWrite() noexcept
         {
             if(this->IsClosed())
                 return;
@@ -198,7 +225,7 @@ class File : public UnsafeFile
         }
 
     public:
-        inline FileDescriptor GetFileDescriptor() const noexcept
+        FileDescriptor GetFileDescriptor() const noexcept
         {
             if(this->IsClosed())
                 return UnsafeFile::GetErrorFileDescriptor();
@@ -206,7 +233,7 @@ class File : public UnsafeFile
             return this->GetUnsafeFile().GetFileDescriptor();
         }
 
-        inline bool GetFileStatics(Stats REF stats) const noexcept
+        bool GetFileStatics(Stats REF stats) const noexcept
         {
             if(this->IsClosed())
                 return false;
@@ -223,148 +250,8 @@ class File : public UnsafeFile
         }
 };
 
-
-/*
-void CFileUse()
-{
-    File::OsString path = "path.txt";
-    File::CFileManager manager;
-    File::UnsafeFile unsafe;
-    File file2;
-
-    bool status = true;
-
-    constexpr File::OpenMode openMode = File::GetOpenMode(File::OpenModeFlag::Write, File::OpenModeFlag::Text, File::OpenModeFlag::MustExist);
-    static_assert (openMode.IsValid(), "Invalid arguments");
-
-    file2.OpenNew("file.log", "wb");
-    file2.OpenNew("file.log", openMode);
-    file2.OpenNew("file.log", File::GetOpenMode<File::OpenModeFlag::Write, File::OpenModeFlag::MustExist>());
-    file2.OpenNew("file.log", File::OpenModeFlag::Write, File::OpenModeFlag::MustExist);
-
-    File file(path, "wb");
-
-    if(NOT file.IsOpen())
-        return;
-
-
-    std::string myStr = "My msg";
-    status = file.Write(myStr.data(), myStr.size());
-    status = file.WriteString("My msg");
-
-    if(NOT file.OpenNew("path", "wb"))
-        return;
-
-    status = file.Write(myStr.data(), myStr.size());
-    status = file.WriteString("My msg");
-
-    (void)status;
-}
-
-enum ReturnState
-{
-    Error,
-    Success
-};
-
-void UseString(std::string_view)
-{
-
-}
-
-template<typename T>
-void FuncSomething(T arg)
-{
-    static_assert (std::is_convertible<T, std::string_view>::value, "is not conevrtibe;");
-    UseString(arg);
-}
-
-
-ReturnState DoSomethingWithFile2(std::string fileName,
-                                 unsigned int max,
-                                 unsigned int min)
-{
-    FuncSomething(fileName);
-    unsigned int data;
-    File file;
-    File::PosType beforeReadPos;
-    File::OpenMode openMode = File::GetOpenMode(File::OpenModeFlag::Read,
-                                                File::OpenModeFlag::Write,
-                                                File::OpenModeFlag::Binary,
-                                                File::OpenModeFlag::MustExist);
-
-    file.OpenNew(fileName, openMode);
-
-    if(file.IsClosed())
-        return Error;
-
-    while(true)
-    {
-        beforeReadPos = file.GetPosInFile();
-
-        if(file.ReadObject(data) == false)
-            break;
-
-        if(data > max)
-        {
-            file.SetPosInFile(beforeReadPos);
-            if(file.WriteObject(max) == false)
-                break;
-        }
-        else if(data < min)
-        {
-            file.SetPosInFile(beforeReadPos);
-            if(file.WriteObject(min) == false)
-                break;
-        }
-    }
-
-    if(file.WasLastErrorEndOfFile())
-        return Success;
-    else
-        return Error;
-}
-
-bool DoSomethingWithCFile2(std::string fileName,
-                           unsigned int max,
-                           unsigned int min)
-{
-
-    unsigned int data;
-    FILE * file;
-
-    fopen_s(ADDRESS(file), fileName.data(), "r+b");
-
-    if(file == nullptr)
-        return Error;
-
-    while(true)
-    {
-        auto beforeReadPos = _ftelli64(file);
-
-        if(fread_s(ADDRESS(data), sizeof (unsigned int), sizeof (unsigned int), 1, file) != 1)
-            break;
-
-        if(data > max)
-        {
-            _fseeki64(file, beforeReadPos, SEEK_SET);
-            fwrite(ADDRESS(max), sizeof (unsigned int), 1, file);
-        }
-        else if(data < min)
-        {
-            _fseeki64(file, beforeReadPos, SEEK_SET);
-            fwrite(ADDRESS(min), sizeof (unsigned int), 1, file);
-        }
-    }
-
-    if(feof(file))
-        return Success;
-    else
-        return Error;
-}
-*/
-
-
-
+using CFileManager = BasicCFileManager<OsCharType>;
+using UnsafeFile = BasicUnsafeFile<OsCharType>;
+using File = BasicFile<OsCharType>;
 
 #endif // FILE_H
