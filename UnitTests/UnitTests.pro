@@ -15,8 +15,8 @@ HEADERS += \
         DynamicLog.h \
         File.h \
         StaticLog.h \
-        AllocatorFramework.h \
-        CFileManager.h
+        CFileManager.h \
+        UnsafeFile.h
 
 SOURCES += \
 

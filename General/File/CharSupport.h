@@ -1,7 +1,6 @@
 #ifndef CHARSUPPORT_H
 #define CHARSUPPORT_H
 
-#include "OsSupport.h"
 #include "CompilerSupport.h"
 
 template<typename OsCharTpeArg>

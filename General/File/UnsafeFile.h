@@ -38,6 +38,7 @@ class BasicUnsafeFile : public BasicCFileManager<OsCharTypeArg>
         using OsStringView  = typename CFileManager::OsStringView;
         using OsCString     = typename CFileManager::OsCString;
 
+        static_assert (CharSupport::IsValid, "Invalid OsCharType; Only char and wchar_t allowed; (No posix function takes other char types)");
 
     public:
         static constexpr int EndOfFile              = CharSupport::EndOfFile;
@@ -56,7 +57,7 @@ class BasicUnsafeFile : public BasicCFileManager<OsCharTypeArg>
 
         struct Stats
         {
-                using CStatType = struct ::_stat64;
+                using CStatType = struct _stat64;
                 CStatType CStats;
 
                 inline auto GroupIdOwningFile()         {return CStats.st_gid;}
@@ -77,7 +78,10 @@ class BasicUnsafeFile : public BasicCFileManager<OsCharTypeArg>
                 friend ThisType;
 
             protected:
-                [[maybe_unused]] InnerDescriptor Descriptor;
+                #if defined (_MSC_VER)
+                [[maybe_unused]]
+                #endif
+                InnerDescriptor Descriptor;
                 FileDescriptor(InnerDescriptor descriptor) noexcept : Descriptor(descriptor) {}
 
             public:
@@ -117,6 +121,15 @@ class BasicUnsafeFile : public BasicCFileManager<OsCharTypeArg>
     public:
         ~BasicUnsafeFile() = default;
 
+    public:
+        inline CFileManager REF GetCFileManager() noexcept
+        {
+            return static_cast<CFileManager REF>(PTR_VAL(this));
+        }
+        inline const CFileManager REF GetCFileManager() const noexcept
+        {
+            return static_cast<const CFileManager REF>(PTR_VAL(this));
+        }
 
     public:
         inline bool WasLastErrorEndOfFile() const noexcept
@@ -399,6 +412,8 @@ class BasicUnsafeFile : public BasicCFileManager<OsCharTypeArg>
 
 };
 
+using WUnsafeFile   = BasicUnsafeFile<charW>;
+using UnsafeFile    = BasicUnsafeFile<char8>;
 
 namespace
 {

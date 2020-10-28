@@ -1,5 +1,0 @@
-#ifndef ALLOCATORFRAMEWORK_H
-#define ALLOCATORFRAMEWORK_H
-
-#include "Catch2/Catch.hpp"
-#endif // ALLOCATORFRAMEWORK_H

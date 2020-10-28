@@ -29,9 +29,7 @@ class BasicCFileManager : public OpenModeHolder<OsCharTypeArg>
         using OsStringView  = StringView<OsCharType>;
         using OsCString     = CString<OsCharType>;
 
-
-
-        //static_assert (CharSupport::Is8bit OR CharSupport::Is16bit OR CharSupport::Is32bit OR CharSupport::IsWide, "CharTypeDependendt : Unsupported char type; only 8bit, 16bit and 32bit characters allowed");
+        static_assert (CharSupport::IsValid, "Invalid OsCharType; Only char and wchar_t allowed; (No posix function takes other char types)");
 
     public:
         FILE POINTER FilePtr;
@@ -63,7 +61,7 @@ class BasicCFileManager : public OpenModeHolder<OsCharTypeArg>
         ThisType REF operator=(const ThisType REF) = delete;
         ThisType REF operator=(ThisType RVALUE_REF other) noexcept
         {
-            //TODO - test speed and compiled code
+            //TODO - test speed and compare compiled code
             BasicCFileManager temp(std::move(other));
 
             this->Swap(temp);
@@ -176,5 +174,8 @@ namespace std
         file1.Swap(file2);
     }
 }
+
+using CFileManager  = BasicCFileManager<char8>;
+using WCFileManager = BasicCFileManager<charW>;
 
 #endif // CFILEMANAGER_H

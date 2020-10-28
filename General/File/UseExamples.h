@@ -5,26 +5,26 @@
 #include "UtfConversion.h"
 
 
-using MFile = BasicFile<utf8>;
+using File = BasicFile<utf8>;
 
 void CFileUse()
 {
-    MFile::OsString path = "path.txt";
-    MFile::CFileManager manager;
-    MFile::UnsafeFile unsafe;
-    MFile file2;
+    File::OsString path = "path.txt";
+    File::CFileManager manager;
+    File::UnsafeFile unsafe;
+    File file2;
 
     bool status = true;
 
-    constexpr MFile::OpenMode openMode = MFile::GetOpenMode(MFile::OpenModeFlag::Write, MFile::OpenModeFlag::Text, MFile::OpenModeFlag::MustExist);
+    constexpr File::OpenMode openMode = File::GetOpenMode(File::OpenModeFlag::Write, File::OpenModeFlag::Text, File::OpenModeFlag::MustExist);
     static_assert (openMode.IsValid(), "Invalid arguments");
 
     file2.OpenNew("file.log", "wb");
     file2.OpenNew("file.log", openMode);
-    file2.OpenNew("file.log", MFile::GetOpenMode<MFile::OpenModeFlag::Write, MFile::OpenModeFlag::MustExist>());
-    file2.OpenNew("file.log", MFile::OpenModeFlag::Write, MFile::OpenModeFlag::MustExist);
+    file2.OpenNew("file.log", File::GetOpenMode<File::OpenModeFlag::Write, File::OpenModeFlag::MustExist>());
+    file2.OpenNew("file.log", File::OpenModeFlag::Write, File::OpenModeFlag::MustExist);
 
-    MFile file(path, "wb");
+    File file(path, "wb");
 
     if(NOT file.IsOpen())
         return;
@@ -54,13 +54,13 @@ void CFileUse()
 
 void ProcessChunk(byte[], size_t) {}
 
-bool ReadFileByChunks(MFile::OsStringView path) noexcept
+bool ReadFileByChunks(File::OsStringView path) noexcept
 {
     constexpr size_t chunkSize = 1024;
-    constexpr MFile::OpenMode openMode = MFile::GetOpenMode(MFile::OpenModeFlag::Read, MFile::OpenModeFlag::Binary, MFile::OpenModeFlag::MustExist);
+    constexpr File::OpenMode openMode = File::GetOpenMode(File::OpenModeFlag::Read, File::OpenModeFlag::Binary, File::OpenModeFlag::MustExist);
     static_assert (openMode.IsValid(), "Invalid arguments");
 
-    MFile file;
+    File file;
     byte chunk[chunkSize];
 
     file.OpenNew(path, openMode);
@@ -74,7 +74,7 @@ bool ReadFileByChunks(MFile::OsStringView path) noexcept
         return false;
 }
 
-void UpdateProgress(MFile::PosType current, MFile::PosType max)
+void UpdateProgress(File::PosType current, File::PosType max)
 {
     const double percentage = static_cast<double>(max) / static_cast<double>(current);
     (void)percentage;
@@ -82,13 +82,13 @@ void UpdateProgress(MFile::PosType current, MFile::PosType max)
 
 //Note that this function can be declared noexcept since all
 // functions in the File (BasicFile<>) class are noexcept
-bool ReadFileWithProgress(MFile::OsStringView path) noexcept
+bool ReadFileWithProgress(File::OsStringView path) noexcept
 {
 
     constexpr size_t chunkSize = 1024;
 
     //We create OpenMode with the desired flags
-    constexpr MFile::OpenMode openMode(MFile::OpenModeFlag::Read, MFile::OpenModeFlag::Binary, MFile::OpenModeFlag::MustExist);
+    constexpr File::OpenMode openMode(File::OpenModeFlag::Read, File::OpenModeFlag::Binary, File::OpenModeFlag::MustExist);
     //We can check at compile time if the arguments are valid
     //(ie. if it does not contain any errors such having both MustExist and MustNotExist flags)
     static_assert (openMode.IsValid(), "Invalid arguments");
@@ -97,7 +97,7 @@ bool ReadFileWithProgress(MFile::OsStringView path) noexcept
     // (this happens every time both MustExist and Append flags are present)
     static_assert (openMode.IsSupported(), "Unsupported arguments");
 
-    MFile file;
+    File file;
     byte chunk[chunkSize];
 
     //Open a new file given the provided (relative) path
@@ -113,7 +113,7 @@ bool ReadFileWithProgress(MFile::OsStringView path) noexcept
 
     //We get the maximum position by moving to end and getting it
     file.MoveToEnd();
-    const MFile::PosType maxPos = file.GetPosInFile();
+    const File::PosType maxPos = file.GetPosInFile();
     //We restore the pos to the beggining afterwards
     file.MoveToBegging();
 
@@ -148,10 +148,10 @@ bool ReadFileWithProgress(MFile::OsStringView path) noexcept
         return false;
 }
 
-bool ReadFileFastest(MFile::OsStringView path) noexcept
+bool ReadFileFastest(File::OsStringView path) noexcept
 {
     constexpr size_t chunkSize = 4096;
-    constexpr MFile::OpenMode openMode(MFile::OpenModeFlag::Read, MFile::OpenModeFlag::Binary, MFile::OpenModeFlag::MustExist);
+    constexpr File::OpenMode openMode(File::OpenModeFlag::Read, File::OpenModeFlag::Binary, File::OpenModeFlag::MustExist);
     static_assert (openMode.IsValid(), "Invalid arguments");
 
     //We use UnsafeFile instead of File
@@ -161,7 +161,7 @@ bool ReadFileFastest(MFile::OsStringView path) noexcept
     // (ie. using most of the function on unitialised
     //   will cause a SEGFAULT)
 
-    MFile::UnsafeFile file;
+    File::UnsafeFile file;
     byte chunk[chunkSize];
 
     //We need to check if the file was opened
@@ -175,7 +175,7 @@ bool ReadFileFastest(MFile::OsStringView path) noexcept
 
     //We set the buffering to None
     // (in this case the first two parameters dont matter)
-    file.SetBuffer(nullptr, 0, MFile::BufferingCode::None);
+    file.SetBuffer(nullptr, 0, File::BufferingCode::None);
 
     //We read the file normally and process the data
     while(file.Read(chunk, chunkSize))
@@ -187,14 +187,14 @@ bool ReadFileFastest(MFile::OsStringView path) noexcept
     // only in single line
 }
 
-bool ReadFileBackwards(MFile::OsStringView path) noexcept
+bool ReadFileBackwards(File::OsStringView path) noexcept
 {
     constexpr size_t chunkSize = 4096;
     //Using this notation the open mode is checked inside the GetOpenMode function
     // please note that this creates a specialisation of the function
-    constexpr MFile::OpenMode openMode = MFile::GetOpenMode<MFile::OpenModeFlag::Read, MFile::OpenModeFlag::Binary, MFile::OpenModeFlag::MustExist>();
+    constexpr File::OpenMode openMode = File::GetOpenMode<File::OpenModeFlag::Read, File::OpenModeFlag::Binary, File::OpenModeFlag::MustExist>();
 
-    MFile::UnsafeFile file;
+    File::UnsafeFile file;
     byte chunk[chunkSize];
 
     //We open the file normally
@@ -205,14 +205,14 @@ bool ReadFileBackwards(MFile::OsStringView path) noexcept
     file.MoveToEnd();
 
     //We move negative (backwards) chunksize
-    file.MoveBy(- static_cast<MFile::SizeType>(chunkSize));
+    file.MoveBy(- static_cast<File::PosType>(chunkSize));
 
     //Both of the above functons can be fused into the following one:
-    //file.SetPosInFile(- static_cast<MFile::SizeType>(chunkSize), MFile::OriginPosition::End);
+    //file.SetPosInFile(- static_cast<File::SizeType>(chunkSize), File::OriginPosition::End);
     //This is faster because the file is moved only once instead of two
 
     //We set the buffering to None
-    file.SetBuffer(nullptr, 0, MFile::BufferingCode::None);
+    file.SetBuffer(nullptr, 0, File::BufferingCode::None);
 
     //We read the file normally and process the data
     while(true)
@@ -226,7 +226,7 @@ bool ReadFileBackwards(MFile::OsStringView path) noexcept
         // this is because the File::Read function automatically
         // moves after the read data
         // (this is cstdio restriction and can not be changed)
-        file.MoveBy(- static_cast<MFile::SizeType>(chunkSize) * 2);
+        file.MoveBy(- static_cast<File::PosType>(chunkSize) * 2);
     }
 
     //We check the last error and exit normally
@@ -274,8 +274,6 @@ bool WorkingWithFilesInUtf(std::string_view path) //NOT!!! noexcept
     // the "UtfConversion.h" header and use the conversion functions from any string type.
     // this is showed below:
 
-    using WFile = BasicFile<wchar_t>;
-
     const std::wstring osPath = ConvertToUtfWide(path);
 
     //If we are simply using the File and chnaging the whole interaction layers using the defines
@@ -298,13 +296,15 @@ bool WorkingWithFilesInUtf(std::string_view path) //NOT!!! noexcept
     // - File::RemoveFile(...)
     // - File::GetFileStatics(...) //Static overload version
     // - File::GetFileSize(...) //Static overload version
+
+    return true;
 }
 
-bool WriteFileUtf(MFile::OsStringView path)
+bool WriteFileUtf(File::OsStringView path)
 {
-    constexpr MFile::OpenMode openMode = MFile::GetOpenMode<MFile::OpenModeFlag::Read, MFile::OpenModeFlag::Write, MFile::OpenModeFlag::Binary,
+    constexpr File::OpenMode openMode = File::GetOpenMode<File::OpenModeFlag::Read, File::OpenModeFlag::Write, File::OpenModeFlag::Binary,
             //Unicode flag makes the file automatically skip the BOM mark
-            MFile::OpenModeFlag::UnicodeEncoding>();
+            File::OpenModeFlag::UnicodeEncoding>();
 
 
     //Note utf8, utf16, utf32 and utfW are just char, char16_t, char32_t and wchar_t respectively
@@ -316,7 +316,7 @@ bool WriteFileUtf(MFile::OsStringView path)
     const std::basic_string_view<utf8> utf8StrView     = "My msg";
     const utf16 * utf16CStr = u"My msg";
 
-    MFile::UnsafeFile file;
+    File::UnsafeFile file;
 
     //We open the file normally
     if(file.OpenNew(path, openMode) == false)

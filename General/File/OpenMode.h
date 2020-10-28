@@ -5,7 +5,6 @@
 #include <string_view>
 
 #include "General/Common/Common.h"
-#include "OsSupport.h"
 
 
 //Struct holding the OpenMode and the associated functionality
@@ -23,7 +22,6 @@ struct OpenModeHolder
         //It is safer to have every struct declared as enum class so there is no automatic
         // degradation to the underlying type. Because of this its necessary to have the
         // OpenModeFlag name present.
-
         using OpenModeFlagUnderlyingType = u8;
         //This is used as the actual argument for OpenMode
         enum class OpenModeFlag : OpenModeFlagUnderlyingType
@@ -78,8 +76,13 @@ struct OpenModeHolder
     public:
         struct OpenMode
         {
+            public:
+                using ThisType = OpenMode;
+                using CharType = OsCharTpeArg;
+                using StringView = std::basic_string_view<CharType>;
+
             protected:
-                enum class OpenModeVality : OpenModeFlagUnderlyingType
+                enum class OpenModeValidity : OpenModeFlagUnderlyingType
                 {
                     Valid,              //Arguemnts are valid
                     Invalid,            //Arguments are invalid. ie. both Read and Write are missing
@@ -87,12 +90,16 @@ struct OpenModeHolder
                                         // ie. all combinations containing Append && MustExist
                 };
 
-            protected:
-                static constexpr u32 OpenModeMaxChars = 26;
-                static constexpr CFileOpenMode DefaultOpenMode = CFileOpenMode::ReadWrite;
-                using OpenModeString = MetaPrograming::ConstexprCStr<OpenModeMaxChars>;
+                struct COpenModeWithValidty
+                {
+                        OpenModeValidity Validity = {};
+                        CFileOpenMode OpenMode = {};
 
-                struct PresenceArray
+                        constexpr COpenModeWithValidty(CFileOpenMode mode, OpenModeValidity val = OpenModeValidity::Valid) : Validity(val), OpenMode(mode) {}
+                        constexpr COpenModeWithValidty(OpenModeValidity val) : Validity(val), OpenMode(CFileOpenMode::ReadWrite) {}
+                };
+
+                struct FlagPresence
                 {
                         bool Presence[OpenModeOptionsCount] = {};
                         constexpr bool REF operator[](OpenModeFlag modeArg)
@@ -105,82 +112,72 @@ struct OpenModeHolder
                         }
                 };
 
-            public:
-                using ThisType = OpenMode;
-
-            public:
-                using CharType = OsCharTpeArg;
-                using StringView = std::basic_string_view<CharType>;
+            protected:
+                static constexpr u32 OpenModeMaxChars = 26;
+                static constexpr CFileOpenMode DefaultCOpenMode = CFileOpenMode::ReadWrite;
+                static constexpr OpenModeValidity DefaultValidity = OpenModeValidity::Invalid;
+                using OpenModeString = MetaPrograming::ConstexprCStr<OpenModeMaxChars, CharType>;
 
             protected:
                 OpenModeString OpenModeStr;
                 CFileOpenMode COpenMode;
-                OpenModeVality Validity;
-
+                OpenModeValidity Validity;
 
             public:
                 constexpr OpenMode() noexcept
-                    : OpenModeStr(), COpenMode(), Validity()
-                {
-                    AssignCOpenMode(ThisType::DefaultOpenMode, OpenModeVality::Invalid);
-                }
+                    : OpenModeStr(), COpenMode(ThisType::DefaultCOpenMode), Validity(ThisType::DefaultValidity)
+                {}
 
                 constexpr OpenMode(CFileOpenMode openMode) noexcept
                     : OpenModeStr(), COpenMode(), Validity()
                 {
-                    AssignCOpenMode(openMode, OpenModeVality::Valid);
-                }
-
-            protected:
-                //Is protected because the user should have no direct control over validity
-                constexpr OpenMode(OpenModeVality validity) noexcept
-                    : OpenModeStr(), COpenMode(), Validity(validity)
-                {
-                    AssignCOpenMode(ThisType::DefaultOpenMode, validity);
+                    AssignCOpenMode(openMode);
                 }
 
             public:
-                constexpr OpenMode(const ThisType REF) = default;
-                constexpr OpenMode(ThisType RVALUE_REF) = default;
+                constexpr OpenMode(const ThisType REF other) : OpenModeStr(other.OpenModeStr), COpenMode(other.COpenMode), Validity(other.Validity) {};
+                constexpr OpenMode(ThisType RVALUE_REF other) : OpenModeStr(other.OpenModeStr), COpenMode(other.COpenMode), Validity(other.Validity) {};
 
                 constexpr ThisType REF operator=(const ThisType REF) = default;
                 constexpr ThisType REF operator=(ThisType RVALUE_REF) = default;
 
-                template<typename ... OpenModeTypes>
-                constexpr OpenMode(OpenModeTypes ... openModes) noexcept
+                template<typename ... FlagTypes>
+                constexpr OpenMode(FlagTypes ... flags) noexcept
                     : OpenModeStr(), COpenMode(), Validity()
                 {
-                    this->operator =(GetOpenMode<OpenModeTypes ...>(openModes...));
+                    this->operator =(GetOpenMode<FlagTypes ...>(flags...));
                 }
 
-                constexpr void AssignCOpenMode(CFileOpenMode cOpenMode, OpenModeVality validity) noexcept
+                constexpr void AssignCOpenMode(CFileOpenMode cOpenMode) noexcept
                 {
                     this->COpenMode = cOpenMode;
-                    this->Validity = validity;
+                    this->Validity = OpenModeValidity::Valid;
                     this->OpenModeStr = GetCOpenModeStr(cOpenMode);
                 }
 
-                template<typename ... OpenModeTypes>
-                static constexpr OpenMode GetOpenMode(OpenModeTypes ... openModes) noexcept
+                template<typename ... FlagTypes>
+                static constexpr OpenMode GetOpenMode(FlagTypes ... flags) noexcept
                 {
-                    static_assert (MetaPrograming::AreTypesSameTo<OpenModeFlag, OpenModeTypes...>::value,
-                                   "CFile::OpenMode::GetOpenMode : All provided openModes must be of type OpenModeFlag");
+                    static_assert (MetaPrograming::AreTypesSameTo<OpenModeFlag, FlagTypes...>::value,
+                                   "CFile::OpenMode::GetOpenMode : All provided flags must be of type OpenModeFlag");
 
-                    PresenceArray modePresence;
-                    ThisType::FillOpenModePresenceArray<OpenModeTypes...>(modePresence, openModes...);
+                    FlagPresence flagPresence;
+                    ThisType::FillFlagPresence<FlagTypes...>(flagPresence, flags...);
 
-                    if(ThisType::AreOpenModesConflicting(modePresence))
-                        return OpenModeVality::Invalid;
+                    if(ThisType::AreOpenModesConflicting(flagPresence))
+                    {
+                        //return OpenMode(OpenModeValidity::Invalid);
+                        return OpenModeConstructor(OpenModeValidity::Invalid);
+                    }
 
-                    OpenMode openMode = ThisType::GetCOpenMode(modePresence);
+                    OpenMode openMode = OpenModeConstructor(ThisType::GetCOpenMode(flagPresence));
+                    //OpenMode openMode = ThisType::GetCOpenMode(flagPresence);
+
                     if(openMode.IsValid() == false)
                         return openMode;
 
-                    OpenMode additionalOpenMode = ThisType::GetAdditionalMode(modePresence);
-                    if(additionalOpenMode.IsValid() == false)
-                        return additionalOpenMode;
-
-                    openMode.OpenModeStr += additionalOpenMode.OpenModeStr;
+                    openMode.OpenModeStr = ThisType::GetCOpenModeStr(openMode.COpenMode);
+                    openMode.OpenModeStr += ThisType::GetAdditionalModeStr(flagPresence);
 
                     return openMode;
                 }
@@ -197,13 +194,13 @@ struct OpenModeHolder
                     return openMode;
                 }
 
-                constexpr inline bool IsValid() const noexcept
+                inline constexpr bool IsValid() const noexcept
                 {
-                    return this->Validity == OpenModeVality::Valid;
+                    return this->Validity == OpenModeValidity::Valid;
                 }
-                constexpr inline bool IsSupported() const noexcept
+                inline constexpr bool IsSupported() const noexcept
                 {
-                    return NOT(this->Validity == OpenModeVality::Unsupported);
+                    return NOT(this->Validity == OpenModeValidity::Unsupported);
                 }
 
                 inline constexpr StringView GetStr() const noexcept
@@ -215,40 +212,43 @@ struct OpenModeHolder
                     return this->GetStr();
                 }
 
-
                 //Helpers
-            protected:
-                template<MetaPrograming::Indetifier identifier>
-                static constexpr bool IsOpenModePresentInternal(OpenModeFlag) noexcept {return false;}
-
-                template<MetaPrograming::Indetifier identifier, typename FirstOpneModeType, typename ... OpenModeTypes>
-                static constexpr bool IsOpenModePresentInternal(OpenModeFlag lookingForMode, FirstOpneModeType firstOpenMode, OpenModeTypes ... openModes) noexcept
-                {
-                    if(lookingForMode == firstOpenMode)
-                        return true;
-                    else
-                        return ThisType::IsOpenModePresentInternal<MetaPrograming::Indetifier::Indentify, OpenModeTypes...>(lookingForMode, openModes...);
-                }
 
             protected:
-                template<typename ... OpenModeTypes>
-                static constexpr bool IsOpenModePresent(OpenModeFlag lookingForMode, OpenModeTypes ... openModes) noexcept
-                {
-                    return ThisType::IsOpenModePresentInternal<MetaPrograming::Indetifier::Indentify, OpenModeTypes...>(lookingForMode, openModes...);
-                }
+                //For some reason if this is implemented as constructor it breaks (only when compiled with MSVC)
+                //Is protected because the user should have no direct control over validity
+                //constexpr OpenMode(OpenModeValidity validity, CFileOpenMode openMode = ThisType::DefaultCOpenMode) noexcept
+                //    : OpenModeStr(), COpenMode(openMode), Validity(validity)
+                //{}
 
-                template<typename ... OpenModeTypes>
-                static constexpr void FillOpenModePresenceArray(PresenceArray REF presenceArray, OpenModeTypes ... openModes) noexcept
+                //constexpr OpenMode(COpenModeWithValidty pair) noexcept
+                //    : OpenModeStr(), COpenMode(pair.OpenMode), Validity(pair.Validity)
+                //{}
+
+                static constexpr OpenMode OpenModeConstructor(OpenModeValidity validity, CFileOpenMode copenMode = ThisType::DefaultCOpenMode) noexcept
+                {
+                    OpenMode openMode;
+                    openMode.Validity = validity;
+                    openMode.COpenMode = copenMode;
+                    return openMode;
+                }
+                static constexpr inline  OpenMode OpenModeConstructor(COpenModeWithValidty copenModeWithValidity) noexcept
+                {
+                    return OpenModeConstructor(copenModeWithValidity.Validity, copenModeWithValidity.OpenMode);
+                }
+                template<typename ... FlagTypes>
+                static constexpr void FillFlagPresence(FlagPresence REF presenceArray, const FlagTypes ... flags) noexcept
                 {
                     using Underlying = OpenModeFlagUnderlyingType;
+
                     for(Underlying i = 0; i < OpenModeOptionsCount; i++)
                     {
-                        const OpenModeFlag CurrentMode = static_cast<OpenModeFlag>(i);
-                        presenceArray[CurrentMode] = ThisType::IsOpenModePresent<OpenModeTypes...>(CurrentMode, openModes...);
+                        const OpenModeFlag currFlag = static_cast<OpenModeFlag>(i);
+                        presenceArray[currFlag] = ThisType::IsFlagPresent<FlagTypes...>(currFlag, flags...);
                     }
                 }
 
-                static constexpr bool AreOpenModesConflicting(PresenceArray REF modes) noexcept
+                static constexpr bool AreOpenModesConflicting(const FlagPresence REF modes) noexcept
                 {
                     if(modes[OpenModeFlag::MustExist] && modes[OpenModeFlag::MustNotExist])
                         return true;
@@ -275,21 +275,7 @@ struct OpenModeHolder
                     return false;
                 }
 
-                static constexpr OpenModeString GetCOpenModeStr(CFileOpenMode mode) noexcept
-                {
-                    switch(mode)
-                    {
-                        case CFileOpenMode::ReadMustExist:      return "r";
-                        case CFileOpenMode::Write:              return "w";
-                        case CFileOpenMode::WriteAppend:        return "a";
-                        case CFileOpenMode::ReadWriteMustExist: return "r+";
-                        case CFileOpenMode::ReadWrite:          return "w+";
-                        case CFileOpenMode::ReadWriteAppend:    return "a+";
-                        default:                                return "i!";
-                    }
-                }
-
-                static constexpr OpenMode GetCOpenMode(PresenceArray REF presenceArray) noexcept
+                static constexpr COpenModeWithValidty GetCOpenMode(const FlagPresence REF presenceArray) noexcept
                 {
                     const bool read         = presenceArray[OpenModeFlag::Read];
                     const bool write        = presenceArray[OpenModeFlag::Write];
@@ -301,57 +287,105 @@ struct OpenModeHolder
                     switch (BINARY(read, write, append, mustExist))
                     {
                         //          R  W  A  M
-                        case BINARY(0, 0, 0, 0): return OpenModeVality::Invalid;
-                        case BINARY(0, 0, 0, 1): return OpenModeVality::Invalid;
-                        case BINARY(0, 0, 1, 0): return OpenModeVality::Invalid;
-                        case BINARY(0, 0, 1, 1): return OpenModeVality::Invalid;
+                        case BINARY(0, 0, 0, 0): return OpenModeValidity::Invalid;
+                        case BINARY(0, 0, 0, 1): return OpenModeValidity::Invalid;
+                        case BINARY(0, 0, 1, 0): return OpenModeValidity::Invalid;
+                        case BINARY(0, 0, 1, 1): return OpenModeValidity::Invalid;
                         case BINARY(0, 1, 0, 0): return CFileOpenMode::Write;
                         case BINARY(0, 1, 0, 1): return CFileOpenMode::ReadWriteMustExist;
                         case BINARY(0, 1, 1, 0): return CFileOpenMode::WriteAppend;
-                        case BINARY(0, 1, 1, 1): return OpenModeVality::Unsupported;
+                        case BINARY(0, 1, 1, 1): return OpenModeValidity::Unsupported;
                         case BINARY(1, 0, 0, 0): return CFileOpenMode::ReadWrite;
                         case BINARY(1, 0, 0, 1): return CFileOpenMode::ReadMustExist;
                         case BINARY(1, 0, 1, 0): return CFileOpenMode::ReadWriteAppend;
-                        case BINARY(1, 0, 1, 1): return OpenModeVality::Unsupported;
+                        case BINARY(1, 0, 1, 1): return OpenModeValidity::Unsupported;
                         case BINARY(1, 1, 0, 0): return CFileOpenMode::ReadWrite;
                         case BINARY(1, 1, 0, 1): return CFileOpenMode::ReadWriteMustExist;
                         case BINARY(1, 1, 1, 0): return CFileOpenMode::ReadWriteAppend;
-                        case BINARY(1, 1, 1, 1): return OpenModeVality::Unsupported;
+                        case BINARY(1, 1, 1, 1): return OpenModeValidity::Unsupported;
 
-                        default: return OpenModeVality::Invalid;
+                        default: return OpenModeValidity::Invalid;
                     }
 
                     #undef BINARY
                 }
 
-                static constexpr OpenMode GetAdditionalMode(PresenceArray REF presenceArray) noexcept
+                static constexpr OpenModeString GetCOpenModeStr(const CFileOpenMode mode) noexcept
                 {
-                    OpenMode additionalMode;
-                    //For some reason the constructor declaring validty cannot be used here
-                    //"Cannot acccess protected constrcor of class"
-                    additionalMode.Validity = OpenModeVality::Valid;
-                    if(presenceArray[OpenModeFlag::Text])                       additionalMode.OpenModeStr += "t";
-                    if(presenceArray[OpenModeFlag::Binary])                     additionalMode.OpenModeStr += "b";
-                    if(presenceArray[OpenModeFlag::MustNotExist])               additionalMode.OpenModeStr += "x";
-                    if(presenceArray[OpenModeFlag::CommitDirectlyToDisk])       additionalMode.OpenModeStr += "c";
-                    if(presenceArray[OpenModeFlag::CommitIndirectlyToDisk])     additionalMode.OpenModeStr += "n";
-                    if(presenceArray[OpenModeFlag::NotInheritedByChildProcess]) additionalMode.OpenModeStr += "N";
-                    if(presenceArray[OpenModeFlag::SequntialAccessOptimized])   additionalMode.OpenModeStr += "R";
-                    if(presenceArray[OpenModeFlag::RandomAccessOptimized])      additionalMode.OpenModeStr += "R";
-                    if(presenceArray[OpenModeFlag::IfPossibleNoFlushingToDisk]) additionalMode.OpenModeStr += "T";
-                    if(presenceArray[OpenModeFlag::DeleteAfterClose])           additionalMode.OpenModeStr += "D";
-                    if(presenceArray[OpenModeFlag::UnicodeEncoding])            additionalMode.OpenModeStr += ",css=UNICODE";
-                    if(presenceArray[OpenModeFlag::Utf8Encoding])               additionalMode.OpenModeStr += ",css=UTF-8";
-                    if(presenceArray[OpenModeFlag::Utf16Encoding])              additionalMode.OpenModeStr += ",css=UTF-16LE";
-                    return additionalMode;
+                    switch(mode)
+                    {
+                        case CFileOpenMode::ReadMustExist:      return ConvertStr<char8, CharType>("r");
+                        case CFileOpenMode::Write:              return ConvertStr<char8, CharType>("w");
+                        case CFileOpenMode::WriteAppend:        return ConvertStr<char8, CharType>("a");
+                        case CFileOpenMode::ReadWriteMustExist: return ConvertStr<char8, CharType>("r+");
+                        case CFileOpenMode::ReadWrite:          return ConvertStr<char8, CharType>("w+");
+                        case CFileOpenMode::ReadWriteAppend:    return ConvertStr<char8, CharType>("a+");
+                        default:                                return ConvertStr<char8, CharType>("i!");
+                    }
                 }
 
+                static constexpr OpenModeString GetAdditionalModeStr(const FlagPresence REF presenceArray) noexcept
+                {
+                    OpenModeString additionalModeStr;
+
+                    if(presenceArray[OpenModeFlag::Text])                       AddStr(additionalModeStr, "t");
+                    if(presenceArray[OpenModeFlag::Binary])                     AddStr(additionalModeStr, "b");
+                    if(presenceArray[OpenModeFlag::MustNotExist])               AddStr(additionalModeStr, "x");
+                    if(presenceArray[OpenModeFlag::CommitDirectlyToDisk])       AddStr(additionalModeStr, "c");
+                    if(presenceArray[OpenModeFlag::CommitIndirectlyToDisk])     AddStr(additionalModeStr, "n");
+                    if(presenceArray[OpenModeFlag::NotInheritedByChildProcess]) AddStr(additionalModeStr, "N");
+                    if(presenceArray[OpenModeFlag::SequntialAccessOptimized])   AddStr(additionalModeStr, "R");
+                    if(presenceArray[OpenModeFlag::RandomAccessOptimized])      AddStr(additionalModeStr, "R");
+                    if(presenceArray[OpenModeFlag::IfPossibleNoFlushingToDisk]) AddStr(additionalModeStr, "T");
+                    if(presenceArray[OpenModeFlag::DeleteAfterClose])           AddStr(additionalModeStr, "D");
+                    if(presenceArray[OpenModeFlag::UnicodeEncoding])            AddStr(additionalModeStr, ",css=UNICODE");
+                    if(presenceArray[OpenModeFlag::Utf8Encoding])               AddStr(additionalModeStr, ",css=UTF-8");
+                    if(presenceArray[OpenModeFlag::Utf16Encoding])              AddStr(additionalModeStr, ",css=UTF-16LE");
+
+                    return additionalModeStr;
+                }
+
+            protected:
+                template<typename ... FlagTypes>
+                static constexpr bool IsFlagPresent(const OpenModeFlag lookingForMode, const FlagTypes ... flags) noexcept
+                {
+                    return ThisType::IsFlagPresentInternal<MetaPrograming::Indetifier::Indentify, FlagTypes...>(lookingForMode, flags...);
+                }
+
+                template<MetaPrograming::Indetifier identifier>
+                static constexpr bool IsFlagPresentInternal(const OpenModeFlag) noexcept {return false;}
+
+                template<MetaPrograming::Indetifier identifier, typename FirstOpneModeType, typename ... FlagTypes>
+                static constexpr bool IsFlagPresentInternal(const OpenModeFlag lookingForMode, const FirstOpneModeType firstOpenMode, const FlagTypes ... flags) noexcept
+                {
+                    if(lookingForMode == firstOpenMode)
+                        return true;
+                    else
+                        return ThisType::IsFlagPresentInternal<MetaPrograming::Indetifier::Indentify, FlagTypes...>(lookingForMode, flags...);
+                }
+
+                template<typename CharFrom, typename CharTo>
+                static constexpr auto ConvertStr(const MetaPrograming::ConstexprCStr<OpenModeMaxChars, CharFrom> str) noexcept
+                {
+                    MetaPrograming::ConstexprCStr<OpenModeMaxChars, CharTo> returnStr;
+                    returnStr.Size = str.Size;
+
+                    for(size_t i = 0; i < str.Size; i++)
+                        returnStr[i] = static_cast<CharTo>(str[i]);
+
+                    return returnStr;
+                }
+
+                static constexpr void AddStr(OpenModeString REF openMode, const char8 * str)
+                {
+                    openMode += ConvertStr<char8, CharType>(str);
+                }
         };
 
-        template<typename ... OpenModeTypes>
-        static constexpr OpenMode GetOpenMode(OpenModeTypes ... openModes)
+        template<typename ... FlagTypes>
+        static constexpr OpenMode GetOpenMode(FlagTypes ... flags)
         {
-            return OpenMode::template GetOpenMode<OpenModeTypes...>(openModes...);
+            return OpenMode::template GetOpenMode<FlagTypes...>(flags...);
         }
 
         template<OpenModeFlag ... openModeArguments>

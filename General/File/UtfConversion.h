@@ -7,9 +7,9 @@
 #include <array>
 #include <type_traits>
 #include <codecvt>
+#include <locale>
 
 #include "General/Common/Common.h"
-#include "OsSupport.h"
 
 //Utf assumed for types
 using utf8 = char8;
@@ -187,15 +187,15 @@ inline auto ConvertToUtfWide(BasicStringView<CharType> convertFrom)
 }
 
 //TODO - find a better place for this one
-template<typename CharType>
-inline auto ConvertToOsUtf(BasicStringView<CharType> convertFrom)
-{
-    #ifdef FILE_OS_INTERACTON_UTF_WIDE
-    return ConvertToUtfWide(convertFrom);
-    #else
-    return ConvertToUtf8(convertFrom);
-    #endif
-}
+//template<typename CharType>
+//inline auto ConvertToOsUtf(BasicStringView<CharType> convertFrom)
+//{
+//    #ifdef FILE_OS_INTERACTON_UTF_WIDE
+//    return ConvertToUtfWide(convertFrom);
+//    #else
+//    return ConvertToUtf8(convertFrom);
+//    #endif
+//}
 
 
 void func()
@@ -204,5 +204,25 @@ void func()
     static_assert(std::is_same_v<decltype (convertedName), BasicString<utfW>>, "Hello");
 }
 
+
+//NEW
+/*
+std::size_t GetWideConvertedSize(utf8 IN_COPY conevrtFrom[], std::mbstate_t INOUT state)
+{
+    return mbsrtowcs(NULL, &conevrtFrom, 0, &state);
+}
+
+bool ConvertToWide(utf8 IN_COPY conevrtFrom[], utfW convertTo[], std::size_t wideLenght)
+{
+    std::mbstate_t state = std::mbstate_t();
+
+}
+
+bool ConvertToWide(BasicStringView<utf8> IN conevrtFrom, BasicString<utf8> OUT convertTo)
+{
+    std::mbstate_t state = std::mbstate_t();
+}
+*/
+//No except function would require the lenght argument as to not make it resize the string
 
 #endif // UTFCONVERSION_H

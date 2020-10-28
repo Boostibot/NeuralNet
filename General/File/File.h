@@ -12,6 +12,7 @@ class BasicFile : public BasicUnsafeFile<OsCharTypeArg>
     public:
         using UnsafeFile        = BasicUnsafeFile<OsCharTypeArg>;
         using CFileManager      = typename UnsafeFile::CFileManager;
+        using CharSupport       = typename CFileManager::CharSupport;
 
     public:
         using SizeType          = typename UnsafeFile::SizeType;
@@ -21,10 +22,6 @@ class BasicFile : public BasicUnsafeFile<OsCharTypeArg>
         using BufferingCode     = typename UnsafeFile::BufferingCode;
         using FileDescriptor    = typename UnsafeFile::FileDescriptor;
         using Stats             = typename UnsafeFile::Stats;
-
-        using SizeType          = size_t;
-        using FileSizeType      = decltype (::_stat64::st_size);
-        using PosType           = CompilerSpecific::OffsetType;
 
         using OpenMode          = typename UnsafeFile::OpenMode;
 
@@ -39,6 +36,8 @@ class BasicFile : public BasicUnsafeFile<OsCharTypeArg>
         using OsString      = typename CFileManager::OsString;
         using OsStringView  = typename CFileManager::OsStringView;
         using OsCString     = typename CFileManager::OsCString;
+
+        static_assert (CharSupport::IsValid, "Invalid OsCharType; Only char and wchar_t allowed; (No posix function takes other char types)");
 
     private:
         using UnsafeFile::FilePtr;
@@ -250,8 +249,6 @@ class BasicFile : public BasicUnsafeFile<OsCharTypeArg>
         }
 };
 
-using CFileManager = BasicCFileManager<OsCharType>;
-using UnsafeFile = BasicUnsafeFile<OsCharType>;
-using File = BasicFile<OsCharType>;
-
+using File          = BasicFile<char8>;
+using WFile         = BasicFile<charW>;
 #endif // FILE_H

@@ -33,7 +33,6 @@ HEADERS += \
     General/File/File.h \
     General/File/LegacyUniversalString.h \
     General/File/OpenMode.h \
-    General/File/OsSupport.h \
     General/File/UniversalString.h \
     General/File/UnsafeFile.h \
     General/File/UseExamples.h \

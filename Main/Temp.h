@@ -393,6 +393,156 @@ void GenericProgramingTests()
     std::cout << myStr << std::endl;
 }
 
+struct Block;
+
+struct BlockHeader
+{
+        Block * nextBlock;
+        Block * prevBlock;
+        size_t size;
+};
+
+template<size_t size>
+struct alignas(size) AlignedMemory {};
+
+using ElemtT = int;
+
+template <size_t size>
+struct BlockTempl
+{
+        BlockHeader header;
+        ElemtT data[size];
+};
+
+void AllocatingBlocksTesting()
+{
+    //size_t dynamicSize = 0;
+    //void * blockPtr =  new BlockTempl<dynamicSize>();
+}
+
+constexpr void AddPaddingSize(size_t INOUT totalSize, size_t IN align)
+{
+    const size_t modulo = totalSize % align;
+
+    if(modulo != 0)
+        totalSize += align - (modulo);
+}
+
+constexpr void AddSize(size_t INOUT totalSize, size_t IN size)
+{
+    totalSize += size;
+}
+
+template<typename T>
+constexpr void AddMember(size_t INOUT totalSize)
+{
+    AddPaddingSize(totalSize, alignof (T));
+    AddSize(totalSize, sizeof (T));
+}
+
+
+template<size_t size>
+using Size = std::integral_constant<size_t, size>;
+
+template<MetaPrograming::Indetifier>
+constexpr size_t GetMaxInternal(size_t max)
+{
+    return max;
+}
+
+template<MetaPrograming::Indetifier, typename FirstArg, typename ... Args>
+constexpr size_t GetMaxInternal(size_t curMax, FirstArg first, Args... args)
+{
+    if(first > curMax)
+        curMax = first;
+    return GetMaxInternal<MetaPrograming::Indetifier::Indentify, Args...>(curMax, args...);
+}
+
+
+template<bool error = true>
+constexpr size_t GetMax()
+{
+    //static_assert (error, "No set provided; At least one parameter must be present");
+    return 0;
+}
+
+template<typename FirstArg, typename ... Args>
+constexpr size_t GetMax(FirstArg first, Args... args)
+{
+    return GetMaxInternal<MetaPrograming::Indetifier::Indentify, Args...>(first, args...);
+}
+
+template<typename ... MemberTypes>
+constexpr size_t GetMaxSize()
+{
+    return GetMax(sizeof (MemberTypes)...);
+}
+
+template<typename ... MemberTypes>
+constexpr size_t GetMaxAlignment()
+{
+    return GetMax(alignof (MemberTypes)...);
+}
+
+template<MetaPrograming::Indetifier>
+constexpr void GetStructureSizeRecursive(size_t INOUT)
+{}
+
+template<MetaPrograming::Indetifier, typename FirstMemberType, typename ... MemberTypes>
+constexpr void GetStructureSizeRecursive(size_t INOUT totalSize)
+{
+    AddMember<FirstMemberType>(totalSize);
+    GetStructureSizeRecursive<MetaPrograming::Indetifier::Indentify, MemberTypes...>(totalSize);
+}
+
+
+template<typename ... MemberTypes>
+constexpr size_t GetStructureSize()
+{
+    size_t returnSize = 0;
+    //Add main size and padding
+    GetStructureSizeRecursive<MetaPrograming::Indetifier::Indentify, MemberTypes...>(returnSize);
+
+    //Add trailing padding
+    constexpr size_t maxMemberSize = GetMaxAlignment<MemberTypes...>();
+    AddPaddingSize(returnSize, maxMemberSize);
+
+    return returnSize;
+}
+
+template<typename ... MemberTypes>
+using GetSize = std::integral_constant<size_t, GetStructureSize<MemberTypes...>()>;
+
+
+struct CustomSize
+{
+        int d1;
+        int d2;
+        int d3;
+};
+
+struct TestSize1
+{
+        int d1;
+        double d2;
+};
+
+
+
+void AllocatingBlocksTesting2()
+{
+    //alignas(BlockHeader) int a;
+    //AlignedMemory<16> memory[106];
+    //size_t padding = 0 /* Some way to calculcate the nrcessary padding*/;
+
+    //void * allocated = new char[sizeof(BlockHeader) + padding +  sizeof (ElemtT)];
+
+
+    //Block * blockPtr =  static_cast<Block *>(allocated);
+
+    static_assert (std::is_same_v<GetSize<double, int>, Size<sizeof(TestSize1)>>, "");
+}
+
 void PassingSupportTesting()
 {
     PassingSupport::ClassData data;
@@ -403,12 +553,8 @@ void PassingSupportTesting()
 
 #include "General/StaticLog/SpeedTests.h"
 #include "General/File/File.h"
+#include "General/File/UseExamples.h"
 
-//
-void WideCharTesting()
-{
-
-}
 
 void RunTemp()
 {
@@ -423,7 +569,6 @@ void RunTemp()
     //StringAdditionSpeedTesting();
     //GenericProgramingTests();
     //PassingSupportTesting();
-    WideCharTesting();
 
     //SpeedTests();
     //AllocationTests();

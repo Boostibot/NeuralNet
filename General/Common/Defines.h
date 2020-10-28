@@ -18,6 +18,7 @@
 #define MUST_OVERRIDE           0
 
 #define IN const REF
+#define IN_COPY const
 #define OUT REF
 #define INOUT REF
 #define FORWARD RVALUE_REF
