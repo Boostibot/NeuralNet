@@ -551,9 +551,47 @@ void PassingSupportTesting()
     PassingSupport::Function3(data);
 }
 
+
 #include "General/StaticLog/SpeedTests.h"
 #include "General/File/File.h"
 #include "General/File/UseExamples.h"
+
+template<typename T>
+struct A
+{
+       T a1;
+       T a2;
+};
+
+struct B
+{
+        i32 b1;
+        i32 b2;
+        i32 b3;
+
+        B(i32 a1, i32 a2, i32 a3)
+        {
+            b1 = a1;
+            b2 = a2;
+            b3 = a3;
+        }
+
+        template<typename T>
+        operator A<T>()
+        {
+            A<T> a;
+            a.a1 = static_cast<T>(b1);
+            a.a2 = static_cast<T>(b2);
+            return a;
+        }
+};
+
+void OpenModeConstructortesting()
+{
+    B b(0, 1, 2);
+    A<i32> aI32 = b;
+    A<u32> aU32 = b;
+}
 
 
 void RunTemp()
@@ -569,6 +607,7 @@ void RunTemp()
     //StringAdditionSpeedTesting();
     //GenericProgramingTests();
     //PassingSupportTesting();
+    OpenModeConstructortesting();
 
     //SpeedTests();
     //AllocationTests();

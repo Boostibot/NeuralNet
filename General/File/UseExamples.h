@@ -4,7 +4,7 @@
 #include "File.h"
 #include "UtfConversion.h"
 
-
+/*
 using File = BasicFile<utf8>;
 
 void CFileUse()
@@ -22,7 +22,7 @@ void CFileUse()
     file2.OpenNew("file.log", "wb");
     file2.OpenNew("file.log", openMode);
     file2.OpenNew("file.log", File::GetOpenMode<File::OpenModeFlag::Write, File::OpenModeFlag::MustExist>());
-    file2.OpenNew("file.log", File::OpenModeFlag::Write, File::OpenModeFlag::MustExist);
+    //file2.OpenNew("file.log", File::OpenModeFlag::Write, File::OpenModeFlag::MustExist);
 
     File file(path, "wb");
 
@@ -248,14 +248,14 @@ bool WorkingWithFilesInUtf(std::string_view path) //NOT!!! noexcept
     // utf8 (char) string;
     // As such they might behave incorectly when the file not opened with the OpenModeFlag::Binary
 
-    //*****************************************************************//
+    //=================================================================//
     //                                                                 //
     //        ALWAYS OPEN FILES WITH THE OpenModeFlag::Binary          //
     //                                                                 //
-    //*****************************************************************//
+    //=================================================================//
 
     // OS interaction and utf
-    //************************
+    //========================
     //
     // The cstdio library only uses utf8 (char) to interact with the OS but there are also
     // expansions for wchar_t support.
@@ -348,6 +348,6 @@ bool WriteFileUtf(File::OsStringView path)
 
     return file.WasLastErrorEndOfFile();
 }
-
+*/
 
 #endif // USEEXAMPLES_H

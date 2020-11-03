@@ -3,18 +3,24 @@
 #include "General/File/UnsafeFile.h"
 #include "CFileManager.h"
 #include <fstream>
-namespace UnsafeFileTesting
+namespace CIo::UnsafeFileTesting
 {
+    template<typename CharT>
+    using BasicFilenameCleaner = CFileManagerTesting::BasicFilenameCleaner<CharT>;
+
+    using CFileManagerTesting::FilenameCleaner;
+    using CFileManagerTesting::WFilenameCleaner;
+
     template<typename CharT>
     struct BasicMockFile
     {
-            CFileManagerTesting::BasicFilenameCleaner<CharT> Cleaner;
+            BasicFilenameCleaner<CharT> Cleaner;
 
             BasicMockFile() = default;
             ~BasicMockFile() = default;
 
             template<typename FunctionType>
-            inline bool ChangeFile(FunctionType REF lambda)
+            inline bool ApplyToFile(FunctionType REF lambda)
             {
                 if(Cleaner.HasError())
                     return false;
@@ -31,15 +37,15 @@ namespace UnsafeFileTesting
                 return lambda(manager);
             }
 
-            inline auto Filename() {return Cleaner.Filename;}
+            inline auto Filename() const noexcept {return Cleaner.Filename();}
     };
 
     using MockFile = BasicMockFile<char8>;
     using WMockFile = BasicMockFile<charW>;
 }
-namespace UnsafeFileTesting
+namespace CIo::UnsafeFileTesting
 {
-    TEST_CASE("Only char and wchar_t specialisations should compile")
+    TEST_CASE("Only char and wchar_t specialisations should compile", "[UnsafeFile]")
     {
         BasicUnsafeFile<char8> file8;
         BasicUnsafeFile<charW> fileW;
@@ -52,10 +58,11 @@ namespace UnsafeFileTesting
         //BasicUnsafeFile<std::wstring> fileWString;
     }
 
-    TEST_CASE("Only char and wchar_t specialisations should compile")
+    TEMPLATE_TEST_CASE("Mocking use", "[UnsafeFile]", CFileManagerTestedTypes)
     {
+        using MockFile = BasicMockFile<TestType>;
+
         MockFile mock;
-        WMockFile wmock;
 
         auto fileChange = [](auto& cFileManager)
         {
@@ -67,8 +74,7 @@ namespace UnsafeFileTesting
         };
 
         //Mockign should not fail
-        REQUIRE(mock.ChangeFile(fileChange) == true);
-        REQUIRE(wmock.ChangeFile(fileChange) == true);
+        REQUIRE(mock.ApplyToFile(fileChange) == true);
     }
 }
 #endif // UNSAFEFILETETSING_H

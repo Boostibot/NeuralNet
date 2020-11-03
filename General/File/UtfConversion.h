@@ -17,13 +17,13 @@ using utf16 = char16;
 using utf32 = char32;
 using utfW = charW;
 
-//TODO - maybe move to FileInternal
+//TODO - maybe move to Detail
 template<typename CharType>
 using BasicString = std::basic_string<CharType>;
 template<typename CharType>
 using BasicStringView = std::basic_string_view<CharType>;
 
-namespace FileInternal
+namespace Detail
 {
     template<size_t WideCharSize>
     struct GetWideCharEquivalentInternal : std::false_type
@@ -53,7 +53,7 @@ namespace FileInternal
                                             std::is_same_v<CharType, utf32> OR
                                             std::is_same_v<CharType, utfW>;
 
-    using WideCharEquivalent = FileInternal::GetWideCharEquivalentInternal<sizeof (utfW)>::type;
+    using WideCharEquivalent = Detail::GetWideCharEquivalentInternal<sizeof (utfW)>::type;
 
     template<typename FromType, typename ToType>
     inline bool CopyStringDataDisregardType(BasicStringView<FromType> from, BasicString<ToType> REF to)
@@ -77,16 +77,16 @@ namespace FileInternal
     template<typename CharType>
     inline auto ConvertAnyNonWideToUtf8(BasicStringView<CharType> convertFrom)
     {
-        if constexpr(FileInternal::IsSameType<CharType, utf8>)
+        if constexpr(Detail::IsSameType<CharType, utf8>)
         {
             return convertFrom;
         }
-        else if constexpr(FileInternal::IsSameType<CharType, utf16>)
+        else if constexpr(Detail::IsSameType<CharType, utf16>)
         {
             std::wstring_convert<std::codecvt_utf8<utf16>, utf16> cvt;
             return cvt.to_bytes(convertFrom.data());
         }
-        else if constexpr(FileInternal::IsSameType<CharType, utf32>)
+        else if constexpr(Detail::IsSameType<CharType, utf32>)
         {
             std::wstring_convert<std::codecvt_utf8<utf32>, utf32> cvt;
             return cvt.to_bytes(convertFrom.data());
@@ -99,22 +99,22 @@ namespace FileInternal
 
     inline BasicString<utf8> ConvertUtfWideToUtf8(BasicStringView<utfW> convertFrom)
     {
-        if constexpr(FileInternal::IsSameType<WideCharEquivalent, utf8>)
+        if constexpr(Detail::IsSameType<WideCharEquivalent, utf8>)
         {
             BasicString<utf8> returnStr;
-            FileInternal::CopyStringDataDisregardType(convertFrom, returnStr);
+            Detail::CopyStringDataDisregardType(convertFrom, returnStr);
             return returnStr;
         }
-        else if constexpr(FileInternal::IsSameType<WideCharEquivalent, utf16>)
+        else if constexpr(Detail::IsSameType<WideCharEquivalent, utf16>)
         {
             BasicString<utf16> tempStr;
-            FileInternal::CopyStringDataDisregardType(convertFrom, tempStr);
+            Detail::CopyStringDataDisregardType(convertFrom, tempStr);
             return ConvertAnyNonWideToUtf8<utf16>(tempStr);
         }
-        else if constexpr(FileInternal::IsSameType<WideCharEquivalent, utf32>)
+        else if constexpr(Detail::IsSameType<WideCharEquivalent, utf32>)
         {
             BasicString<utf32> tempStr;
-            FileInternal::CopyStringDataDisregardType(convertFrom, tempStr);
+            Detail::CopyStringDataDisregardType(convertFrom, tempStr);
             return ConvertAnyNonWideToUtf8<utf32>(tempStr);
         }
         else
@@ -127,26 +127,26 @@ namespace FileInternal
     {
         BasicString<utfW> returnStr;
 
-        if constexpr(FileInternal::IsSameType<WideCharEquivalent, utf8>)
+        if constexpr(Detail::IsSameType<WideCharEquivalent, utf8>)
         {
-            FileInternal::CopyStringDataDisregardType(convertFrom, returnStr);
+            Detail::CopyStringDataDisregardType(convertFrom, returnStr);
             return returnStr;
         }
 
-        else if constexpr(FileInternal::IsSameType<WideCharEquivalent, utf16>)
+        else if constexpr(Detail::IsSameType<WideCharEquivalent, utf16>)
         {
             std::wstring_convert<std::codecvt_utf8<utf16>, utf16> cvt;
             BasicString<utf16> utf16Str = cvt.from_bytes(convertFrom.data());
 
-            FileInternal::CopyStringDataDisregardType<utf16>(utf16Str, returnStr);
+            Detail::CopyStringDataDisregardType<utf16>(utf16Str, returnStr);
             return returnStr;
         }
-        else if constexpr(FileInternal::IsSameType<WideCharEquivalent, utf32>)
+        else if constexpr(Detail::IsSameType<WideCharEquivalent, utf32>)
         {
             std::wstring_convert<std::codecvt_utf8<utf32>, utf32> cvt;
             BasicString<utf32> utf32Str = cvt.from_bytes(convertFrom.data());
 
-            FileInternal::CopyStringDataDisregardType<utf32>(utf32Str, returnStr);
+            Detail::CopyStringDataDisregardType<utf32>(utf32Str, returnStr);
             return returnStr;
         }
 
@@ -159,30 +159,30 @@ namespace FileInternal
 template<typename CharType>
 inline BasicString<utf8> ConverToUtf8(BasicStringView<CharType> convertFrom)
 {
-    static_assert (FileInternal::IsValidCharType<CharType>,
+    static_assert (Detail::IsValidCharType<CharType>,
             "Invalid char type; Only accepting char, utf16_t, utf32_t, wchar_t");
 
-    if constexpr(FileInternal::IsSameType<CharType, utfW>)
-        return FileInternal::ConvertUtfWideToUtf8(convertFrom);
+    if constexpr(Detail::IsSameType<CharType, utfW>)
+        return Detail::ConvertUtfWideToUtf8(convertFrom);
     else
-        return FileInternal::ConvertAnyNonWideToUtf8(convertFrom);
+        return Detail::ConvertAnyNonWideToUtf8(convertFrom);
 }
 
 template<typename CharType>
 inline auto ConvertToUtfWide(BasicStringView<CharType> convertFrom)
 {
-    static_assert (FileInternal::IsValidCharType<CharType>,
+    static_assert (Detail::IsValidCharType<CharType>,
             "Invalid char type; Only accepting char, utf16_t, utf32_t, wchar_t");
 
     //If already is wide returns it
-    if constexpr(FileInternal::IsSameType<CharType, utfW>)
+    if constexpr(Detail::IsSameType<CharType, utfW>)
     {
             return convertFrom;
     }
     else
     {
-        BasicString<utf8> temp(FileInternal::ConvertAnyNonWideToUtf8(convertFrom));
-        return FileInternal::ConvertUtf8ToWide(temp);
+        BasicString<utf8> temp(Detail::ConvertAnyNonWideToUtf8(convertFrom));
+        return Detail::ConvertUtf8ToWide(temp);
     }
 }
 

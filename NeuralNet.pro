@@ -32,6 +32,7 @@ HEADERS += \
     General/File/CompilerSupport.h \
     General/File/File.h \
     General/File/LegacyUniversalString.h \
+    General/File/NewOpenMode.h \
     General/File/OpenMode.h \
     General/File/UniversalString.h \
     General/File/UnsafeFile.h \

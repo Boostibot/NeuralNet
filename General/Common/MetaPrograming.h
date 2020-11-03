@@ -9,6 +9,7 @@ struct TypeIdentity
         using type = Type;
 };
 
+/*
 template <typename ValueTypeArg, ValueTypeArg valueArg>
 struct ValueTemplate
 {
@@ -30,7 +31,7 @@ using IntVal = ValueTemplate<int, value>;
 
 template<unsigned int value>
 using UintVal = ValueTemplate<unsigned int, value>;
-
+*/
 
 namespace MetaPrograming
 {
@@ -51,8 +52,10 @@ namespace MetaPrograming
 
     template < template <typename...> class TypeTemplate, typename... TemplateArgs>
     struct IsTypeTemplate< TypeTemplate<TemplateArgs...> > : std::true_type {} ;
+}
 
-
+namespace MetaPrograming
+{
     template <int N, typename... T>
     struct tuple_element;
 
@@ -67,18 +70,24 @@ namespace MetaPrograming
 
     template<int index, typename... Types>
     using TypeOnIndex = typename tuple_element<index, Types...>::type;
+}
 
-    template<typename ...>
-    using void_t = void;
+namespace MetaPrograming
+{
+    //template<typename ...>
+    //using void_t = void;
 
-    template<typename ... ParentTypes> struct TypePack : public ParentTypes... {};
+    //template<typename ... ParentTypes> struct TypePack : public ParentTypes... {};
 
-    struct ValidType {static constexpr bool IsValid = true;};
-    struct InvalidType {static constexpr bool IsValid = false;};
-    struct EmptyType{};
+    //struct ValidType {static constexpr bool IsValid = true;};
+    //struct InvalidType {static constexpr bool IsValid = false;};
+    //struct EmptyType{};
 
     enum class Indetifier : u8 {Indentify};
+}
 
+namespace MetaPrograming
+{
     template<typename SameTo, typename ... ArgumentTypes>
     struct IsTypePresent
     {
@@ -124,16 +133,119 @@ namespace MetaPrograming
     using AreTypesSame = AreTypesSameTo<ArgumentTypes...>;
 }
 
+namespace MetaPrograming
+{
+    template<typename FunctionType, typename ResultType, typename FirstType, typename ... OtherArgumentTypes>
+    constexpr static auto EvaluateFunctionRecursivelyBackwards(FunctionType REF func, FirstType firstValue, OtherArgumentTypes... values)
+    {
+        if(sizeof... (values) > 0)
+            return func(firstValue, EvaluateFunctionRecursivelyBackFirst(func, values...));
+        else
+            return firstValue;
+    }
+    template<typename FunctionType, typename ResultType, typename FirstType, typename ... OtherArgumentTypes>
+    constexpr static auto EvaluateFunctionRecursivelyBackwards(FunctionType REF, ResultType currentResult)
+    {
+        return currentResult;
+    }
+    template<typename FunctionType, typename ResultType, typename FirstType, typename ... OtherArgumentTypes>
+    constexpr static auto EvaluateFunctionRecursivelyForwards(FunctionType REF func, ResultType currentResult, FirstType firstValue, OtherArgumentTypes... values)
+    {
+        return EvaluateFunctionRecursivelyForwards(func, func(currentResult, firstValue), values...);
+    }
+    template<typename FunctionType, typename ResultType, typename FirstType, typename ... OtherArgumentTypes>
+    constexpr static auto EvaluateFunctionRecursivelyForwards(FunctionType REF, ResultType currentResult)
+    {
+        return currentResult;
+    }
+
+
+    //Functions
+    template<typename FirstType, typename SecondType>
+    constexpr static auto AndFunction(FirstType firstValue, SecondType secondValue)
+    {
+        return firstValue && secondValue;
+    }
+    template<typename FirstType, typename SecondType>
+    constexpr static auto OrFunction(FirstType firstValue, SecondType secondValue)
+    {
+        return firstValue || secondValue;
+    }
+    template<typename FirstType, typename SecondType>
+    constexpr static auto EqualsFunction(FirstType firstValue, SecondType secondValue)
+    {
+        return firstValue == secondValue;
+    }
+    template<typename FirstType, typename SecondType>
+    constexpr static auto NotEqualsFunction(FirstType firstValue, SecondType secondValue)
+    {
+        return firstValue != secondValue;
+    }
+    template<typename FirstType, typename SecondType>
+    constexpr static auto BiggerFunction(FirstType firstValue, SecondType secondValue)
+    {
+        return firstValue > secondValue;
+    }
+    template<typename FirstType, typename SecondType>
+    constexpr static auto BiggerOrEqualFunction(FirstType firstValue, SecondType secondValue)
+    {
+        return firstValue >= secondValue;
+    }
+    template<typename FirstType, typename SecondType>
+    constexpr static auto SmallerFunction(FirstType firstValue, SecondType secondValue)
+    {
+        return firstValue < secondValue;
+    }
+    template<typename FirstType, typename SecondType>
+    constexpr static auto SmallerOrEqualFunction(FirstType firstValue, SecondType secondValue)
+    {
+        return firstValue < secondValue;
+    }
+
+
+    template<typename ... ArgumentTypes>
+    constexpr static auto AndApplyFunctionImplemented(ArgumentTypes... args)
+    {
+        static_assert (sizeof...(args) > 0, "No arguments provided");
+        return EvaluateFunctionRecursivelyForwards(AndFunction<bool, bool>, args...);
+    }
+
+    template<typename FirstType, typename ... OtherArgumentTypes>
+    constexpr static bool And(FirstType firstValue, OtherArgumentTypes... values)
+    {
+        if(sizeof... (values) > 0)
+            return firstValue && And<OtherArgumentTypes...>(values...);
+        else
+            return firstValue;
+    }
+    template<int identifier>
+    constexpr static bool OrInternal()
+    {
+        return false;
+    }
+    template<int identifier, typename FirstType, typename ... OtherArgumentTypes>
+    constexpr static bool OrInternal(FirstType firstValue, OtherArgumentTypes... values)
+    {
+        return firstValue || OrInternal<identifier>(values...);
+    }
+    template<typename ... ArgumentTypes>
+    constexpr bool Or(ArgumentTypes... values)
+    {
+        return OrInternal<0, ArgumentTypes...>(values...);
+    }
+}
+
+#include <string>
 //ConstexprCString
 namespace MetaPrograming
 {
 
-    template<size_t size, typename CharT = char>
-    struct ConstexprCStr
+    template<size_t capacity, typename CharT = char>
+    struct ConstexprStr
     {
             using CharType = CharT;
             using SizeType = size_t;
-            using ThisType = ConstexprCStr<size, CharType>;
+            using ThisType = ConstexprStr<capacity, CharType>;
 
             static constexpr u32 StringLenght(const char* str)
             {
@@ -144,35 +256,39 @@ namespace MetaPrograming
                 return i;
             }
 
-            static constexpr SizeType MaxSize = size;
-            static constexpr SizeType MaxTotalSize = MaxSize + 1;
+        protected:
+            static constexpr SizeType TotalSize = capacity + 1;
             static constexpr CharT NullTermination = '\0';
 
-            SizeType Size = 0;
-            CharType String[MaxTotalSize] = {};
+            SizeType CurrentSize = 0;
+            CharType String[TotalSize] = {};
 
-            constexpr ConstexprCStr() : Size(0)
+        public:
+            constexpr ConstexprStr() : CurrentSize(0), String()
             {
-                String[Size] = NullTermination;
+                String[CurrentSize] = NullTermination;
             }
-            constexpr ConstexprCStr(const ThisType REF) = default;
-            constexpr ConstexprCStr(ThisType RVALUE_REF) = default;
+            constexpr ConstexprStr(const ThisType REF) = default;
+            constexpr ConstexprStr(ThisType RVALUE_REF) = default;
 
-            constexpr ConstexprCStr(const CharType * string)
+            constexpr ConstexprStr(const CharType * string) : CurrentSize(0), String()
             {
-                for(SizeType i = 0; i < MaxSize; i++)
+                for(SizeType i = 0; i < capacity; i++)
                 {
                     String[i] = string[i];
                     if(String[i] == NullTermination)
                     {
-                        Size = i + 1;
+                        CurrentSize = i;
                         return;
                     }
                 }
 
-                Size = MaxSize;
-                String[MaxSize] = NullTermination;
+                CurrentSize = capacity;
+                String[capacity] = NullTermination;
             }
+
+            static constexpr auto Capacity() noexcept {return capacity;}
+            constexpr auto Size() const noexcept {return CurrentSize;}
 
             constexpr ThisType REF operator=(const ThisType REF) = default;
             constexpr ThisType REF operator=(ThisType RVALUE_REF) = default;
@@ -184,24 +300,37 @@ namespace MetaPrograming
             {
                 return String[at];
             }
-            constexpr ThisType REF operator+=(const ThisType string)
+            constexpr ThisType REF operator+=(const ThisType other)
             {
-                for(; Size < MaxSize; Size++)
+                SizeType indexInOther = 0;
+                for(; CurrentSize < capacity; CurrentSize++, indexInOther++)
                 {
-                    String[Size] = string[Size];
-                    if(String[Size] == NullTermination)
-                        return PTR_VAL(this);
+                    String[CurrentSize] = other[indexInOther];
+                    if(String[CurrentSize] == NullTermination)
+                        break;
                 }
 
-                String[MaxSize] = NullTermination;
+                String[capacity] = NullTermination;
                 return PTR_VAL(this);
             }
+
+            constexpr ThisType REF operator+=(const CharT singleChar)
+            {
+                if(CurrentSize < capacity)
+                {
+                    String[CurrentSize] = singleChar;
+                    CurrentSize ++;
+                    String[CurrentSize] = NullTermination;
+                }
+                return PTR_VAL(this);
+            }
+
             constexpr bool operator==(const ThisType string) const
             {
-                if(this->Size != string.Size)
+                if(this->CurrentSize != string.CurrentSize)
                     return false;
 
-                for(SizeType i = 0; i < Size; i++)
+                for(SizeType i = 0; i < this->CurrentSize; i++)
                 {
                     if(this->String[i] != string[i])
                         return false;
@@ -211,10 +340,10 @@ namespace MetaPrograming
             }
             constexpr bool operator!=(const ThisType string) const
             {
-                if(this->Size != string.Size)
+                if(this->CurrentSize != string.CurrentSize)
                     return true;
 
-                for(SizeType i = 0; i < Size; i++)
+                for(SizeType i = 0; i < this->CurrentSize; i++)
                 {
                     if(this->String[i] != string[i])
                         return true;
@@ -222,7 +351,10 @@ namespace MetaPrograming
 
                 return false;
             }
-
+            constexpr operator std::basic_string_view<CharT>() const noexcept
+            {
+                return std::basic_string_view<CharT>(ADDRESS(String[0]), CurrentSize);
+            }
     };
 
 }

@@ -14,6 +14,7 @@ INCLUDEPATH += \
 HEADERS += \
         DynamicLog.h \
         File.h \
+        OpenMode.h \
         StaticLog.h \
         CFileManager.h \
         UnsafeFile.h
