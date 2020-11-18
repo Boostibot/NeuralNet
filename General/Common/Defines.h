@@ -1,15 +1,9 @@
 #ifndef G_DEFINES_H
 #define G_DEFINES_H
 
-#include <type_traits>
 #include <memory>
 
-///General defines
-#ifndef NULL
-#define NULL 0
-#endif // NULL
-
-///Operator readability
+//Operator readability
 #define NOT                     !
 #define REFERENCE               &
 #define REF                     REFERENCE
@@ -17,21 +11,33 @@
 #define RVALUE_REF              RVALUE_REFERENCE
 #define MUST_OVERRIDE           0
 
-#define IN const REF
-#define IN_COPY const
-#define OUT REF
-#define INOUT REF
-#define FORWARD RVALUE_REF
-#define MOVE RVALUE_REF
+//Argument intent
+#ifdef IN
+#undef IN
+#endif
 
-///Logic
+#ifdef OUT
+#undef OUT
+#endif
+
+#define IN                      const REF
+#define IN_COPY                 const
+#define OUT                     REF
+#define INOUT                   REF
+#define FORWARD                 RVALUE_REF
+#define MOVE                    RVALUE_REF
+
+//Header support
+#define HEADER_ONLY             inline
+
+//Logic
 #define AND                     &&
 #define OR                      ||
 
 //Is used to mark that a retunr type is a pointer; Has no actual impact; Mostly used in template functions with unspecified argument types to mark the type
 #define CLASSIFIED_AS_POINTER
 
-///Pointer readablity define functions
+//Pointer readablity define functions
 #define ADDRESS(item)           (std::addressof(item))
 #define POINTER                 *
 #define PTR                     POINTER
@@ -53,6 +59,7 @@
 #define EXPAND(x) x
 #define CONSUME(...)
 
+//Debug mode
 #ifdef NDEBUG
 #define IS_IN_DEBUG_MODE false
 #else

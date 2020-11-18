@@ -92,7 +92,7 @@ namespace CIo
         template< typename ... T>
         struct TestingStruct;
 
-        void IsStringClassTesting()
+        HEADER_ONLY void IsStringClassTesting()
         {
             static_assert (IsStringClass<std::string>::value, "");
             static_assert (IsStringClass<std::basic_string<char16>>::value, "");
@@ -126,7 +126,7 @@ namespace CIo
             static_assert (NOT IsStringClass<std::integral_constant<int, 0>>::value, "");
         }
 
-        void StringLiteralTesting()
+        HEADER_ONLY void StringLiteralTesting()
         {
             using StrLiteralType = decltype ("Hello");
             using DecayStrLiteral = std::decay_t<StrLiteralType>;
@@ -155,7 +155,7 @@ namespace CIo
             static_assert (std::is_same_v<GetCStringType<const char32 * const>::type, char32>, "");
         }
 
-        void IsAnyStringTesting()
+        HEADER_ONLY void IsAnyStringTesting()
         {
             static_assert (IsAnyString_v<char8 *>, "");
             static_assert (IsAnyString_v<const char8 *>, "");
@@ -183,7 +183,7 @@ namespace CIo
             static_assert (NOT IsAnyString_v<std::integral_constant<int, 0>>, "");
         }
 
-        void GetStrTesting()
+        HEADER_ONLY void GetStrTesting()
         {
             static_assert (std::is_same_v<GetAnyStringType_t<char8 *>, char8>, "");
             static_assert (std::is_same_v<GetAnyStringType_t<const char8 *>, char8>, "");

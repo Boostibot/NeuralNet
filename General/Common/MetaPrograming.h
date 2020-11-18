@@ -1,6 +1,7 @@
 #ifndef METAPROGRAMING_H
 #define METAPROGRAMING_H
 
+#include <type_traits>
 #include "General/Common/Common.h"
 
 template<typename Type>
@@ -135,6 +136,7 @@ namespace MetaPrograming
 
 namespace MetaPrograming
 {
+    //TODO - fix
     template<typename FunctionType, typename ResultType, typename FirstType, typename ... OtherArgumentTypes>
     constexpr static auto EvaluateFunctionRecursivelyBackwards(FunctionType REF func, FirstType firstValue, OtherArgumentTypes... values)
     {
@@ -210,20 +212,28 @@ namespace MetaPrograming
         return EvaluateFunctionRecursivelyForwards(AndFunction<bool, bool>, args...);
     }
 
-    template<typename FirstType, typename ... OtherArgumentTypes>
-    constexpr static bool And(FirstType firstValue, OtherArgumentTypes... values)
+    template<Indetifier identifier>
+    constexpr static bool AndInternal()
     {
-        if(sizeof... (values) > 0)
-            return firstValue && And<OtherArgumentTypes...>(values...);
-        else
-            return firstValue;
+        return true;
     }
-    template<int identifier>
+    template<Indetifier identifier, typename FirstType, typename ... OtherArgumentTypes>
+    constexpr static bool AndInternal(FirstType firstValue, OtherArgumentTypes... values)
+    {
+        return firstValue && AndInternal<identifier>(values...);
+    }
+    template<typename ... ArgumentTypes>
+    constexpr bool And(ArgumentTypes... values)
+    {
+        return AndInternal<Indetifier::Indentify, ArgumentTypes...>(values...);
+    }
+
+    template<Indetifier identifier>
     constexpr static bool OrInternal()
     {
         return false;
     }
-    template<int identifier, typename FirstType, typename ... OtherArgumentTypes>
+    template<Indetifier identifier, typename FirstType, typename ... OtherArgumentTypes>
     constexpr static bool OrInternal(FirstType firstValue, OtherArgumentTypes... values)
     {
         return firstValue || OrInternal<identifier>(values...);
@@ -231,7 +241,7 @@ namespace MetaPrograming
     template<typename ... ArgumentTypes>
     constexpr bool Or(ArgumentTypes... values)
     {
-        return OrInternal<0, ArgumentTypes...>(values...);
+        return OrInternal<Indetifier::Indentify, ArgumentTypes...>(values...);
     }
 }
 
@@ -240,11 +250,13 @@ namespace MetaPrograming
 namespace MetaPrograming
 {
 
+    /*
     template<size_t capacity, typename CharT = char>
     struct ConstexprStr
     {
             using CharType = CharT;
             using SizeType = size_t;
+            using OffsetType = i64;
             using ThisType = ConstexprStr<capacity, CharType>;
 
             static constexpr u32 StringLenght(const char* str)
@@ -355,8 +367,108 @@ namespace MetaPrograming
             {
                 return std::basic_string_view<CharT>(ADDRESS(String[0]), CurrentSize);
             }
-    };
 
+        private:
+            //Does not check if it is in bounds
+            constexpr void FinishStringAt(SizeType atPos)
+            {
+                CurrentSize = atPos;
+                String[atPos] = NullTermination;
+            }
+
+        private:
+            constexpr bool AssignForwards(const CharT PTR data, SizeType IN size, SizeType IN atPos = 0)
+            {
+                struct Helper{ static constexpr bool WereAllCharsCopied(SizeType index, SizeType size) {return index == size;} };
+
+                SizeType indexInThis = atPos;
+                SizeType indexInData = 0;
+
+                for(;
+                    indexInThis < capacity && indexInData < size;
+                    indexInThis++, indexInData++)
+                {
+                    String[indexInThis] = data[indexInData];
+
+                    if(String[indexInThis] == ThisType::NullTermination)
+                    {
+                        FinishStringAt(indexInThis);
+                        return true;
+                    }
+                }
+
+                FinishStringAt(capacity);
+
+                return Helper::WereAllCharsCopied(indexInData, size);
+            }
+            constexpr bool AssignBackwards(const CharT PTR data, SizeType IN size, SizeType IN atPos = 0)
+            {
+                struct Helper{ static constexpr bool WereAllCharsCopied(SizeType index, SizeType size) {return index == size;} };
+
+                SizeType indexInThis = capacity;
+                SizeType indexInData = size;
+
+                for(;
+                    indexInThis-- > atPos && indexInData-- > 0;
+                    )
+                {
+                    String[indexInThis] = data[indexInData];
+
+                    if(String[indexInThis] == ThisType::NullTermination)
+                    {
+                        FinishStringAt(indexInThis);
+                        return true;
+                    }
+                }
+
+                FinishStringAt(capacity);
+
+                return Helper::WereAllCharsCopied(indexInData, size);
+            }
+
+            inline constexpr bool Assign(const CharT PTR data, SizeType IN size, SizeType IN atPos = 0)
+            {
+                return AssignForwards(data, size, atPos);
+            }
+
+            constexpr bool ShiftForward(SizeType IN by, SizeType IN size, SizeType IN atPos)
+            {
+                return AssignBackwards(ADDRESS(String[atPos]), size, atPos + by);
+            }
+            constexpr bool ShiftBackward(SizeType IN by, SizeType IN size, SizeType IN atPos)
+            {
+                return AssignForwards(ADDRESS(String[atPos]), size, atPos - by);
+            }
+
+            constexpr bool Shift(OffsetType IN by, SizeType IN size, SizeType IN atPos)
+            {
+                if(by > 0)
+                    return ShiftForward(static_cast<SizeType>(by), size, atPos);
+                else
+                    return ShiftBackward(static_cast<SizeType>(-by), size, atPos);
+            }
+
+            constexpr void Set(SizeType IN size, SizeType IN atPos)
+            {
+
+            }
+
+            constexpr bool Erase(SizeType IN size, SizeType IN atPos)
+            {
+                ShiftBackward(size, size, atPos);
+
+            }
+
+            inline constexpr bool Assign(ThisType IN other, SizeType IN atPos = 0)
+            {
+                return Assign(other.String, other.Size(), atPos);
+            }
+            constexpr bool Append(ThisType IN other)
+            {
+                return Assign(other, Size());
+            }
+    };
+    */
 }
 
 

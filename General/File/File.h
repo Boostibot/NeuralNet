@@ -16,9 +16,9 @@ namespace CIo
             using CharSupport       = typename CFileManager::CharSupport;
 
         public:
-            using SizeType          = typename UnsafeFile::SizeType;
-            using FileSizeType      = typename UnsafeFile::FileSizeType;
-            using PosType           = typename UnsafeFile::PosType;
+            using Size              = typename UnsafeFile::Size;
+            using FileSize          = typename UnsafeFile::FileSize;
+            using Position          = typename UnsafeFile::Position;
             using OriginPosition    = typename UnsafeFile::OriginPosition;
             using BufferingCode     = typename UnsafeFile::BufferingCode;
             using FileDescriptor    = typename UnsafeFile::FileDescriptor;
@@ -51,90 +51,89 @@ namespace CIo
             ThisType REF operator=(ThisType RVALUE_REF) = default;
 
         public:
-            inline BasicFile(const OsStringView path, const OsStringView openMode) : UnsafeFile(path, openMode)
+            inline BasicFile(const OsStringView path, const OpenMode REF openMode) : UnsafeFile(path, openMode)
             {}
             template<typename ... OpenModeTypes,
-                     std::enable_if_t<MetaPrograming::AreTypesSameTo<typename UnsafeFile::CFileManager::OpenModeFlag, OpenModeTypes...>::value, int> = 0>
+                     std::enable_if_t<OpenModeHelpers::AreOpenModeFlags<OpenModeTypes...>(), i32> = 0>
             inline BasicFile(const OsStringView path, OpenModeTypes ... openModes) noexcept : UnsafeFile(path, openModes...)
             {}
 
-
         protected:
-            inline UnsafeFile REF GetUnsafeFile() noexcept
+            inline UnsafeFile REF GetUnsafe() noexcept
             {
                 return static_cast<UnsafeFile REF>(PTR_VAL(this));
             }
-            inline const UnsafeFile REF GetUnsafeFile() const noexcept
+            inline const UnsafeFile REF GetUnsafe() const noexcept
             {
                 return static_cast<const UnsafeFile REF>(PTR_VAL(this));
             }
 
 
         public:
-             bool WasLastErrorEndOfFile() const noexcept
+            bool WasEndOfFileRieched() const noexcept
             {
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafeFile().WasLastErrorEndOfFile();
+                return this->GetUnsafe().WasEndOfFileRieched();
             }
 
 
         public:
-            PosType GetPosInFile() noexcept
+            Position GetPosInFile() noexcept
             {
                 if(this->IsClosed())
-                    return static_cast<PosType>(0);
+                    return static_cast<Position>(0);
 
-                return this->GetUnsafeFile().GetPosInFile();
+                return this->GetUnsafe().GetPosInFile();
             }
 
-            bool SetPosInFile(PosType pos, OriginPosition from = OriginPosition::Beggining) noexcept
+            bool SetPosInFile(Position pos, OriginPosition from = OriginPosition::Beggining) noexcept
             {
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafeFile().SetPosInFile(pos, from);
+                return this->GetUnsafe().SetPosInFile(pos, from);
             }
             void MoveToBegging() noexcept
             {
                 if(this->IsClosed())
                     return;
 
-                this->GetUnsafeFile().MoveToBegging();
+                this->GetUnsafe().MoveToBegging();
             }
             void MoveToEnd() noexcept
             {
                 if(this->IsClosed())
                     return;
 
-                this->GetUnsafeFile().MoveToEnd();
+                this->GetUnsafe().MoveToEnd();
             }
-            bool MoveBy(PosType by) noexcept
+            bool MoveBy(Position by) noexcept
             {
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafeFile().MoveBy(by);
+                return this->GetUnsafe().MoveBy(by);
             }
 
         public:
             template<typename PointerType>
-            [[nodiscard]] bool Read(PointerType POINTER ptrToBuffer, SizeType count) noexcept
+            [[nodiscard]] bool Read(PointerType PTR ptrToBuffer, Size count) noexcept
             {
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafeFile().Read(ptrToBuffer, count);
+                return this->GetUnsafe().Read(ptrToBuffer, count);
             }
 
             template<typename PointerType>
-            [[nodiscard]] SizeType ReadAndCount(PointerType POINTER ptrToBuffer, SizeType count) noexcept
+            [[nodiscard]] Size ReadAndCount(PointerType PTR ptrToBuffer, Size count) noexcept
             {
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafeFile().ReadAndCount(ptrToBuffer, count);
+                return this->GetUnsafe().ReadAndCount(ptrToBuffer, count);
             }
 
             template<typename CharT>
@@ -143,16 +142,16 @@ namespace CIo
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafeFile().ReadString(to);
+                return this->GetUnsafe().ReadString(to);
             }
 
             template<typename CharT>
-            [[nodiscard]] bool ReadString(OsString REF to, const SizeType lenght) noexcept
+            [[nodiscard]] bool ReadString(OsString REF to, const Size lenght) noexcept
             {
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafeFile().ReadString(to, lenght);
+                return this->GetUnsafe().ReadString(to, lenght);
             }
 
             template<typename ObjectType>
@@ -161,25 +160,25 @@ namespace CIo
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafeFile().ReadObject(object);
+                return this->GetUnsafe().ReadObject(object);
             }
 
         public:
             template<typename PointerType>
-            [[nodiscard]] bool Write(PointerType POINTER ptrToData, SizeType count) noexcept
+            [[nodiscard]] bool Write(PointerType PTR ptrToData, Size count) noexcept
             {
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafeFile().Write(ptrToData, count);
+                return this->GetUnsafe().Write(ptrToData, count);
             }
             template<typename PointerType>
-            [[nodiscard]] SizeType WriteAndCount(PointerType POINTER ptrToData, SizeType count) noexcept
+            [[nodiscard]] Size WriteAndCount(PointerType PTR ptrToData, Size count) noexcept
             {
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafeFile().WriteAndCount(ptrToData, count);
+                return this->GetUnsafe().WriteAndCount(ptrToData, count);
             }
             template<typename ObjectType>
             [[nodiscard]] bool WriteObject(ObjectType RVALUE_REF object) noexcept
@@ -187,7 +186,7 @@ namespace CIo
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafeFile().WriteObject(object);
+                return this->GetUnsafe().WriteObject(object);
             }
 
             template <typename T,
@@ -197,31 +196,31 @@ namespace CIo
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafeFile().WriteString(std::forward<T>(str));
+                return this->GetUnsafe().WriteString(std::forward<T>(str));
             }
 
 
         public:
-            bool SetBuffer(void POINTER bufferPtr, SizeType bufferSize, BufferingCode mode) noexcept
+            bool SetBuffer(void PTR bufferPtr, Size bufferSize, BufferingCode mode) noexcept
             {
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafeFile().SetBuffer(bufferPtr, bufferSize, mode);
+                return this->GetUnsafe().SetBuffer(bufferPtr, bufferSize, mode);
             }
             void Flush() noexcept
             {
                 if(this->IsClosed())
                     return;
 
-                return this->GetUnsafeFile().Flush();
+                return this->GetUnsafe().Flush();
             }
-            void SwitchBetweenReadAndWrite() noexcept
+            void SwitchReadAndWrite() noexcept
             {
                 if(this->IsClosed())
                     return;
 
-                return this->GetUnsafeFile().SwitchBetweenReadAndWrite();
+                return this->GetUnsafe().SwitchBetweenReadAndWrite();
             }
 
         public:
@@ -230,7 +229,7 @@ namespace CIo
                 if(this->IsClosed())
                     return UnsafeFile::GetErrorFileDescriptor();
 
-                return this->GetUnsafeFile().GetFileDescriptor();
+                return this->GetUnsafe().GetFileDescriptor();
             }
 
             bool GetFileStatics(Stats REF stats) const noexcept
@@ -238,15 +237,15 @@ namespace CIo
                 if(this->IsClosed())
                     return false;
 
-                return this->GetUnsafeFile().GetFileStatics(stats);
+                return this->GetUnsafe().GetFileStatics(stats);
             }
 
-            FileSizeType GetFileSize() const noexcept
+            FileSize GetFileSize() const noexcept
             {
                 if(this->IsClosed())
                     return 0;
 
-                return this->GetUnsafeFile().GetFileSize();
+                return this->GetUnsafe().GetFileSize();
             }
     };
 

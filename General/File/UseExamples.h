@@ -7,7 +7,7 @@
 /*
 using File = BasicFile<utf8>;
 
-void CFileUse()
+inline void CFileUse()
 {
     File::OsString path = "path.txt";
     File::CFileManager manager;
@@ -52,9 +52,9 @@ void CFileUse()
 }
 
 
-void ProcessChunk(byte[], size_t) {}
+inline void ProcessChunk(byte[], size_t) {}
 
-bool ReadFileByChunks(File::OsStringView path) noexcept
+inline bool ReadFileByChunks(File::OsStringView path) noexcept
 {
     constexpr size_t chunkSize = 1024;
     constexpr File::OpenMode openMode = File::GetOpenMode(File::OpenModeFlag::Read, File::OpenModeFlag::Binary, File::OpenModeFlag::MustExist);
@@ -74,7 +74,7 @@ bool ReadFileByChunks(File::OsStringView path) noexcept
         return false;
 }
 
-void UpdateProgress(File::PosType current, File::PosType max)
+inline void UpdateProgress(File::PosType current, File::PosType max)
 {
     const double percentage = static_cast<double>(max) / static_cast<double>(current);
     (void)percentage;
@@ -82,7 +82,7 @@ void UpdateProgress(File::PosType current, File::PosType max)
 
 //Note that this function can be declared noexcept since all
 // functions in the File (BasicFile<>) class are noexcept
-bool ReadFileWithProgress(File::OsStringView path) noexcept
+inline bool ReadFileWithProgress(File::OsStringView path) noexcept
 {
 
     constexpr size_t chunkSize = 1024;
@@ -148,7 +148,7 @@ bool ReadFileWithProgress(File::OsStringView path) noexcept
         return false;
 }
 
-bool ReadFileFastest(File::OsStringView path) noexcept
+inline bool ReadFileFastest(File::OsStringView path) noexcept
 {
     constexpr size_t chunkSize = 4096;
     constexpr File::OpenMode openMode(File::OpenModeFlag::Read, File::OpenModeFlag::Binary, File::OpenModeFlag::MustExist);
@@ -187,7 +187,7 @@ bool ReadFileFastest(File::OsStringView path) noexcept
     // only in single line
 }
 
-bool ReadFileBackwards(File::OsStringView path) noexcept
+inline bool ReadFileBackwards(File::OsStringView path) noexcept
 {
     constexpr size_t chunkSize = 4096;
     //Using this notation the open mode is checked inside the GetOpenMode function
@@ -234,7 +234,7 @@ bool ReadFileBackwards(File::OsStringView path) noexcept
 }
 
 #include "UtfConversion.h"
-bool WorkingWithFilesInUtf(std::string_view path) //NOT!!! noexcept
+inline bool WorkingWithFilesInUtf(std::string_view path) //NOT!!! noexcept
 {
     //When working with files in UTF there are few important things to note:
     //
@@ -300,7 +300,7 @@ bool WorkingWithFilesInUtf(std::string_view path) //NOT!!! noexcept
     return true;
 }
 
-bool WriteFileUtf(File::OsStringView path)
+inline bool WriteFileUtf(File::OsStringView path)
 {
     constexpr File::OpenMode openMode = File::GetOpenMode<File::OpenModeFlag::Read, File::OpenModeFlag::Write, File::OpenModeFlag::Binary,
             //Unicode flag makes the file automatically skip the BOM mark

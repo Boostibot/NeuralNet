@@ -3,6 +3,7 @@
 
 #define _FILE_OFFSET_BITS 64
 #define _LARGEFILE_SOURCE
+#define __STDC_WANT_LIB_EXT1__ 1
 
 #include <locale.h>
 #include <cstdio>
@@ -18,7 +19,7 @@ namespace CIo
 {
     namespace CompilerSpecific
     {
-        inline FILE POINTER fopen(const char8 * fileName, const char8 * arguments) noexcept
+        inline auto fopen(const char8 * fileName, const char8 * arguments) noexcept
         {
             #if defined (_MSC_VER)
             FILE POINTER ptr;
@@ -29,11 +30,20 @@ namespace CIo
             #endif
         }
 
-        inline FILE POINTER wfopen(const charW * fileName, const charW * arguments) noexcept
+        inline auto wfopen(const charW * fileName, const charW * arguments) noexcept
         {
             FILE POINTER ptr;
             _wfopen_s(ADDRESS(ptr), fileName, arguments);
             return ptr;
+        }
+
+        inline auto freopen(const char8 * fileName, const char * arguments, FILE POINTER stream)
+        {
+            return ::freopen(fileName, arguments, stream);
+        }
+        inline auto wfreopen(const charW * fileName, const charW * arguments, FILE POINTER stream)
+        {
+            return ::_wfreopen(fileName, arguments, stream);
         }
 
         #if defined (_MSC_VER)

@@ -2,7 +2,7 @@
 #define TEMP_H
 
 #include <iostream>
-
+#include "General/Common/Common.h"
 /*
 void* operator new (size_t size)
 {
@@ -26,7 +26,7 @@ void operator delete(void* ptr, size_t size)
 #include "Libraries/Fmt/fmt/printf.h"
 #include "Libraries/Fmt/fmt/compile.h"
 
-void FmtTesting()
+HEADER_ONLY void FmtTesting()
 {
     std::string buffer;
     std::cout << "Reserving buffer ================" << std::endl;
@@ -66,7 +66,7 @@ void FmtTesting()
 #include "General/StaticLog/StaticLog.h"
 #include "General/StaticLog/TesterClasses.h"
 
-void StaticLogInterpretTesting()
+HEADER_ONLY void StaticLogInterpretTesting()
 {
 
     std::string output;
@@ -75,7 +75,7 @@ void StaticLogInterpretTesting()
     interpret.InterpretArg(0, output);
 }
 
-void DefaultLogWritterPackageTesting()
+HEADER_ONLY void DefaultLogWritterPackageTesting()
 {
     using namespace StaticLog;
     using namespace StaticLogTesting;
@@ -93,7 +93,7 @@ void DefaultLogWritterPackageTesting()
 
 }
 
-void LoggerCopyTesting()
+HEADER_ONLY void LoggerCopyTesting()
 {
     ::StaticLog::LoggerInterface<::StaticLog::StaticLogTesting::TestingLoggerCopy> logWriterCopy1(11, "Copy1");
     logWriterCopy1.DoLog(false);
@@ -108,7 +108,7 @@ void LoggerCopyTesting()
     //int a = 0;
 }
 
-void LogDefLoggerTesting()
+HEADER_ONLY void LogDefLoggerTesting()
 {
     StaticLog::DefaultLoggerPackage dataPackage("FilePackage");
     StaticLog::StaticLogTesting::GetDefPackageTester(dataPackage).CollectionString   = "PackageCollectionString";
@@ -144,7 +144,7 @@ void LogDefLoggerTesting()
     }
 }
 
-void LogDefLoggerConstructing()
+HEADER_ONLY void LogDefLoggerConstructing()
 {
     StaticLog::DefaultLoggerPackage dataPackage("FilePackage");
     StaticLog::StaticLogTesting::GetDefPackageTester(dataPackage).CollectionString   = "PackageCollectionString";
@@ -241,14 +241,14 @@ namespace UnorderedArgumentChain
 
 }
 
-void UnorderedArgumentChainTesting()
+HEADER_ONLY void UnorderedArgumentChainTesting()
 {
     UnorderedArgumentChain::Caller caller;
     caller.Function("Hello World").WithTags("Tag").WithSource("File");
 }
 
 
-void StringAdditionSpeedTesting()
+HEADER_ONLY void StringAdditionSpeedTesting()
 {
     using MicrosecondsChronoDurations = std::chrono::duration<double, std::ratio<1, 1000>>;
 
@@ -341,19 +341,19 @@ namespace PassingSupport
             ClassData POINTER operator->() {return ADDRESS(Data);}
     };
 
-    void Function1(ClassRef ref)
+    HEADER_ONLY void Function1(ClassRef ref)
     {
         std::cout << ref.Data.PassCount << std::endl;
     }
 
-    void Function2(ClassRef ref)
+    HEADER_ONLY void Function2(ClassRef ref)
     {
         std::cout << ref.Data.PassCount << std::endl;
         Function1(ref);
         std::cout << ref.Data.PassCount << std::endl;
     }
 
-    void Function3(ClassRef ref)
+    HEADER_ONLY void Function3(ClassRef ref)
     {
         std::cout << ref.Data.PassCount << std::endl;
         Function2(ref);
@@ -361,7 +361,7 @@ namespace PassingSupport
     }
 }
 
-u32 Counter()
+HEADER_ONLY u32 Counter()
 {
     static u32 counter = 0;
     u32 counterCopy = counter;
@@ -372,14 +372,14 @@ u32 Counter()
 }
 
 
-std::string CounterText()
+HEADER_ONLY std::string CounterText()
 {
     return std::to_string(Counter());
 }
 
 thread_local StaticLog::DefaultLogger<> Log("Temp" + CounterText() + ".txt");
 
-void GenericProgramingTests()
+HEADER_ONLY void GenericProgramingTests()
 {
 
     const char * myStr = "Hello world";
@@ -414,7 +414,7 @@ struct BlockTempl
         ElemtT data[size];
 };
 
-void AllocatingBlocksTesting()
+HEADER_ONLY void AllocatingBlocksTesting()
 {
     //size_t dynamicSize = 0;
     //void * blockPtr =  new BlockTempl<dynamicSize>();
@@ -529,7 +529,7 @@ struct TestSize1
 
 
 
-void AllocatingBlocksTesting2()
+HEADER_ONLY void AllocatingBlocksTesting2()
 {
     //alignas(BlockHeader) int a;
     //AlignedMemory<16> memory[106];
@@ -543,7 +543,7 @@ void AllocatingBlocksTesting2()
     static_assert (std::is_same_v<GetSize<double, int>, Size<sizeof(TestSize1)>>, "");
 }
 
-void PassingSupportTesting()
+HEADER_ONLY void PassingSupportTesting()
 {
     PassingSupport::ClassData data;
     PassingSupport::ClassRef ref(data);
@@ -552,49 +552,31 @@ void PassingSupportTesting()
 }
 
 
-#include "General/StaticLog/SpeedTests.h"
 #include "General/File/File.h"
 #include "General/File/UseExamples.h"
 
-template<typename T>
-struct A
+template<typename T, T... values>
+void templFUnc()
 {
-       T a1;
-       T a2;
-};
 
-struct B
+}
+
+HEADER_ONLY void OpenModeConstructortesting()
 {
-        i32 b1;
-        i32 b2;
-        i32 b3;
+    using namespace CIo;
+    using namespace OpenModeHelpers;
+    FlagPresence::IsFlagPresent(OpenModeFlag::Read, OpenModeFlag::Read);
+    FlagPresence::IsFlagPresent(OpenModeFlag::Read, OpenModeFlag::Read, OpenModeFlag::Write);
+    FlagPresence::IsFlagPresent(OpenModeFlag::Read, OpenModeFlag::Read, OpenModeFlag::Read);
 
-        B(i32 a1, i32 a2, i32 a3)
-        {
-            b1 = a1;
-            b2 = a2;
-            b3 = a3;
-        }
+    templFUnc<int, 1, 2, 3>();
 
-        template<typename T>
-        operator A<T>()
-        {
-            A<T> a;
-            a.a1 = static_cast<T>(b1);
-            a.a2 = static_cast<T>(b2);
-            return a;
-        }
-};
-
-void OpenModeConstructortesting()
-{
-    B b(0, 1, 2);
-    A<i32> aI32 = b;
-    A<u32> aU32 = b;
+    UnsafeFile file;
+    file.IsOpen();
 }
 
 
-void RunTemp()
+HEADER_ONLY void RunTemp()
 {
     //FmtTesting();
     //StaticLogInterpretTesting();
@@ -609,10 +591,6 @@ void RunTemp()
     //PassingSupportTesting();
     OpenModeConstructortesting();
 
-    //SpeedTests();
-    //AllocationTests();
-    //StaticLogLogCheckingOverheadTests();
-    //LibSpeedTests();
 }
 
 #endif // TEMP_H

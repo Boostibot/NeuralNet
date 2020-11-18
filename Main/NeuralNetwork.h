@@ -553,7 +553,7 @@ class NeuralNet
 
 };
 
-void RunNeuralNetwork()
+HEADER_ONLY void RunNeuralNetwork()
 {
     std::vector<UnsignedNum> networkSize = {2, 2, 1};
     NeuralNet ann(networkSize);

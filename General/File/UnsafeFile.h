@@ -12,18 +12,22 @@ namespace CIo
     //A full wrapper class which should implemnt a wrapper function for all c FILE functions
     //It should also ease the use of c FILE and be the base for more specific classes
     template<typename OsCharTypeArg>
-    class BasicUnsafeFile : public BasicCFileManager<OsCharTypeArg>
+    class BasicUnsafeFile : public BasicCFileManager<OsCharTypeArg>,
+                            public StaticFileFunctions<OsCharTypeArg>
     {
         protected:
             using ThisType          = BasicUnsafeFile;
             using CFileManager      = BasicCFileManager<OsCharTypeArg>;
             using CharSupport       = typename CFileManager::CharSupport;
             using OpenModeHolder    = typename CFileManager::OpenModeHolder;
+            using StaticFunctions   = typename CFileManager::StaticFileFunctions;
 
         public:
-            using SizeType          = size_t;
-            using FileSizeType      = decltype (::_stat64::st_size);
-            using PosType           = CompilerSpecific::OffsetType;
+            using Size              = size_t;
+            using Position          = CompilerSpecific::OffsetType;
+            using FileSize          = typename StaticFunctions::FileSize;
+            using FileDescriptor    = typename StaticFunctions::FileDescriptor;
+            using Stats             = typename StaticFunctions::Stats;
 
             using OpenMode          = typename OpenModeHolder::OpenMode;
 
@@ -41,57 +45,14 @@ namespace CIo
 
             static_assert (CharSupport::IsValid, "Invalid OsCharType; Only char and wchar_t allowed; (No posix function takes other char types)");
 
-        public:
-            static constexpr int EndOfFile              = CharSupport::EndOfFile;
-            static constexpr int FileNamesLenghtMax     = FILENAME_MAX;
-            static constexpr int OpenFilesMax           = FOPEN_MAX;
-            static constexpr int TempFileNamesLenghtMax = L_tmpnam;
-            static constexpr int TemporaryFilesMax      = TMP_MAX;
-
-
-            enum class OriginPosition : int
+            enum class OriginPosition : i32
             {
                 Beggining = SEEK_SET,
                 CurrentPosition = SEEK_CUR,
                 End = SEEK_END
             };
 
-            struct Stats
-            {
-                    using CStatType = struct _stat64;
-                    CStatType CStats;
-
-                    inline auto GroupIdOwningFile()         const noexcept {return CStats.st_gid;}
-                    inline auto UserIdOwningFile()          const noexcept {return CStats.st_uid;}
-                    inline auto TimeOfCreation()            const noexcept {return CStats.st_ctime;}
-                    inline auto TimeOfLastAccess()          const noexcept {return CStats.st_atime;}
-                    inline auto TimeOfLastModification()    const noexcept {return CStats.st_mtime;}
-                    inline auto DriveNumberOfDiskWithFile() const noexcept {return CStats.st_dev;}
-                    inline auto NumberOfInformationNodes()  const noexcept {return CStats.st_ino;}
-                    inline auto FileModeBitMask()           const noexcept {return CStats.st_mode;}
-                    inline auto NumberOfHardLinks()         const noexcept {return CStats.st_nlink;}
-                    inline auto Size()                      const noexcept {return CStats.st_size;}
-            };
-
-            struct FileDescriptor
-            {
-                    using InnerDescriptor = int;
-                    friend ThisType;
-
-                protected:
-                    #if defined (_MSC_VER)
-                    [[maybe_unused]]
-                    #endif
-                    InnerDescriptor Descriptor;
-                    FileDescriptor(InnerDescriptor descriptor) noexcept : Descriptor(descriptor) {}
-
-                public:
-                    FileDescriptor() = default;
-                    explicit operator InnerDescriptor() noexcept {return Descriptor;}
-                    inline bool IsValid() const noexcept {return Descriptor >= 0;}
-            };
-
-            enum class BufferingCode : int
+            enum class BufferingCode : i32
             {
                 Full = _IOFBF,
                 Line = _IONBF,
@@ -111,13 +72,13 @@ namespace CIo
             ThisType REF operator=(ThisType RVALUE_REF) = default;
 
         public:
-            inline BasicUnsafeFile(const OsStringView path, const OsStringView openMode) noexcept : CFileManager(path, openMode)
-            {}
-            template<typename ... OpenModeTypes,
-                     std::enable_if_t<MetaPrograming::AreTypesSameTo<typename CFileManager::OpenModeFlag, OpenModeTypes...>::value, int> = 0>
-            BasicUnsafeFile(const OsStringView path, OpenModeTypes ... openModes) noexcept : CFileManager(path, openModes...)
+            inline BasicUnsafeFile(const OsStringView path, const OpenMode REF openMode) noexcept : CFileManager(path, openMode)
             {}
 
+            template<typename ... OpenModeTypes,
+                     std::enable_if_t<OpenModeHelpers::AreOpenModeFlags<OpenModeTypes...>(), i32> = 0>
+            inline BasicUnsafeFile(const OsStringView path, OpenModeTypes ... openModes) noexcept : CFileManager(path, openModes...)
+            {}
 
         public:
             ~BasicUnsafeFile() = default;
@@ -133,7 +94,7 @@ namespace CIo
             //}
 
         public:
-            inline bool WasLastErrorEndOfFile() const noexcept
+            inline bool WasEndOfFileRieched() const noexcept
             {
                 return (feof(FilePtr) != 0);
             }
@@ -212,11 +173,11 @@ namespace CIo
             }
 
         public:
-            inline PosType GetPosInFile() noexcept //ftell
+            inline Position GetPosInFile() noexcept //ftell
             {
                 return CompilerSpecific::ftell(this->FilePtr);
             }
-            inline bool SetPosInFile(const PosType pos, const OriginPosition from = OriginPosition::Beggining) noexcept //fseek
+            inline bool SetPosInFile(const Position pos, const OriginPosition from = OriginPosition::Beggining) noexcept //fseek
             {
                 return (CompilerSpecific::fseek(this->FilePtr, pos, static_cast<int>(from)) == 0);
             }
@@ -231,20 +192,20 @@ namespace CIo
                 // negative
                 SetPosInFile(0, OriginPosition::End);
             }
-            inline bool MoveBy(PosType by) noexcept //fseek curr
+            inline bool MoveBy(Position by) noexcept //fseek curr
             {
                 return SetPosInFile(by, OriginPosition::CurrentPosition);
             }
 
         public:
             template<typename PointerType>
-            [[nodiscard]] inline bool Read(PointerType POINTER ptrToBuffer, const SizeType count) noexcept
+            [[nodiscard]] inline bool Read(PointerType PTR ptrToBuffer, const Size count) noexcept
             {
                 return (ReadAndCount(ptrToBuffer, count) == count);
             }
 
             template<typename PointerType>
-            [[nodiscard]] inline SizeType ReadAndCount(PointerType POINTER ptrToBuffer, const SizeType count) noexcept //fread
+            [[nodiscard]] inline Size ReadAndCount(PointerType PTR ptrToBuffer, const Size count) noexcept //fread
             {
                 return fread(ptrToBuffer, sizeof (PointerType), count, FilePtr);
             }
@@ -255,7 +216,7 @@ namespace CIo
                 return Read(to.data(), to.size());
             }
             template<typename CharT>
-            [[nodiscard]] inline bool ReadString(String<CharT> REF to, const SizeType maxlenght) noexcept
+            [[nodiscard]] inline bool ReadString(String<CharT> REF to, const Size maxlenght) noexcept
             {
                 return Read(to.data(), ThisType::Min(to.size(), maxlenght));
             }
@@ -268,13 +229,13 @@ namespace CIo
 
         public:
             template<typename PointerType>
-            [[nodiscard]] inline bool Write(const PointerType POINTER const ptrToData, const SizeType count) noexcept
+            [[nodiscard]] inline bool Write(const PointerType PTR const ptrToData, const Size count) noexcept
             {
                 return (WriteAndCount(ptrToData, count) == count);
             }
 
             template<typename PointerType>
-            [[nodiscard]] inline SizeType WriteAndCount(const PointerType POINTER const ptrToData, const SizeType count) noexcept //fwrite
+            [[nodiscard]] inline Size WriteAndCount(const PointerType PTR const ptrToData, const Size count) noexcept //fwrite
             {
                 return fwrite(ptrToData, sizeof (PointerType), count, FilePtr);
             }
@@ -326,9 +287,9 @@ namespace CIo
             //bool UnReadCharcter();
 
         public:
-            inline bool SetBuffer(void POINTER bufferPtr, const SizeType bufferSize, const BufferingCode mode) noexcept //Setvbuf
+            inline bool SetBuffer(void PTR bufferPtr, const Size bufferSize, const BufferingCode mode) noexcept //Setvbuf
             {
-                return setvbuf(this->FilePtr, static_cast<char POINTER>(bufferPtr), static_cast<int>(mode), bufferSize);
+                return setvbuf(this->FilePtr, static_cast<char PTR>(bufferPtr), static_cast<int>(mode), bufferSize);
             }
             inline void Flush() noexcept //fflush
             {
@@ -340,63 +301,17 @@ namespace CIo
             }
 
         public:
-            static bool GetUniqueTempFileName(OsString REF fileName) noexcept //tmpnam_s
-            {
-                if(fileName.size() < ThisType::TempFileNamesLenghtMax)
-                    return false;
-
-                return (CharSupport::tmpnam_s(fileName.data(), fileName.size()) == 0);
-            }
-
-        public:
-            static bool CreateDirectory(const OsStringView dirName) noexcept
-            {
-                return (CharSupport::mkdir(dirName.data()) == 0);
-            }
-
-            static bool CreateFile(const OsStringView filename) noexcept
-            {
-                ThisType file;
-                return file.OpenNew(filename, ThisType::OpenMode(ThisType::CFileOpenMode::Write));
-            }
-            inline static bool RenameFile(const OsStringView oldFileName, const OsStringView newFileName) noexcept
-            {
-                return (CharSupport::rename(oldFileName.data(), newFileName.data()) == 0);
-            }
-            inline static bool RemoveFile(const OsStringView fileName) noexcept
-            {
-                return (CharSupport::remove(fileName.data()) == 0);
-            }
-
-        public:
             inline FileDescriptor GetFileDescriptor() const noexcept
             {
                 return _fileno(this->FilePtr);
-            }
-
-            inline static bool GetFileStatics(Stats REF stats, const FileDescriptor descriptor) noexcept
-            {
-                return (_fstat64(descriptor, ADDRESS(stats.CStats)) == 0);
-            }
-
-            inline static bool GetFileStatics(Stats REF stats, const OsStringView filename) noexcept
-            {
-                return (CharSupport::_stat64(filename.data(), ADDRESS(stats.CStats)) == 0);
             }
 
             inline bool GetFileStatics(Stats REF stats) const noexcept
             {
                 return ThisType::GetFileStatics(stats, this->GetFileDescriptor());
             }
-            static bool GetFileSize(const OsStringView filename) noexcept
-            {
-                Stats stats;
-                if(NOT ThisType::GetFileStatics(stats, filename))
-                    return 0;
 
-                return stats.Size();
-            }
-            FileSizeType GetFileSize() const noexcept
+            FileSize GetFileSize() const noexcept
             {
                 Stats stats;
 

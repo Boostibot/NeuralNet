@@ -114,7 +114,7 @@ namespace  CompileTimeNumericConversion
     };
 
 
-    void ConstexprNumConversionUse()
+    HEADER_ONLY void ConstexprNumConversionUse()
     {
         using namespace MetaPrograming;
         using namespace CompileTimeNumericConversion;

@@ -256,7 +256,7 @@ namespace StaticLog
 
         };
 
-        DefaultLoggerPackageTester REF GetDefPackageTester(DefaultLoggerPackage<> REF package)
+        HEADER_ONLY DefaultLoggerPackageTester REF GetDefPackageTester(DefaultLoggerPackage<> REF package)
         {
             return static_cast<DefaultLoggerPackageTester REF>(package);
         }

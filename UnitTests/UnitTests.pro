@@ -12,6 +12,7 @@ INCLUDEPATH += \
 
 #User files
 HEADERS += \
+        ConstexprString.h \
         DynamicLog.h \
         File.h \
         OpenMode.h \

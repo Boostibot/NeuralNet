@@ -5,77 +5,32 @@
 
 namespace CIo::CFileManagerTesting
 {
-    template<typename T>
-    struct BasicCFileManagerTester : public BasicCFileManager<T>
-    {
-            using BasicCFileManager = BasicCFileManager<T>;
-            using BasicCFileManager::FilePtr;
-            using BasicCFileManager::CloseFile;
-    };
-
-    template<typename T>
-    BasicCFileManagerTester<T> REF ToTester(BasicCFileManager<T> REF file)
-    {
-        return static_cast<BasicCFileManagerTester<T> REF>(file);
-    }
-
-    template<typename CharT, size_t CharsMaxArg = L_tmpnam>
+    template<typename CharT, size_t CharsMax = L_tmpnam>
     struct BasicFilenameCleaner
     {
-
-            static constexpr size_t CharsMax = CharsMaxArg;
-            static constexpr bool IsChar8 = std::is_same_v<CharT, char8>;
-            static constexpr bool IsCharW = std::is_same_v<CharT, charW>;
-
-            static_assert (IsChar8 || IsCharW, "Only char and wchar_t allowed as CharT");
+            using CharSupport = CharTypeSupport<CharT>;
 
         private:
-            bool Success;
+            bool State;
             CharT FilenameString[CharsMax];
-
-            inline void SetFilename(const CharT * string, size_t size) noexcept
-            {
-                if constexpr(IsChar8)
-                    Success = (strcpy_s(FilenameString, std::min(CharsMax, size), string) == 0);
-                else
-                    Success = (wcscpy_s(FilenameString, std::min(CharsMax, size), string) == 0);
-            }
 
         public:
             BasicFilenameCleaner()
             {
-                if constexpr(IsChar8)
-                    Success = (tmpnam_s(FilenameString, CharsMax) == 0);
-                else
-                    Success = (_wtmpnam_s(FilenameString, CharsMax) == 0);
+                State = (CharSupport::tmpnam_s(FilenameString, CharsMax) == 0);
             }
-            BasicFilenameCleaner(const CharT * string, size_t size)
-            {
-                SetFilename(string, size);
-            }
-            BasicFilenameCleaner(const std::basic_string_view<CharT> string)
-            {
-                SetFilename(string, string.size());
-            }
-            BasicFilenameCleaner(const BasicFilenameCleaner REF other)
-            {
-                SetFilename(other.FilenameString, CharsMax);
-            }
+            BasicFilenameCleaner(const BasicFilenameCleaner REF) = default;
             ~BasicFilenameCleaner()
             {
-                if(HasError())
+                if(IsOk() == false)
                     return;
 
                 //It is ok to remove file that does not exist
                 // in that case the functions should do nothing
-                if constexpr(IsChar8)
-                    remove(FilenameString);
-                else
-                    _wremove(FilenameString);
+                CharSupport::remove(FilenameString);
             }
             inline auto Filename() const noexcept {return FilenameString;}
-            inline bool IsOk()     const noexcept {return Success; }
-            inline bool HasError() const noexcept {return NOT Success;}
+            inline bool IsOk()     const noexcept {return State; }
 
         public:
             BasicFilenameCleaner(BasicFilenameCleaner RVALUE_REF) = delete;
@@ -83,14 +38,12 @@ namespace CIo::CFileManagerTesting
             BasicFilenameCleaner REF operator=(BasicFilenameCleaner RVALUE_REF) = delete;
     };
 
-    using FilenameCleaner = BasicFilenameCleaner<char8>;
-    using WFilenameCleaner = BasicFilenameCleaner<charW>;
-
-    constexpr OpenMode defaultOpenMode = OpenMode::COpenMode::ReadWrite;
-    static_assert (defaultOpenMode.IsValid(), "INVALID");
-    static_assert (defaultOpenMode.IsSupported(), "UNSUPPORTED");
-    static_assert (defaultOpenMode.GetOpenModeString() == OpenMode::OpenModeString("w+"), "UNEXPECTED");
+    constexpr OpenMode defaultOpenMode(OpenMode::OpenModeFlag::Read, OpenMode::OpenModeFlag::Write, OpenMode::OpenModeFlag::Binary);
+    static_assert (defaultOpenMode.IsValid(),                                              "INVALID");
+    static_assert (defaultOpenMode.IsSupported(),                                          "UNSUPPORTED");
+    static_assert (defaultOpenMode.GetOpenModeString() == OpenMode::OpenModeString("w+b"), "UNEXPECTED");
 }
+
 #define CFileManager_TEST_COMPILE_ERROR false
 #define CFileManagerTestedTypes char8, charW
 
@@ -114,56 +67,84 @@ namespace CIo::CFileManagerTesting
 
     TEMPLATE_TEST_CASE("[BasicCFileManager] : After construction file should be closed", "[BasicCFileManager]", CFileManagerTestedTypes)
     {
-        //BasicCFileManager<TestType>
         const BasicCFileManager<TestType> file;
-
-        const FilenameCleaner cleaner;
-        //CFileManager file2(cleaner.Filename(), CFileManager::CFileOpenMode::ReadWrite);
-
-        //The pointer should be set to null
         REQUIRE(file.IsOpen() == false);
     }
 
-    TEMPLATE_TEST_CASE("[BasicCFileManager] : Constructing by opening a file should open the file", "[BasicCFileManager]", CFileManagerTestedTypes)
+
+    TEMPLATE_TEST_CASE("[BasicCFileManager] : Constructing a file with filename and OpenMode should open the file", "[BasicCFileManager]", CFileManagerTestedTypes)
     {
         using CFileManager = BasicCFileManager<TestType>;
         using FilenameCleaner = BasicFilenameCleaner<TestType>;
 
+        constexpr OpenMode invalidOpenMode;
+        constexpr OpenMode unsupportedOpenMode(OpenModeFlag::Read, OpenModeFlag::Write, OpenModeFlag::Append, OpenModeFlag::MustExist);
+        static_assert (invalidOpenMode.IsValid() == false, "!");
+        static_assert (unsupportedOpenMode.IsSupported() == false, "!");
+
         const FilenameCleaner cleaner;
         REQUIRE(cleaner.IsOk() == true);
 
-        WHEN("A file is opened in the constructor it is opened")
+        WHEN("A valid filename is passed into the constructor")
         {
-            const CFileManager file(cleaner.Filename(), defaultOpenMode);
+            WHEN("and a valid openMode is provided the file is opened")
+            {
+                const CFileManager file(cleaner.Filename(), defaultOpenMode);
 
-            //It should be declared open
-            REQUIRE(file.IsOpen() == true);
+                REQUIRE(file.IsOpen() == true);
+            }
 
+            WHEN("and a invalid openMode is provided no file is opened")
+            {
+                const CFileManager file(cleaner.Filename(), invalidOpenMode);
+
+                REQUIRE(file.IsOpen() == false);
+            }
+
+            WHEN("and a unsupported openMode is provided no file is opened")
+            {
+                const CFileManager file(cleaner.Filename(), unsupportedOpenMode);
+
+                REQUIRE(file.IsOpen() == false);
+            }
         }
 
-        WHEN("A infvalid filename is passed into the constructor no file is opened")
+
+        WHEN("A infvalid filename is passed into the constructor (and the mode requires valid file) no file is opened")
         {
-            using CFileManager = BasicCFileManager<TestType>;
-            using FilenameCleaner = BasicFilenameCleaner<TestType>;
-
-            const FilenameCleaner cleaner;
-            REQUIRE(cleaner.IsOk() == true);
-
             //Creates a new cleaner that manages the same generated
             // filename and destructs it
-            // This leaves us with an unique filename that is guaranteed to eb deleted
+            // This leaves us with an unique filename in the first cleaner that is guaranteed to be deleted
             {
                 const FilenameCleaner cleanerTemp(cleaner);
                 REQUIRE(cleanerTemp.IsOk() == true);
             }
 
-            //Opens a deleetd unique filename
-            const CFileManager file2(cleaner.Filename(), CFileManager::COpenMode::ReadMustExist);
+            WHEN("and a valid openMode is provided no file is opened")
+            {
+                constexpr OpenMode mustExistOpenMode(OpenMode::OpenModeFlag::Read, OpenMode::OpenModeFlag::MustExist, OpenMode::OpenModeFlag::Binary);
+                static_assert (mustExistOpenMode.IsValid()   == true, "!");
 
-            //It should not be opened
-            REQUIRE(file2.IsOpen() == false);
+                //Opens a deleetd unique filename that must exist
+                const CFileManager file(cleaner.Filename(), mustExistOpenMode);
+
+                REQUIRE(file.IsOpen() == false);
+            }
+
+            WHEN("and a invalid openMode is provided no file is opened")
+            {
+                const CFileManager file(cleaner.Filename(), invalidOpenMode);
+
+                REQUIRE(file.IsOpen() == false);
+            }
+
+            WHEN("and a unsupported openMode is provided no file is opened")
+            {
+                const CFileManager file(cleaner.Filename(), unsupportedOpenMode);
+
+                REQUIRE(file.IsOpen() == false);
+            }
         }
-
     }
 
     TEMPLATE_TEST_CASE("[BasicCFileManager] : ReOpening files", "[BasicCFileManager]", CFileManagerTestedTypes)

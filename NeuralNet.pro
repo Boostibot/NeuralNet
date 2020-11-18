@@ -30,10 +30,10 @@ HEADERS += \
     General/File/CFileManager.h \
     General/File/CharSupport.h \
     General/File/CompilerSupport.h \
+    General/File/ConstexprString.h \
     General/File/File.h \
-    General/File/LegacyUniversalString.h \
-    General/File/NewOpenMode.h \
     General/File/OpenMode.h \
+    General/File/StaticFileFunctions.h \
     General/File/UniversalString.h \
     General/File/UnsafeFile.h \
     General/File/UseExamples.h \
@@ -44,7 +44,6 @@ HEADERS += \
     General/DynamicLog/Log.h \
     General/DynamicLog/LogDataInterpret.h \
     General/DynamicLog/LogDefines.h \
-    General/DynamicLog/LogTests.h \
     General/DynamicLog/LogWriter.h \
     \
     General/OptionalTemplateArgs/OptionalTemplateArgs.h \
@@ -55,7 +54,6 @@ HEADERS += \
     General/StaticLog/LoggerInterface.h \
     General/StaticLog/TesterClasses.h \
     General/StaticLog/LogDefines.h \
-    General/StaticLog/SpeedTests.h \
     \
     Main/NeuralNetwork.h \
     Main/Temp.h \

@@ -27,6 +27,13 @@ namespace CIo
                 else
                     return CompilerSpecific::wfopen(fileName, arguments);
             }
+            static auto freopen(const OsCharType * fileName, const OsCharType * arguments, FILE POINTER stream) noexcept
+            {
+                if constexpr (IsUtf8)
+                        return CompilerSpecific::freopen(fileName, arguments, stream);
+                else
+                    return CompilerSpecific::wfreopen(fileName, arguments, stream);
+            }
             static inline auto fclose(FILE POINTER ptr) noexcept
             {
                 return ::fclose(ptr);
@@ -97,6 +104,30 @@ namespace CIo
                         return ::_stat64(fileName, stats);
                 else
                     return ::_wstat64(fileName, stats);
+            }
+
+        public:
+            static inline auto strcpy_s(const OsCharType * to, size_t size, const OsCharType * from) noexcept
+            {
+                if constexpr (IsUtf8)
+                        return ::strcpy_s(to, size, from);
+                else
+                    return ::wcscpy_s(to, size, from);
+            }
+
+        public:
+            static inline bool createFile(const OsCharType * filename) noexcept
+            {
+                FILE PTR file;
+
+                if constexpr (IsUtf8)
+                    file = fopen(filename, "w");
+                else
+                    file = fopen(filename, L"w");
+
+                if(file == nullptr)
+                    return false;
+                return fclose(file);
             }
     };
 }

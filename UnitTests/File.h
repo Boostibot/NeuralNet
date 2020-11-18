@@ -1,5 +1,5 @@
-#ifndef FILE_H
-#define FILE_H
+#ifndef FILETEST_H
+#define FILETEST_H
 #include "Catch2/Catch.hpp"
 
-#endif // FILE_H
+#endif // FILETEST_H

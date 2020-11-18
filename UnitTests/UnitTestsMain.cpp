@@ -3,6 +3,7 @@
 
 //#include "DynamicLog.h"
 //#include "StaticLog.h"
+#include "ConstexprString.h"
 #include "OpenMode.h"
 #include "CFileManager.h"
 #include "UnsafeFile.h"
