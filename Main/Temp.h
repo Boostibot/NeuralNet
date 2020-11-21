@@ -555,21 +555,24 @@ HEADER_ONLY void PassingSupportTesting()
 #include "General/File/File.h"
 #include "General/File/UseExamples.h"
 
-template<typename T, T... values>
-void templFUnc()
+HEADER_ONLY void FuncWithConstArgRef(const CIo::UnsafeFile::OsCStringRef REF ref)
 {
+    ref.Data[0] = '\0';
+}
 
+template<typename Signal = MetaPrograming::ErrorSignalType>
+void DoSomthing(int arg1)
+{
+    (void)arg1;
+    static_assert (NOT std::is_same_v<Signal, MetaPrograming::ErrorSignalType>, "Is unimplmeneted");
 }
 
 HEADER_ONLY void OpenModeConstructortesting()
 {
     using namespace CIo;
     using namespace OpenModeHelpers;
-    FlagPresence::IsFlagPresent(OpenModeFlag::Read, OpenModeFlag::Read);
-    FlagPresence::IsFlagPresent(OpenModeFlag::Read, OpenModeFlag::Read, OpenModeFlag::Write);
-    FlagPresence::IsFlagPresent(OpenModeFlag::Read, OpenModeFlag::Read, OpenModeFlag::Read);
 
-    templFUnc<int, 1, 2, 3>();
+    constexpr OpenMode openMode;
 
     UnsafeFile file;
     file.IsOpen();

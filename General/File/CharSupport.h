@@ -6,7 +6,7 @@
 namespace CIo
 {
     template<typename OsCharTpeArg>
-    struct CharTypeSupport
+    struct CharSupport
     {
             using OsCharType    = OsCharTpeArg;
 
@@ -30,14 +30,13 @@ namespace CIo
             static auto freopen(const OsCharType * fileName, const OsCharType * arguments, FILE POINTER stream) noexcept
             {
                 if constexpr (IsUtf8)
-                        return CompilerSpecific::freopen(fileName, arguments, stream);
+                        return ::freopen(fileName, arguments, stream);
                 else
-                    return CompilerSpecific::wfreopen(fileName, arguments, stream);
+                    return ::_wfreopen(fileName, arguments, stream);
             }
-            static inline auto fclose(FILE POINTER ptr) noexcept
-            {
-                return ::fclose(ptr);
-            }
+
+            //Unused
+        public:
             static inline auto fgetc(FILE POINTER ptr) noexcept
             {
                 if constexpr (IsUtf8)
@@ -45,7 +44,7 @@ namespace CIo
                 else
                     return ::fgetwc(ptr);
             }
-            static inline auto fgets(OsCharType * str, int numChars, FILE POINTER ptr)  noexcept
+            static inline auto fgets(OsCharType * str, i32 numChars, FILE POINTER ptr)  noexcept
             {
                 if constexpr (IsUtf8)
                         return ::fgets(str, numChars, ptr);
@@ -82,6 +81,13 @@ namespace CIo
                 else
                     return ::_wmkdir(dirName);
             }
+            static inline auto rmdir(const OsCharType * dirName) noexcept
+            {
+                if constexpr (IsUtf8)
+                        return ::_rmdir(dirName);
+                else
+                    return ::_wrmdir(dirName);
+            }
             static inline auto rename(const OsCharType * oldName, const OsCharType * newName) noexcept
             {
                 if constexpr (IsUtf8)
@@ -106,6 +112,7 @@ namespace CIo
                     return ::_wstat64(fileName, stats);
             }
 
+            //Unsused
         public:
             static inline auto strcpy_s(const OsCharType * to, size_t size, const OsCharType * from) noexcept
             {
@@ -114,21 +121,66 @@ namespace CIo
                 else
                     return ::wcscpy_s(to, size, from);
             }
-
-        public:
-            static inline bool createFile(const OsCharType * filename) noexcept
+            template<typename ...Types>
+            static inline auto printf(const OsCharType * format, const Types* ... flags ) noexcept
             {
-                FILE PTR file;
+                if constexpr(CharSupport::IsUtf8)
+                {
+                    printf(format, flags...);
+                }
+                else
+                {
+                    printf(format, flags...);
+                }
+            }
+
+
+
+
+            //Fopen specialisatiobs
+        public:
+            //Used for checking if file could be opened
+            static inline auto fopenRead(const OsCharType * filename) noexcept
+            {
+                if constexpr (IsUtf8)
+                    return fopen(filename, "r");
+                else
+                    return fopen(filename, L"r");
+            }
+            //Used for creating files
+            static inline auto fopenWriteMustExist(const OsCharType * filename) noexcept
+            {
+                if constexpr (IsUtf8)
+                    return fopen(filename, "wx");
+                else
+                    return fopen(filename, L"wx");
+            }
+            static inline auto fopenAppend(const OsCharType * filename) noexcept
+            {
+                if constexpr (IsUtf8)
+                    return fopen(filename, "a");
+                else
+                    return fopen(filename, L"a");
+            }
+
+            //Unused
+            static inline auto fopenWrite(const OsCharType * filename) noexcept
+            {
+                if constexpr (IsUtf8)
+                    return fopen(filename, "w");
+                else
+                    return fopen(filename, L"w");
+            }
+            static inline auto fopenSimpleMode(const OsCharType * filename, i32 modeChar) noexcept
+            {
+                const OsCharType str[] = {static_cast<OsCharType>(modeChar), '\0'};
 
                 if constexpr (IsUtf8)
-                    file = fopen(filename, "w");
+                    return fopen(filename, str);
                 else
-                    file = fopen(filename, L"w");
-
-                if(file == nullptr)
-                    return false;
-                return fclose(file);
+                    return fopen(filename, str);
             }
     };
 }
+
 #endif // CHARSUPPORT_H

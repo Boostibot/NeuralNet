@@ -245,6 +245,18 @@ namespace MetaPrograming
     }
 }
 
+namespace MetaPrograming
+{
+    //Used to signal errors thorugh default templte arguments
+    struct ErrorSignalType{};
+
+    //template<typename Signal = MetaPrograming::ErrorSignalType>
+    //void SomeFunction(int)
+    //{
+    //    static_assert (NOT std::is_same_v<Signal, MetaPrograming::ErrorSignalType>, "Is unimplmeneted");
+    //}
+}
+
 #include <string>
 //ConstexprCString
 namespace MetaPrograming

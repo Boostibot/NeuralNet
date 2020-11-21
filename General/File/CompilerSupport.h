@@ -11,8 +11,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <direct.h>
-//#include <unistd.h>
 #include <locale>
+
+#ifndef _MSC_VER
+#include <unistd.h>
+#endif
 
 #include "General/Common/Common.h"
 namespace CIo
@@ -37,15 +40,6 @@ namespace CIo
             return ptr;
         }
 
-        inline auto freopen(const char8 * fileName, const char * arguments, FILE POINTER stream)
-        {
-            return ::freopen(fileName, arguments, stream);
-        }
-        inline auto wfreopen(const charW * fileName, const charW * arguments, FILE POINTER stream)
-        {
-            return ::_wfreopen(fileName, arguments, stream);
-        }
-
         #if defined (_MSC_VER)
         using OffsetType = __int64;
         #else
@@ -61,7 +55,7 @@ namespace CIo
             #endif
         }
 
-        inline int fseek(FILE POINTER stream, OffsetType offset, int origin) noexcept
+        inline auto fseek(FILE POINTER stream, OffsetType offset, i32 origin) noexcept
         {
             #if defined (_MSC_VER)
             return _fseeki64(stream, offset, origin);

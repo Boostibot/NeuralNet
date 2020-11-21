@@ -33,7 +33,6 @@ HEADERS += \
     General/File/ConstexprString.h \
     General/File/File.h \
     General/File/OpenMode.h \
-    General/File/StaticFileFunctions.h \
     General/File/UniversalString.h \
     General/File/UnsafeFile.h \
     General/File/UseExamples.h \

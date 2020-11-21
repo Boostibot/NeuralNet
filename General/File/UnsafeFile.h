@@ -2,48 +2,88 @@
 #define UNSAFEFILE_H
 
 #include "CFileManager.h"
-#include "UniversalString.h"
 
 //TODO
 // - Sort out GetFileSize() and GetFileStatistics() return types - make A or B
 // - Test all functions
 namespace CIo
 {
-    //A full wrapper class which should implemnt a wrapper function for all c FILE functions
-    //It should also ease the use of c FILE and be the base for more specific classes
+    //A full wrapper class which should implemnt a wrapper function for all necessary C FILE functions
+    //It should also ease the use of C FILE and be the base for more specific classes
     template<typename OsCharTypeArg>
-    class BasicUnsafeFile : public BasicCFileManager<OsCharTypeArg>,
-                            public StaticFileFunctions<OsCharTypeArg>
+    class BasicUnsafeFile : public BasicCFileManager<OsCharTypeArg>
     {
         protected:
             using ThisType          = BasicUnsafeFile;
             using CFileManager      = BasicCFileManager<OsCharTypeArg>;
             using CharSupport       = typename CFileManager::CharSupport;
-            using OpenModeHolder    = typename CFileManager::OpenModeHolder;
-            using StaticFunctions   = typename CFileManager::StaticFileFunctions;
 
         public:
             using Size              = size_t;
             using Position          = CompilerSpecific::OffsetType;
-            using FileSize          = typename StaticFunctions::FileSize;
-            using FileDescriptor    = typename StaticFunctions::FileDescriptor;
-            using Stats             = typename StaticFunctions::Stats;
+            using FileSize          = decltype (::_stat64::st_size);
 
-            using OpenMode          = typename OpenModeHolder::OpenMode;
+            using OpenMode          = typename CFileManager::OpenMode;
 
             template<typename CharType>
             using String        = typename CFileManager:: template String<CharType>;
             template<typename CharType>
             using StringView    = typename CFileManager:: template StringView<CharType>;
             template<typename CharType>
-            using CString       = typename CFileManager:: template CString<CharType>;
+            using CStringRef    = typename CFileManager:: template CStringRef<CharType>;
 
             using OsCharType    = typename CFileManager::OsCharType;
             using OsString      = typename CFileManager::OsString;
             using OsStringView  = typename CFileManager::OsStringView;
-            using OsCString     = typename CFileManager::OsCString;
+            using OsCStringRef  = typename CFileManager::OsCStringRef;
 
             static_assert (CharSupport::IsValid, "Invalid OsCharType; Only char and wchar_t allowed; (No posix function takes other char types)");
+
+        public:
+            static constexpr i32 EndOfFile              = CharSupport::EndOfFile;
+            static constexpr i32 FileNameMaxLenght      = FILENAME_MAX;
+            static constexpr i32 OpenFilesMax           = FOPEN_MAX;
+            static constexpr i32 TempFileNameMaxLenght  = L_tmpnam;
+            static constexpr i32 TempFilesMax           = TMP_MAX;
+
+            struct Stats
+            {
+                    //SHOULD BE IN COMPILER SPECIFIC!!!
+                    #if defined (_MSC_VER)
+                    using CStatType = struct ::_stat64;
+                    #else
+                    using CStatType = struct _stat64;
+                    #endif
+                    CStatType CStats;
+
+                    inline auto GroupIdOwningFile()         const noexcept {return CStats.st_gid;}
+                    inline auto UserIdOwningFile()          const noexcept {return CStats.st_uid;}
+                    inline auto TimeOfCreation()            const noexcept {return CStats.st_ctime;}
+                    inline auto TimeOfLastAccess()          const noexcept {return CStats.st_atime;}
+                    inline auto TimeOfLastModification()    const noexcept {return CStats.st_mtime;}
+                    inline auto DriveNumberOfDiskWithFile() const noexcept {return CStats.st_dev;}
+                    inline auto NumberOfInformationNodes()  const noexcept {return CStats.st_ino;}
+                    inline auto FileModeBitMask()           const noexcept {return CStats.st_mode;}
+                    inline auto NumberOfHardLinks()         const noexcept {return CStats.st_nlink;}
+                    inline auto Size()                      const noexcept {return CStats.st_size;}
+            };
+
+            struct FileDescriptor
+            {
+                    using InnerDescriptor = int;
+                    static constexpr InnerDescriptor ErrorDescriptor = {-1};
+
+                protected:
+                    #if defined (_MSC_VER)
+                    [[maybe_unused]]
+                    #endif
+                    const InnerDescriptor Descriptor = ErrorDescriptor;
+
+                public:
+                    constexpr FileDescriptor() noexcept = default;
+                    constexpr explicit operator InnerDescriptor() const noexcept {return Descriptor;}
+                    constexpr inline bool IsValid() const noexcept               {return Descriptor >= 0;}
+            };
 
             enum class OriginPosition : i32
             {
@@ -59,9 +99,7 @@ namespace CIo
                 None = _IONBF
             };
 
-            //Should the user not have acces to the file pointer?
-            //After all this class is called BasicUnsafeFile
-        protected:
+        private:
             using CFileManager::FilePtr;
 
         public:
@@ -173,7 +211,7 @@ namespace CIo
             }
 
         public:
-            inline Position GetPosInFile() noexcept //ftell
+            inline Position GetPosInFile() const noexcept //ftell
             {
                 return CompilerSpecific::ftell(this->FilePtr);
             }
@@ -211,19 +249,26 @@ namespace CIo
             }
 
             template<typename CharT>
-            [[nodiscard]] inline bool ReadString(String<CharT> REF to) noexcept
+            [[nodiscard]] inline bool ReadString(const CStringRef<CharT> REF output) noexcept
             {
-                return Read(to.data(), to.size());
+                //Even though CStringRef output is marked const it doesnt mean the
+                // managed reference is const.
+                // This is done because passed reference is of smaller size
+                return Read(output.Data, output.Size);
             }
             template<typename CharT>
-            [[nodiscard]] inline bool ReadString(String<CharT> REF to, const Size maxlenght) noexcept
+            [[nodiscard]] inline bool ReadString(const CStringRef<CharT> REF output, const Size maxlenght) noexcept
             {
-                return Read(to.data(), ThisType::Min(to.size(), maxlenght));
+                //Even though CStringRef output is marked const it doesnt mean the
+                // managed reference is const.
+                // This is done because passed reference is of smaller size
+                return Read(output.Data, ThisType::Min(output.Size, maxlenght));
             }
 
             template<typename ObjectType>
             [[nodiscard]] inline bool ReadObject(ObjectType REF object) noexcept
             {
+                //static_assert (std::is_trivial_v<ObjectType>, "UnsafeFile::ReadObject : Object must be trivially constructible");
                 return Read(ADDRESS(object), 1);
             }
 
@@ -243,10 +288,11 @@ namespace CIo
             template<typename ObjectType>
             [[nodiscard]] inline bool WriteObject(ObjectType RVALUE_REF object) noexcept
             {
+                //static_assert (std::is_trivial_v<ObjectType>, "UnsafeFile::WriteObject : Object must be trivially constructible");
                 return Write(ADDRESS(object), 1);
             }
 
-        protected:
+        private:
             template <typename CharT>
             [[nodiscard]] inline bool WriteStringImpl(const std::basic_string_view<CharT> str) noexcept
             {
@@ -256,7 +302,7 @@ namespace CIo
 
         public:
             template <typename T,
-                      std::enable_if_t<IsAnyString_v<T>, int> = 0>
+                      std::enable_if_t<IsAnyString_v<T>, i32> = 0>
             [[nodiscard]] inline bool WriteString(T RVALUE_REF str)
             {
                 using CharT = GetAnyStringType_t<T>;
@@ -301,6 +347,66 @@ namespace CIo
             }
 
         public:
+            static bool GetUniqueTempFileName(const OsCStringRef REF fileName) noexcept //tmpnam_s
+            {
+                //Even though CStringRef output is marked const it doesnt mean the
+                // managed reference is const.
+                // This is done because passed reference is of smaller size
+                if((fileName.Size) < ThisType::TempFileNameMaxLenght)
+                    //The parentheses around fileName.Size are necessary
+                    //Without them MinGW reports strange error - compiler bug?
+                    return false;
+
+                return (CharSupport::tmpnam_s(fileName.Data, fileName.Size) == 0);
+            }
+
+            static bool CreateDirectory(const OsStringView dirName) noexcept
+            {
+                return (CharSupport::mkdir(dirName.data()) == 0);
+            }
+
+            static bool RemoveEmptyDirectory(const OsStringView dirName) noexcept
+            {
+                return (CharSupport::rmdir(dirName.data()) == 0);
+            }
+
+            inline static bool CreateFile(const OsStringView filename) noexcept
+            {
+                constexpr OpenMode appendMode = COpenMode::WriteAppend;
+                ThisType file;
+                return file.OpenNew(filename, appendMode);
+            }
+
+            inline static bool RenameFile(const OsStringView oldFileName, const OsStringView newFileName) noexcept
+            {
+                return (CharSupport::rename(oldFileName.data(), newFileName.data()) == 0);
+            }
+
+            inline static bool RemoveFile(const OsStringView fileName) noexcept
+            {
+                return (CharSupport::remove(fileName.data()) == 0);
+            }
+
+            inline static bool GetFileStatics(Stats REF stats, const FileDescriptor descriptor) noexcept
+            {
+                return (_fstat64(descriptor, ADDRESS(stats.CStats)) == 0);
+            }
+
+            inline static bool GetFileStatics(Stats REF stats, const OsStringView filename) noexcept
+            {
+                return (CharSupport::_stat64(filename.data(), ADDRESS(stats.CStats)) == 0);
+            }
+
+            static FileSize GetFileSize(const OsStringView filename) noexcept
+            {
+                Stats stats;
+                if(NOT ThisType::GetFileStatics(stats, filename))
+                    return -1;
+
+                return stats.Size();
+            }
+
+        public:
             inline FileDescriptor GetFileDescriptor() const noexcept
             {
                 return _fileno(this->FilePtr);
@@ -320,12 +426,6 @@ namespace CIo
 
                 return stats.Size();
             }
-
-        protected:
-            //Is used in File for returning error in the GetFileDescriptor
-            // since it does not have acces to the private constructor of FileDescriptor
-            inline static FileDescriptor GetErrorFileDescriptor() noexcept {return FileDescriptor(-1);}
-
     };
 
     using WUnsafeFile   = BasicUnsafeFile<charW>;

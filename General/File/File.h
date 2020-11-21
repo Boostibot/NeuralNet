@@ -13,7 +13,10 @@ namespace CIo
         public:
             using UnsafeFile        = BasicUnsafeFile<OsCharTypeArg>;
             using CFileManager      = typename UnsafeFile::CFileManager;
-            using CharSupport       = typename CFileManager::CharSupport;
+
+        protected:
+            using CharSupport       = typename UnsafeFile::CharSupport;
+            using StaticFunctions   = typename UnsafeFile::StaticFunctions;
 
         public:
             using Size              = typename UnsafeFile::Size;
@@ -27,16 +30,16 @@ namespace CIo
             using OpenMode          = typename UnsafeFile::OpenMode;
 
             template<typename CharType>
-            using String        = typename CFileManager:: template String<CharType>;
+            using String        = typename StaticFunctions:: template String<CharType>;
             template<typename CharType>
-            using StringView    = typename CFileManager:: template StringView<CharType>;
+            using StringView    = typename StaticFunctions:: template StringView<CharType>;
             template<typename CharType>
-            using CString       = typename CFileManager:: template CString<CharType>;
+            using CStringRef    = typename StaticFunctions:: template CStringRef<CharType>;
 
-            using OsCharType    = typename CFileManager::OsCharType;
-            using OsString      = typename CFileManager::OsString;
-            using OsStringView  = typename CFileManager::OsStringView;
-            using OsCString     = typename CFileManager::OsCString;
+            using OsCharType    = typename StaticFunctions::OsCharType;
+            using OsString      = typename StaticFunctions::OsString;
+            using OsStringView  = typename StaticFunctions::OsStringView;
+            using OsCStringRef  = typename StaticFunctions::OsCStringRef;
 
             static_assert (CharSupport::IsValid, "Invalid OsCharType; Only char and wchar_t allowed; (No posix function takes other char types)");
 
@@ -137,7 +140,7 @@ namespace CIo
             }
 
             template<typename CharT>
-            [[nodiscard]] bool ReadString(OsString REF to) noexcept
+            [[nodiscard]] bool ReadString(CStringRef<CharT> to) noexcept
             {
                 if(this->IsClosed())
                     return false;
@@ -146,7 +149,7 @@ namespace CIo
             }
 
             template<typename CharT>
-            [[nodiscard]] bool ReadString(OsString REF to, const Size lenght) noexcept
+            [[nodiscard]] bool ReadString(CStringRef<CharT> to, const Size lenght) noexcept
             {
                 if(this->IsClosed())
                     return false;
@@ -227,7 +230,7 @@ namespace CIo
             FileDescriptor GetFileDescriptor() const noexcept
             {
                 if(this->IsClosed())
-                    return UnsafeFile::GetErrorFileDescriptor();
+                    return FileDescriptor();
 
                 return this->GetUnsafe().GetFileDescriptor();
             }

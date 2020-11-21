@@ -16,6 +16,7 @@ HEADERS += \
         DynamicLog.h \
         File.h \
         OpenMode.h \
+        StaticFileFunctions.h \
         StaticLog.h \
         CFileManager.h \
         UnsafeFile.h

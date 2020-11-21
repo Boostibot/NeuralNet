@@ -60,20 +60,20 @@ namespace CIo
         //This is to not bother the user with the count option
     };
 
+    enum class COpenMode : OpenModeHelpers::OpenModeEnumsBaseType
+    {
+        ReadMustExist,      //Read && MustExist
+        Write,              //Write
+        WriteAppend,        //Write && Append
+        ReadWriteMustExist, //Read && Write && MustExist
+        ReadWrite,          //Read && Write
+        ReadWriteAppend     //Read && Write && Append
+    };
+
     namespace  OpenModeHelpers
     {
             static constexpr OpenModeEnumsBaseType OpenModeFlagsCount = 6;
             static constexpr OpenModeEnumsBaseType WindowsOpenModeFlagsCount = 11;
-
-            enum class COpenMode : OpenModeEnumsBaseType
-            {
-                ReadMustExist,      //Read && MustExist
-                Write,              //Write
-                WriteAppend,        //Write && Append
-                ReadWriteMustExist, //Read && Write && MustExist
-                ReadWrite,          //Read && Write
-                ReadWriteAppend     //Read && Write && Append
-            };
 
             enum class OpenModeValidity : OpenModeEnumsBaseType
             {
@@ -172,6 +172,7 @@ namespace CIo
                     }
             };
 
+            template<typename OsCharT>
             class OpenModeConversionState
             {
                 public:
@@ -179,15 +180,12 @@ namespace CIo
 
                 public:
                     static constexpr u32 OpenModeMaxChars = 26;
-                    using BaseCharType = char8;
+                    using OsCharType = OsCharT;
 
                     template<typename CharT>
                     using ConstexprString = ConstexprString<CharT, OpenModeMaxChars>;
-                    using OpenModeString = ConstexprString<BaseCharType>;
+                    using OpenModeString = ConstexprString<OsCharType>;
 
-                    template<typename CharT>
-                    using StringView              = std::basic_string_view<CharT>;
-                    using BaseStringView          = StringView<BaseCharType>;
 
                 public:
                     const FlagPresence Presence;
@@ -277,13 +275,13 @@ namespace CIo
                     {
                         switch(mode)
                         {
-                            case COpenMode::ReadMustExist:      return "r";
-                            case COpenMode::Write:              return "w";
-                            case COpenMode::WriteAppend:        return "a";
-                            case COpenMode::ReadWriteMustExist: return "r+";
-                            case COpenMode::ReadWrite:          return "w+";
-                            case COpenMode::ReadWriteAppend:    return "a+";
-                            default:                            return "i!";
+                            case COpenMode::ReadMustExist:      return ToModeString("r");
+                            case COpenMode::Write:              return ToModeString("w");
+                            case COpenMode::WriteAppend:        return ToModeString("a");
+                            case COpenMode::ReadWriteMustExist: return ToModeString("r+");
+                            case COpenMode::ReadWrite:          return ToModeString("w+");
+                            case COpenMode::ReadWriteAppend:    return ToModeString("a+");
+                            default:                            return ToModeString("i!");
                         }
                     }
 
@@ -291,75 +289,85 @@ namespace CIo
                     {
                         OpenModeString additionalModeStr;
 
-                        if(Presence[OpenModeFlag::Binary])                            additionalModeStr += "b";
-                        if(Presence[WindowsOpenModeFlag::Text])                       additionalModeStr += "t"; //Text needs to be before MustNotExist
-                        if(Presence[OpenModeFlag::MustNotExist])                      additionalModeStr += "x";
-                        if(Presence[WindowsOpenModeFlag::CommitDirectlyToDisk])       additionalModeStr += "c";
-                        if(Presence[WindowsOpenModeFlag::CommitIndirectlyToDisk])     additionalModeStr += "n";
-                        if(Presence[WindowsOpenModeFlag::NotInheritedByChildProcess]) additionalModeStr += "N";
-                        if(Presence[WindowsOpenModeFlag::SequntialAccessOptimized])   additionalModeStr += "S";
-                        if(Presence[WindowsOpenModeFlag::RandomAccessOptimized])      additionalModeStr += "R";
-                        if(Presence[WindowsOpenModeFlag::IfPossibleNoFlushingToDisk]) additionalModeStr += "T";
-                        if(Presence[WindowsOpenModeFlag::DeleteAfterClose])           additionalModeStr += "D";
-                        if(Presence[WindowsOpenModeFlag::UnicodeEncoding])            additionalModeStr += ",css=UNICODE";
-                        if(Presence[WindowsOpenModeFlag::Utf8Encoding])               additionalModeStr += ",css=UTF-8";
-                        if(Presence[WindowsOpenModeFlag::Utf16Encoding])              additionalModeStr += ",css=UTF-16LE";
+                        if(Presence[OpenModeFlag::Binary])                            additionalModeStr += ToModeString("b");
+                        if(Presence[WindowsOpenModeFlag::Text])                       additionalModeStr += ToModeString("t"); //Text needs to be in place of binary
+                        if(Presence[OpenModeFlag::MustNotExist])                      additionalModeStr += ToModeString("x");
+                        if(Presence[WindowsOpenModeFlag::CommitDirectlyToDisk])       additionalModeStr += ToModeString("c");
+                        if(Presence[WindowsOpenModeFlag::CommitIndirectlyToDisk])     additionalModeStr += ToModeString("n");
+                        if(Presence[WindowsOpenModeFlag::NotInheritedByChildProcess]) additionalModeStr += ToModeString("N");
+                        if(Presence[WindowsOpenModeFlag::SequntialAccessOptimized])   additionalModeStr += ToModeString("S");
+                        if(Presence[WindowsOpenModeFlag::RandomAccessOptimized])      additionalModeStr += ToModeString("R");
+                        if(Presence[WindowsOpenModeFlag::IfPossibleNoFlushingToDisk]) additionalModeStr += ToModeString("T");
+                        if(Presence[WindowsOpenModeFlag::DeleteAfterClose])           additionalModeStr += ToModeString("D");
+                        if(Presence[WindowsOpenModeFlag::UnicodeEncoding])            additionalModeStr += ToModeString(",css=UNICODE");
+                        if(Presence[WindowsOpenModeFlag::Utf8Encoding])               additionalModeStr += ToModeString(",css=UTF-8");
+                        if(Presence[WindowsOpenModeFlag::Utf16Encoding])              additionalModeStr += ToModeString(",css=UTF-16LE");
 
                         return additionalModeStr;
+                    }
+
+                private:
+                    constexpr static OpenModeString ToModeString(const char8 * text)
+                    {
+                        return PromoteStringCharsTo<OsCharType>(ConstexprString<char8>(text));
                     }
             };
     };
 
-    class OpenMode
+    template <typename OsCharT>
+    class BasicOpenMode
     {
         public:
-            using ThisType = OpenMode;
+            using ThisType = BasicOpenMode;
 
         protected:
-            using OpenModeConversionState = OpenModeHelpers::OpenModeConversionState;
+            using OpenModeConversionState = OpenModeHelpers::OpenModeConversionState<OsCharT>;
             using OpenModeValidity        = OpenModeHelpers::OpenModeValidity;
 
         public:
             using OpenModeEnumsBaseType   = OpenModeHelpers::OpenModeEnumsBaseType;
             using OpenModeFlag            = OpenModeFlag;
-            using WindowsOpenModeFlag     = OpenModeFlag;
-            using COpenMode               = OpenModeHelpers::COpenMode;
+            using WindowsOpenModeFlag     = WindowsOpenModeFlag;
+            using COpenMode               = COpenMode;
 
         public:
-            using OpenModeString          = OpenModeConversionState::OpenModeString;
+            using OsCharType              = typename OpenModeConversionState::OsCharType;
             template<typename CharT>
-            using ConstexprString         = OpenModeConversionState::template ConstexprString<CharT>;
+            using ConstexprString         = typename OpenModeConversionState::template ConstexprString<CharT>;
+            using OpenModeString          = typename OpenModeConversionState::OpenModeString;
             template<typename CharT>
-            using StringView              = OpenModeConversionState::template StringView<CharT>;
-            using BaseCharType            = OpenModeConversionState::BaseCharType;
-            using BaseStringView          = OpenModeConversionState::BaseStringView;
+            using StringView              = std::basic_string_view<CharT>;
+            using OsStringView            = StringView<OsCharType>;
 
-        protected:
+            static_assert (std::is_same_v<OsCharType, char8> || std::is_same_v<OsCharType, charW>,
+                           "Invalid OsCharType; Only char and wchar_t allowed; (No posix function takes other char types)");
+
+        public:
             OpenModeString OpenModeStr;
             COpenMode CMode;
             OpenModeValidity Validity;
 
         public:
-            constexpr OpenMode() noexcept
+            constexpr BasicOpenMode() noexcept
                 : OpenModeStr(), CMode(), Validity(OpenModeValidity::Invalid)
             {}
 
-            constexpr OpenMode(COpenMode openMode) noexcept
+            constexpr BasicOpenMode(COpenMode openMode) noexcept
                 : OpenModeStr(), CMode(), Validity()
             {
                 AssignCOpenMode(openMode);
             }
 
         public:
-            constexpr OpenMode(const ThisType REF other) = default;
-            constexpr OpenMode(ThisType RVALUE_REF other) = default;
+            constexpr BasicOpenMode(const ThisType REF other) = default;
+            constexpr BasicOpenMode(ThisType RVALUE_REF other) = default;
 
             constexpr ThisType REF operator=(const ThisType REF) = default;
             constexpr ThisType REF operator=(ThisType RVALUE_REF) = default;
 
             template<typename ... FlagTypes,
                      std::enable_if_t<OpenModeHelpers::AreOpenModeFlags<FlagTypes...>(), u32> = 0>
-            constexpr OpenMode(FlagTypes ... flags) noexcept
+            constexpr BasicOpenMode(FlagTypes ... flags) noexcept
                 : OpenModeStr(), CMode(), Validity()
             {
                 this->operator =(CreateOpenMode<FlagTypes ...>(flags...));
@@ -370,6 +378,45 @@ namespace CIo
                 this->CMode = cOpenMode;
                 this->Validity = OpenModeValidity::Valid;
                 this->OpenModeStr = OpenModeConversionState::GetCOpenModeStr(cOpenMode);
+            }
+
+
+            inline constexpr bool IsValid()     const noexcept {return IsValid(this->Validity);}
+            inline constexpr bool IsSupported() const noexcept {return IsSupported(this->Validity);}
+
+            inline constexpr auto GetOpenModeString() const noexcept
+            {
+                if(IsValid())
+                    return OpenModeStr;
+                else
+                    return OpenModeString();
+            }
+
+            inline constexpr auto REF GetBaseOpenModeString() const noexcept
+            {
+                return OpenModeStr;
+            }
+            inline constexpr auto GetCOpenMode() const noexcept
+            {
+                return this->CMode;
+            }
+
+            inline constexpr operator OsStringView() const noexcept
+            {
+                return OpenModeStr.operator std::basic_string_view<OsCharType>();
+            }
+
+        private:
+            static constexpr bool IsValid(OpenModeValidity validity)        noexcept {return validity == OpenModeValidity::Valid;}
+            static constexpr bool IsSupported(OpenModeValidity validity)    noexcept {return NOT(validity == OpenModeValidity::Unsupported);}
+
+            //Todo - try update
+            static constexpr ThisType OpenModeConstructor(OpenModeValidity validity, COpenMode cmode) noexcept
+            {
+                ThisType openMode;
+                openMode.Validity = validity;
+                openMode.CMode = cmode;
+                return openMode;
             }
 
             template<typename ... FlagTypes>
@@ -393,91 +440,9 @@ namespace CIo
                 openMode.OpenModeStr += state.GetAdditionalModeStr();
                 return openMode;
             }
-
-            /*
-            template<OpenModeFlag ... openModeArguments,
-                     std::enable_if_t<(sizeof...(openModeArguments) > 0), int> = 0>
-            static inline constexpr ThisType CreateOpenMode() noexcept
-            {
-                constexpr ThisType openMode = CreateOpenMode(openModeArguments...);
-
-                static_assert (openMode.IsValid(), "BasicOpenMode::CreateOpenMode : Invalid open mode arguments; See BasicOpenMode::AreOpenModesConflicting(...) for more info");
-                static_assert (openMode.IsSupported(), "BasicOpenMode::CreateOpenMode : Unsupported open mode argument combination; "
-                                                       "The combination of mode flags is unsupported by the underlying fopen function;"
-                                                       "This Is probably cause by having both OpenModeFlag::Append and OpenModeFlag::MustExist flags present");
-                return openMode;
-            }
-            */
-
-            inline constexpr bool IsValid()     const noexcept {return IsValid(this->Validity);}
-            inline constexpr bool IsSupported() const noexcept {return IsSupported(this->Validity);}
-
-            template<typename OsCharType = OpenModeString::CharType>
-            inline constexpr auto GetOpenModeString() const noexcept
-            {
-                if(IsValid())
-                    return PromoteStringCharsTo<OsCharType>(OpenModeStr);
-                else
-                    return ConstexprString<OsCharType>();
-            }
-            inline constexpr auto GetCOpenMode() const noexcept
-            {
-                return this->CMode;
-            }
-
-            template<typename OsCharType>
-            inline constexpr operator StringView<OsCharType>() const noexcept
-            {
-                return GetOpenModeString<OsCharType>().operator std::basic_string_view<OsCharType>();
-            }
-
-        protected:
-            static constexpr bool IsValid(OpenModeValidity validity)        noexcept {return validity == OpenModeValidity::Valid;}
-            static constexpr bool IsSupported(OpenModeValidity validity)    noexcept {return NOT(validity == OpenModeValidity::Unsupported);}
-
-            //Todo - try update
-            static constexpr ThisType OpenModeConstructor(OpenModeValidity validity, COpenMode cmode) noexcept
-            {
-                ThisType openMode;
-                openMode.Validity = validity;
-                openMode.CMode = cmode;
-                return openMode;
-            }
     };
 
-    //Struct holding the OpenMode and the associated functionality
-    //This holder is ment to be inherited into other classes using OpenMode to ensure
-    // the fucntions are distributed to the correct namespace levels
-    // (ie. directly below the base inherited to class       )
-    // (so it is possible to write File::CreateOpenMode(...) )
-    struct OpenModeHolder
-    {
-            using OpenMode              = OpenMode;
-            using OpenModeFlag          = OpenModeFlag;
-            using WindowsOpenModeFlag   = WindowsOpenModeFlag;
-            using COpenMode             = OpenModeHelpers::COpenMode;
-
-            //The OpenModeFlag should be directly below the class which inherits this type (File)
-            // So it is possible too write File::OpenModeFlag::Write
-            // This is a significant improvement over File::OpenMode::OpenModeFlag::Write
-            //
-            //It is safer to have every enum declared as enum class so there is no automatic
-            // degradation to the underlying type. Because of this its necessary to have the
-            // OpenModeFlag name present.
-
-            template<typename ... FlagTypes>
-            static constexpr OpenMode CreateOpenMode(FlagTypes ... flags)
-            {
-                return OpenMode::CreateOpenMode<FlagTypes...>(flags...);
-            }
-
-            //Compile time evaluation isnt now possible due to there being two types of arguments
-            //template<OpenModeFlag ... openModeArguments>
-            //static inline constexpr OpenMode CreateOpenMode()
-            //{
-            //    return OpenMode::CreateOpenMode<openModeArguments...>();
-            //}
-
-    };
+    using OpenMode = BasicOpenMode<char8>;
+    using WOpenMode = BasicOpenMode<charW>;
 }
 #endif // NEWOPENMODE_H
