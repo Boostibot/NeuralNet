@@ -68,7 +68,7 @@ namespace CIo
                 BasicFileManager temp(std::move(other));
                 this->Swap(temp);
 
-                return POINTER_VALUE(this);
+                return PTR_VAL(this);
             }
 
             explicit inline operator bool() const noexcept
@@ -172,7 +172,7 @@ namespace CIo
 namespace std
 {
     template <typename OsCharT>
-    HEADER_ONLY void swap (CIo::BasicFileManager<OsCharT> REF file1, CIo::BasicFileManager<OsCharT> REF file2) noexcept
+    void swap (CIo::BasicFileManager<OsCharT> REF file1, CIo::BasicFileManager<OsCharT> REF file2) noexcept
     {
         file1.Swap(file2);
     }

@@ -27,7 +27,7 @@ namespace CIo
                 else
                     return CompilerSupport::wfopen(fileName, arguments);
             }
-            static auto freopen(const OsCharType * fileName, const OsCharType * arguments, FILE POINTER stream) noexcept
+            static auto freopen(const OsCharType * fileName, const OsCharType * arguments, FILE PTR stream) noexcept
             {
                 if constexpr (IsUtf8)
                         return ::freopen(fileName, arguments, stream);
@@ -69,28 +69,28 @@ namespace CIo
 
             //Unused
         public:
-            static inline auto fgetc(FILE POINTER ptr) noexcept
+            static inline auto fgetc(FILE PTR ptr) noexcept
             {
                 if constexpr (IsUtf8)
                         return ::fgetc(ptr);
                 else
                     return ::fgetwc(ptr);
             }
-            static inline auto fgets(OsCharType * str, i32 numChars, FILE POINTER ptr)  noexcept
+            static inline auto fgets(OsCharType * str, i32 numChars, FILE PTR ptr)  noexcept
             {
                 if constexpr (IsUtf8)
                         return ::fgets(str, numChars, ptr);
                 else
                     return ::fgetws(str, numChars, ptr);
             }
-            static inline auto fputc(OsCharType c, FILE POINTER ptr) noexcept
+            static inline auto fputc(OsCharType c, FILE PTR ptr) noexcept
             {
                 if constexpr (IsUtf8)
                         return ::fputc(static_cast<int>(c), ptr);
                 else
                     return ::fputwc(c, ptr);
             }
-            static inline auto fputs(const OsCharType * str, FILE POINTER ptr)  noexcept
+            static inline auto fputs(const OsCharType * str, FILE PTR ptr)  noexcept
             {
                 if constexpr (IsUtf8)
                         return ::fputs(str, ptr);
