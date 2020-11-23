@@ -3,7 +3,7 @@
 
 #include <string>
 #include <string_view>
-#include "General/Common/Common.h"
+#include "Common.h"
 
 namespace CIo
 {
@@ -60,6 +60,12 @@ namespace CIo
 
     namespace Detail
     {
+        template<typename Type>
+        struct TypeIdentity
+        {
+                using type = Type;
+        };
+
         template <typename T>
         struct GetStringClassTypeImpl : TypeIdentity<FalseType> {};
 

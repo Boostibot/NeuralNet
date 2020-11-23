@@ -23,6 +23,7 @@ SOURCES += \
     Main/mainwindow.cpp
 
 HEADERS += \
+    General/CIo/Common.h \
     General/Common/Common.h \
     General/Common/MetaPrograming.h \
     General/Common/Typedefs.h \

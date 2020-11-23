@@ -1,7 +1,7 @@
 #ifndef CONSTEXPRSTRING_H
 #define CONSTEXPRSTRING_H
 
-#include "General/Common/Common.h"
+#include "Common.h"
 
 namespace CIo
 {
@@ -99,7 +99,7 @@ namespace CIo
                 String[atPos] = NullTermination;
             }
 
-            constexpr bool Assign(const CharT PTR data, SizeType IN size, SizeType IN atPos = 0)
+            constexpr bool Assign(const CharT PTR data, SizeType size, SizeType atPos = 0)
             {
                 struct Helper{ static constexpr bool WereAllCharsCopied(SizeType index, SizeType size) {return index >= size;} };
 

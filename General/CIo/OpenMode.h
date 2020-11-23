@@ -5,6 +5,27 @@
 
 namespace CIo
 {
+    namespace Meta
+    {
+        enum class Indetifier : u8 {Indentify};
+
+        template<Indetifier identifier>
+        constexpr static bool AndInternal()
+        {
+            return true;
+        }
+        template<Indetifier identifier, typename FirstType, typename ... OtherArgumentTypes>
+        constexpr static bool AndInternal(FirstType firstValue, OtherArgumentTypes... values)
+        {
+            return firstValue && AndInternal<identifier>(values...);
+        }
+        template<typename ... ArgumentTypes>
+        constexpr bool And(ArgumentTypes... values)
+        {
+            return AndInternal<Indetifier::Indentify, ArgumentTypes...>(values...);
+        }
+    }
+
     namespace  OpenModeHelpers
     {
         using OpenModeEnumsBaseType = u8;
@@ -92,7 +113,7 @@ namespace CIo
             template <typename ... FlagTypes>
             constexpr bool AreOpenModeFlags()
             {
-                return MetaPrograming::And(IsTypeOpenModeFlag<FlagTypes>()...);
+                return Meta::And(IsTypeOpenModeFlag<FlagTypes>()...);
             }
 
             class FlagPresence
@@ -141,26 +162,26 @@ namespace CIo
                     constexpr void FillFlagPresence(const FlagTypes ... flags) noexcept
                     {
                         for(Underlying i = 0; i < TotalFlagsCount; i++)
-                            Presence[i] = ThisType::IsFlagPresentInternal<MetaPrograming::Indetifier::Indentify, FlagTypes...>(i, flags...);
+                            Presence[i] = ThisType::IsFlagPresentInternal<Meta::Indetifier::Indentify, FlagTypes...>(i, flags...);
                     }
 
                 public:
                     template<typename ... FlagTypes>
                     static constexpr bool IsFlagPresent(const OpenModeFlag lookingForFlag, const FlagTypes ... flags) noexcept
                     {
-                        return ThisType::IsFlagPresentInternal<MetaPrograming::Indetifier::Indentify, FlagTypes...>(ThisType::ToIndex(lookingForFlag), flags...);
+                        return ThisType::IsFlagPresentInternal<Meta::Indetifier::Indentify, FlagTypes...>(ThisType::ToIndex(lookingForFlag), flags...);
                     }
                     template<typename ... FlagTypes>
                     static constexpr bool IsFlagPresent(const WindowsOpenModeFlag lookingForFlag, const FlagTypes ... flags) noexcept
                     {
-                        return ThisType::IsFlagPresentInternal<MetaPrograming::Indetifier::Indentify, FlagTypes...>(ThisType::ToIndex(lookingForFlag), flags...);
+                        return ThisType::IsFlagPresentInternal<Meta::Indetifier::Indentify, FlagTypes...>(ThisType::ToIndex(lookingForFlag), flags...);
                     }
 
                 private:
-                    template<MetaPrograming::Indetifier identifier>
+                    template<Meta::Indetifier identifier>
                     static constexpr bool IsFlagPresentInternal(const Underlying) noexcept {return false;}
 
-                    template<MetaPrograming::Indetifier identifier, typename FirstOpneModeType, typename ... FlagTypes>
+                    template<Meta::Indetifier identifier, typename FirstOpneModeType, typename ... FlagTypes>
                     static constexpr bool IsFlagPresentInternal(const Underlying lookingForFlag, const FirstOpneModeType firstOpenMode, const FlagTypes ... flags) noexcept
                     {
                         const Underlying firstModeIndex = ThisType::ToIndex(firstOpenMode);

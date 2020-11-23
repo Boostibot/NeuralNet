@@ -10,30 +10,6 @@ struct TypeIdentity
         using type = Type;
 };
 
-/*
-template <typename ValueTypeArg, ValueTypeArg valueArg>
-struct ValueTemplate
-{
-        using ValueType = ValueTypeArg;
-        static constexpr ValueType Value = valueArg;
-};
-
-template<bool value>
-using BoolVal = ValueTemplate<bool, value>;
-
-template<char value>
-using CharVal = ValueTemplate<char, value>;
-
-template<unsigned char value>
-using ByteVal = ValueTemplate<unsigned char, value>;
-
-template<int value>
-using IntVal = ValueTemplate<int, value>;
-
-template<unsigned int value>
-using UintVal = ValueTemplate<unsigned int, value>;
-*/
-
 namespace MetaPrograming
 {
     namespace
