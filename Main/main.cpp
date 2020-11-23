@@ -8,11 +8,11 @@ void RunAllDefaults()
 {
     std::string in;
 
-    RunTemp();
+    //RunTemp();
 
-    std::cin >> in;
+    //std::cin >> in;
 
-    RunNeuralNetwork();
+    RunXORNeuralNetwork();
 
     std::cin >> in;
 }

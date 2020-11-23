@@ -4,13 +4,33 @@
 #include <memory>
 
 //Operator readability
+#ifndef NOT
 #define NOT                     !
+#endif
+
+#ifndef REF
 #define REF                     &
+#endif
+
+#ifndef RVALUE_REF
 #define RVALUE_REF              &&
+#endif
+
+#ifndef MUST_OVERRIDE
 #define MUST_OVERRIDE           0
+#endif
+
+#ifndef ADDRESS
 #define ADDRESS(item)           (std::addressof(item))
+#endif
+
+#ifndef PTR
 #define PTR                     *
+#endif
+
+#ifndef PTR_VAL
 #define PTR_VAL(pointer)        (*pointer)
+#endif
 
 namespace CIo
 {

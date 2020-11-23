@@ -559,13 +559,6 @@ HEADER_ONLY void FuncWithConstArgRef(const CIo::UnsafeFile::OsCStringRef REF ref
     ref.Data[0] = '\0';
 }
 
-template<typename Signal = MetaPrograming::ErrorSignalType>
-void DoSomthing(int arg1)
-{
-    (void)arg1;
-    static_assert (NOT std::is_same_v<Signal, MetaPrograming::ErrorSignalType>, "Is unimplmeneted");
-}
-
 HEADER_ONLY void OpenModeConstructortesting()
 {
     using namespace CIo;
