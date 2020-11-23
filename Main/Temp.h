@@ -2,8 +2,8 @@
 #define TEMP_H
 
 #include <iostream>
-
-
+#include "General/Common/Common.h"
+/*
 void* operator new (size_t size)
 {
     std::cout << "Allocation: " << size << std::endl;
@@ -19,14 +19,14 @@ void operator delete(void* ptr, size_t size)
     std::cout << "Deleting: " << size << std::endl;
     free(ptr);
 }
-
+*/
 
 #include "Libraries/Fmt/fmt/core.h"
 #include "Libraries/Fmt/fmt/os.h"
 #include "Libraries/Fmt/fmt/printf.h"
 #include "Libraries/Fmt/fmt/compile.h"
 
-void FmtTesting()
+HEADER_ONLY void FmtTesting()
 {
     std::string buffer;
     std::cout << "Reserving buffer ================" << std::endl;
@@ -63,10 +63,10 @@ void FmtTesting()
     std::cout << buffer << std::endl;
 }
 
-#include "GClasses/Common/StaticLog/StaticLog.h"
-#include "GClasses/Common/StaticLog/TesterClasses.h"
+#include "General/StaticLog/StaticLog.h"
+#include "General/StaticLog/TesterClasses.h"
 
-void StaticLogInterpretTesting()
+HEADER_ONLY void StaticLogInterpretTesting()
 {
 
     std::string output;
@@ -75,7 +75,7 @@ void StaticLogInterpretTesting()
     interpret.InterpretArg(0, output);
 }
 
-void DefaultLogWritterPackageTesting()
+HEADER_ONLY void DefaultLogWritterPackageTesting()
 {
     using namespace StaticLog;
     using namespace StaticLogTesting;
@@ -93,7 +93,7 @@ void DefaultLogWritterPackageTesting()
 
 }
 
-void LoggerCopyTesting()
+HEADER_ONLY void LoggerCopyTesting()
 {
     ::StaticLog::LoggerInterface<::StaticLog::StaticLogTesting::TestingLoggerCopy> logWriterCopy1(11, "Copy1");
     logWriterCopy1.DoLog(false);
@@ -108,7 +108,7 @@ void LoggerCopyTesting()
     //int a = 0;
 }
 
-void LogDefLoggerTesting()
+HEADER_ONLY void LogDefLoggerTesting()
 {
     StaticLog::DefaultLoggerPackage dataPackage("FilePackage");
     StaticLog::StaticLogTesting::GetDefPackageTester(dataPackage).CollectionString   = "PackageCollectionString";
@@ -144,7 +144,7 @@ void LogDefLoggerTesting()
     }
 }
 
-void LogDefLoggerConstructing()
+HEADER_ONLY void LogDefLoggerConstructing()
 {
     StaticLog::DefaultLoggerPackage dataPackage("FilePackage");
     StaticLog::StaticLogTesting::GetDefPackageTester(dataPackage).CollectionString   = "PackageCollectionString";
@@ -241,14 +241,14 @@ namespace UnorderedArgumentChain
 
 }
 
-void UnorderedArgumentChainTesting()
+HEADER_ONLY void UnorderedArgumentChainTesting()
 {
     UnorderedArgumentChain::Caller caller;
     caller.Function("Hello World").WithTags("Tag").WithSource("File");
 }
 
 
-void StringAdditionSpeedTesting()
+HEADER_ONLY void StringAdditionSpeedTesting()
 {
     using MicrosecondsChronoDurations = std::chrono::duration<double, std::ratio<1, 1000>>;
 
@@ -308,81 +308,6 @@ void StringAdditionSpeedTesting()
     std::cout << "Empty switch: " << emptySwitch << "ms\n";
     std::cout << "Control loop: " << control << "ms\n";
 }
-
-void FileOutputSpeedTesting()
-{
-    using MicrosecondsChronoDurations = std::chrono::duration<double, std::ratio<1, 1000>>;
-
-    auto tempTimePoint = std::chrono::high_resolution_clock::now();
-
-    std::fstream fstream;
-
-    std::vector<MicrosecondsChronoDurations> duartions(15);
-
-    std::string str1 = "Hello ";
-    std::string str2 = "";
-
-    for(u32 rotations = 0; rotations < 5; rotations ++)
-    {
-        tempTimePoint = std::chrono::high_resolution_clock::now();
-        for(u32 i = 0; i < 100000000; i++)
-        {
-            str1.append(str2);
-        }
-        duartions[0 + rotations] = std::chrono::high_resolution_clock::now() - tempTimePoint;
-    }
-
-    for(u32 rotations = 0; rotations < 5; rotations ++)
-    {
-        tempTimePoint = std::chrono::high_resolution_clock::now();
-        for(u32 i = 0; i < 100000000; i++)
-        {
-            if(NOT(str2.empty()))
-                str1.append(str2);
-        }
-        duartions[5 + rotations] = std::chrono::high_resolution_clock::now() - tempTimePoint;
-    }
-
-    for(u32 rotations = 0; rotations < 5; rotations ++)
-    {
-        tempTimePoint = std::chrono::high_resolution_clock::now();
-        for(u32 i = 0; i < 100000000; i++)
-        {
-            //str1.append(str2);
-        }
-        duartions[10 + rotations] = std::chrono::high_resolution_clock::now() - tempTimePoint;
-    }
-
-    u64 append = 0;
-    u64 emptySwitch = 0;
-    u64 control = 0;
-
-    for(u32 rotations = 0; rotations < 5; rotations ++)
-    {
-        append += duartions[0 + rotations].count();
-        emptySwitch += duartions[5 + rotations].count();
-        control += duartions[10 + rotations].count();
-    }
-
-    append /= 5;
-    emptySwitch /= 5;
-    control /= 5;
-
-    std::cout << "Simple append: " << append << "ms\n";
-    std::cout << "Empty switch: " << emptySwitch << "ms\n";
-    std::cout << "Control loop: " << control << "ms\n";
-}
-
-
-struct CrashDebugger
-{
-        static constexpr const char MyString[6] = {"Hello"};
-};
-
-struct DontCrashDebugger
-{
-        const char MyString[6] = {"Hello"};
-};
 
 namespace PassingSupport
 {
@@ -403,12 +328,12 @@ namespace PassingSupport
             ClassRef(ClassData && data) : Data(data) {}
 
             ClassRef() = delete;
-            ClassRef(const ClassRef PASS_REF other) : Data(other.Data)
+            ClassRef(const ClassRef REF other) : Data(other.Data)
             {
                 Data.PassCount++;
 
             }
-            ClassRef(ClassRef PASS_RVALUE_REF) = delete;
+            ClassRef(ClassRef RVALUE_REF) = delete;
             ~ClassRef()
             {
                 Data.PassCount--;
@@ -416,19 +341,19 @@ namespace PassingSupport
             ClassData POINTER operator->() {return ADDRESS(Data);}
     };
 
-    void Function1(ClassRef ref)
+    HEADER_ONLY void Function1(ClassRef ref)
     {
         std::cout << ref.Data.PassCount << std::endl;
     }
 
-    void Function2(ClassRef ref)
+    HEADER_ONLY void Function2(ClassRef ref)
     {
         std::cout << ref.Data.PassCount << std::endl;
         Function1(ref);
         std::cout << ref.Data.PassCount << std::endl;
     }
 
-    void Function3(ClassRef ref)
+    HEADER_ONLY void Function3(ClassRef ref)
     {
         std::cout << ref.Data.PassCount << std::endl;
         Function2(ref);
@@ -436,7 +361,7 @@ namespace PassingSupport
     }
 }
 
-u32 Counter()
+HEADER_ONLY u32 Counter()
 {
     static u32 counter = 0;
     u32 counterCopy = counter;
@@ -447,14 +372,14 @@ u32 Counter()
 }
 
 
-std::string CounterText()
+HEADER_ONLY std::string CounterText()
 {
     return std::to_string(Counter());
 }
 
 thread_local StaticLog::DefaultLogger<> Log("Temp" + CounterText() + ".txt");
 
-void GenericProgramingTests()
+HEADER_ONLY void GenericProgramingTests()
 {
 
     const char * myStr = "Hello world";
@@ -468,7 +393,157 @@ void GenericProgramingTests()
     std::cout << myStr << std::endl;
 }
 
-void PassingSupportTesting()
+struct Block;
+
+struct BlockHeader
+{
+        Block * nextBlock;
+        Block * prevBlock;
+        size_t size;
+};
+
+template<size_t size>
+struct alignas(size) AlignedMemory {};
+
+using ElemtT = int;
+
+template <size_t size>
+struct BlockTempl
+{
+        BlockHeader header;
+        ElemtT data[size];
+};
+
+HEADER_ONLY void AllocatingBlocksTesting()
+{
+    //size_t dynamicSize = 0;
+    //void * blockPtr =  new BlockTempl<dynamicSize>();
+}
+
+constexpr void AddPaddingSize(size_t INOUT totalSize, size_t IN align)
+{
+    const size_t modulo = totalSize % align;
+
+    if(modulo != 0)
+        totalSize += align - (modulo);
+}
+
+constexpr void AddSize(size_t INOUT totalSize, size_t IN size)
+{
+    totalSize += size;
+}
+
+template<typename T>
+constexpr void AddMember(size_t INOUT totalSize)
+{
+    AddPaddingSize(totalSize, alignof (T));
+    AddSize(totalSize, sizeof (T));
+}
+
+
+template<size_t size>
+using Size = std::integral_constant<size_t, size>;
+
+template<MetaPrograming::Indetifier>
+constexpr size_t GetMaxInternal(size_t max)
+{
+    return max;
+}
+
+template<MetaPrograming::Indetifier, typename FirstArg, typename ... Args>
+constexpr size_t GetMaxInternal(size_t curMax, FirstArg first, Args... args)
+{
+    if(first > curMax)
+        curMax = first;
+    return GetMaxInternal<MetaPrograming::Indetifier::Indentify, Args...>(curMax, args...);
+}
+
+
+template<bool error = true>
+constexpr size_t GetMax()
+{
+    //static_assert (error, "No set provided; At least one parameter must be present");
+    return 0;
+}
+
+template<typename FirstArg, typename ... Args>
+constexpr size_t GetMax(FirstArg first, Args... args)
+{
+    return GetMaxInternal<MetaPrograming::Indetifier::Indentify, Args...>(first, args...);
+}
+
+template<typename ... MemberTypes>
+constexpr size_t GetMaxSize()
+{
+    return GetMax(sizeof (MemberTypes)...);
+}
+
+template<typename ... MemberTypes>
+constexpr size_t GetMaxAlignment()
+{
+    return GetMax(alignof (MemberTypes)...);
+}
+
+template<MetaPrograming::Indetifier>
+constexpr void GetStructureSizeRecursive(size_t INOUT)
+{}
+
+template<MetaPrograming::Indetifier, typename FirstMemberType, typename ... MemberTypes>
+constexpr void GetStructureSizeRecursive(size_t INOUT totalSize)
+{
+    AddMember<FirstMemberType>(totalSize);
+    GetStructureSizeRecursive<MetaPrograming::Indetifier::Indentify, MemberTypes...>(totalSize);
+}
+
+
+template<typename ... MemberTypes>
+constexpr size_t GetStructureSize()
+{
+    size_t returnSize = 0;
+    //Add main size and padding
+    GetStructureSizeRecursive<MetaPrograming::Indetifier::Indentify, MemberTypes...>(returnSize);
+
+    //Add trailing padding
+    constexpr size_t maxMemberSize = GetMaxAlignment<MemberTypes...>();
+    AddPaddingSize(returnSize, maxMemberSize);
+
+    return returnSize;
+}
+
+template<typename ... MemberTypes>
+using GetSize = std::integral_constant<size_t, GetStructureSize<MemberTypes...>()>;
+
+
+struct CustomSize
+{
+        int d1;
+        int d2;
+        int d3;
+};
+
+struct TestSize1
+{
+        int d1;
+        double d2;
+};
+
+
+
+HEADER_ONLY void AllocatingBlocksTesting2()
+{
+    //alignas(BlockHeader) int a;
+    //AlignedMemory<16> memory[106];
+    //size_t padding = 0 /* Some way to calculcate the nrcessary padding*/;
+
+    //void * allocated = new char[sizeof(BlockHeader) + padding +  sizeof (ElemtT)];
+
+
+    //Block * blockPtr =  static_cast<Block *>(allocated);
+
+    static_assert (std::is_same_v<GetSize<double, int>, Size<sizeof(TestSize1)>>, "");
+}
+
+HEADER_ONLY void PassingSupportTesting()
 {
     PassingSupport::ClassData data;
     PassingSupport::ClassRef ref(data);
@@ -476,8 +551,35 @@ void PassingSupportTesting()
     PassingSupport::Function3(data);
 }
 
-#include "GClasses/Common/StaticLog/SpeedTests.h"
-void RunTemp()
+
+#include "General/CIo/File.h"
+
+HEADER_ONLY void FuncWithConstArgRef(const CIo::UnsafeFile::OsCStringRef REF ref)
+{
+    ref.Data[0] = '\0';
+}
+
+template<typename Signal = MetaPrograming::ErrorSignalType>
+void DoSomthing(int arg1)
+{
+    (void)arg1;
+    static_assert (NOT std::is_same_v<Signal, MetaPrograming::ErrorSignalType>, "Is unimplmeneted");
+}
+
+HEADER_ONLY void OpenModeConstructortesting()
+{
+    using namespace CIo;
+    using namespace OpenModeHelpers;
+
+    constexpr OpenMode openMode;
+
+    File file;
+    file.IsOpen();
+
+}
+
+
+HEADER_ONLY void RunTemp()
 {
     //FmtTesting();
     //StaticLogInterpretTesting();
@@ -488,13 +590,10 @@ void RunTemp()
     //UnorderedArgumentChainTesting();
     //ConstexprNumConversion();
     //StringAdditionSpeedTesting();
-    GenericProgramingTests();
-    PassingSupportTesting();
+    //GenericProgramingTests();
+    //PassingSupportTesting();
+    OpenModeConstructortesting();
 
-    //SpeedTests();
-    //AllocationTests();
-    //StaticLogLogCheckingOverheadTests();
-    //LibSpeedTests();
 }
 
 #endif // TEMP_H
