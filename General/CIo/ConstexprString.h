@@ -13,7 +13,7 @@ namespace CIo
             using OffsetType = i64;
             using ThisType = ConstexprString<CharType, capacity>;
 
-        protected:
+        private:
             static constexpr SizeType TotalSize = capacity + 1;
             static constexpr CharT NullTermination = '\0';
 

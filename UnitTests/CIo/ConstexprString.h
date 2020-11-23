@@ -2,7 +2,7 @@
 #define CONSTEXPRSTRINGTEST_H
 
 #include "Catch2/Catch.hpp"
-#include "General/File/ConstexprString.h"
+#include "General/CIo/ConstexprString.h"
 
 #define ConstexprStringTestedTypes char8, char16, char32, charW
 
@@ -14,7 +14,7 @@ namespace CIo::ConstexprStringTesting
 
 namespace CIo::ConstexprStringTesting
 {
-    TEMPLATE_TEST_CASE("[ConstexprString] : ConstexprString should be compilable (and constructible) with all sizes", "[ConstexprString]", ConstexprStringTestedTypes)
+    TEMPLATE_TEST_CASE("[ConstexprString] : ConstexprString should be compilable (and constructible) with all sizes", "[ConstexprString][Compilation]", ConstexprStringTestedTypes)
     {
         [[maybe_unused]] const ConstexprString<TestType, 0> str1;
         [[maybe_unused]] const ConstexprString<TestType, 2> str2;
@@ -27,7 +27,7 @@ namespace CIo::ConstexprStringTesting
         [[maybe_unused]] const ConstexprString<TestType, 305> str9;
     }
 
-    TEMPLATE_TEST_CASE("[ConstexprString] : Default constructor should construct an empty string of size 0", "[ConstexprString]", ConstexprStringTestedTypes)
+    TEMPLATE_TEST_CASE("[ConstexprString] : Default constructor should construct an empty string of size 0", "[ConstexprString][Default constructor]", ConstexprStringTestedTypes)
     {
         WHEN("Constructing a string of normal size the result should be empty")
         {
@@ -52,7 +52,7 @@ namespace CIo::ConstexprStringTesting
 
     }
 
-    TEMPLATE_TEST_CASE("[ConstexprString] : Copy constructor shoudl construct an exact copy of the string given", "[ConstexprString]", ConstexprStringTestedTypes)
+    TEMPLATE_TEST_CASE("[ConstexprString] : Copy constructor shoudl construct an exact copy of the string given", "[ConstexprString][Copy constructor]", ConstexprStringTestedTypes)
     {
         WHEN("Constructing from empty strng, the constructed string should also be empty")
         {
@@ -73,7 +73,7 @@ namespace CIo::ConstexprStringTesting
         }
     }
 
-    TEMPLATE_TEST_CASE("[ConstexprString] : Move constructor shoudl construct an exact copy of the string given", "[ConstexprString]", ConstexprStringTestedTypes)
+    TEMPLATE_TEST_CASE("[ConstexprString] : Move constructor shoudl construct an exact copy of the string given", "[ConstexprString][Move constructor]", ConstexprStringTestedTypes)
     {
         WHEN("Constructing from empty strng, the constructed string should also be empty")
         {
@@ -95,7 +95,7 @@ namespace CIo::ConstexprStringTesting
         }
     }
 
-    TEMPLATE_TEST_CASE("[ConstexprString] : Constructor with const CharT * argument shoudl construct an exact copy of the string given", "[ConstexprString]", ConstexprStringTestedTypes)
+    TEMPLATE_TEST_CASE("[ConstexprString] : Constructor with const CharT * argument shoudl construct an exact copy of the string given", "[ConstexprString][Constructor]", ConstexprStringTestedTypes)
     {
         constexpr TestType msg[] = {'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '!', NullTermination<TestType>};
         constexpr size_t msgLenght = 12;
@@ -123,7 +123,7 @@ namespace CIo::ConstexprStringTesting
         }
     }
 
-    TEMPLATE_TEST_CASE("[ConstexprString] : Copy assigning shoudl result in exact copy of the string given", "[ConstexprString]", ConstexprStringTestedTypes)
+    TEMPLATE_TEST_CASE("[ConstexprString] : Copy assigning shoudl result in exact copy of the string given", "[ConstexprString][Copy assignment]", ConstexprStringTestedTypes)
     {
         constexpr TestType msg[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', NullTermination<TestType>};
         constexpr size_t msgLenght = 10;
@@ -163,7 +163,7 @@ namespace CIo::ConstexprStringTesting
         }
     }
 
-    TEMPLATE_TEST_CASE("[ConstexprString] : Move assigning shoudl result in exact copy of the string given", "[ConstexprString]", ConstexprStringTestedTypes)
+    TEMPLATE_TEST_CASE("[ConstexprString] : Move assigning shoudl result in exact copy of the string given", "[ConstexprString][Move assignment]", ConstexprStringTestedTypes)
     {
         constexpr TestType msg[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', NullTermination<TestType>};
         constexpr size_t msgLenght = 10;
@@ -203,7 +203,7 @@ namespace CIo::ConstexprStringTesting
         }
     }
 
-    TEMPLATE_TEST_CASE("[ConstexprString] : Size should return the size of the string minus the null termination", "[ConstexprString]", ConstexprStringTestedTypes)
+    TEMPLATE_TEST_CASE("[ConstexprString] : Size should return the size of the string minus the null termination", "[ConstexprString][Size]", ConstexprStringTestedTypes)
     {
         constexpr TestType msg[] = {'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '!', NullTermination<TestType>};;
         constexpr size_t msgLenght = 12;
@@ -248,7 +248,7 @@ namespace CIo::ConstexprStringTesting
         }
     }
 
-    TEMPLATE_TEST_CASE("[ConstexprString] : Capacity should retun the template specified size", "[ConstexprString]", ConstexprStringTestedTypes)
+    TEMPLATE_TEST_CASE("[ConstexprString] : Capacity should retun the template specified size", "[ConstexprString][Capacity]", ConstexprStringTestedTypes)
     {
         const ConstexprString<TestType, 0> str1;
         REQUIRE(str1.Capacity() == 0);
@@ -270,7 +270,7 @@ namespace CIo::ConstexprStringTesting
         REQUIRE(str9.Capacity() == 305);
     }
 
-    TEMPLATE_TEST_CASE("[ConstexprString] : operator[] should return the character on the specified index", "[ConstexprString]", ConstexprStringTestedTypes)
+    TEMPLATE_TEST_CASE("[ConstexprString] : operator [] should return the character on the specified index", "[ConstexprString][operator []]", ConstexprStringTestedTypes)
     {
         constexpr TestType msg[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', NullTermination<TestType>};
         constexpr size_t msgLenght = 10;
@@ -305,7 +305,7 @@ namespace CIo::ConstexprStringTesting
         }
     }
 
-    TEMPLATE_TEST_CASE("[ConstexprString] : operator += should append a string or charcter to the string", "[ConstexprString]", ConstexprStringTestedTypes)
+    TEMPLATE_TEST_CASE("[ConstexprString] : operator += should append a string or charcter to the string", "[ConstexprString][operator +=]", ConstexprStringTestedTypes)
     {
         constexpr TestType msg[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', NullTermination<TestType>};
         constexpr size_t msgLenght = 10;
@@ -369,7 +369,7 @@ namespace CIo::ConstexprStringTesting
         }
     }
 
-    TEMPLATE_TEST_CASE("[ConstexprString] : operator == should return true when the strings are the same", "[ConstexprString]", ConstexprStringTestedTypes)
+    TEMPLATE_TEST_CASE("[ConstexprString] : operator == should return true when the strings are the same", "[ConstexprString][operator ==]", ConstexprStringTestedTypes)
     {
         constexpr TestType msg1[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', NullTermination<TestType>};
         constexpr size_t msg1Lenght = 10;
@@ -424,7 +424,7 @@ namespace CIo::ConstexprStringTesting
         }
     }
 
-    TEMPLATE_TEST_CASE("[ConstexprString] : operator != should return true when the strings are not the same", "[ConstexprString]", ConstexprStringTestedTypes)
+    TEMPLATE_TEST_CASE("[ConstexprString] : operator != should return true when the strings are not the same", "[ConstexprString][operator !=]", ConstexprStringTestedTypes)
     {
         constexpr TestType msg1[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', NullTermination<TestType>};
         constexpr size_t msg1Lenght = 10;
@@ -479,7 +479,7 @@ namespace CIo::ConstexprStringTesting
         }
     }
 
-    TEMPLATE_TEST_CASE("[ConstexprString] : operator std::basic_string_view should return a string_view with the contents of this string", "[ConstexprString]", ConstexprStringTestedTypes)
+    TEMPLATE_TEST_CASE("[ConstexprString] : operator std::basic_string_view should return a string_view with the contents of this string", "[ConstexprString][operator std::basic_string_view]", ConstexprStringTestedTypes)
     {
         SECTION("With message \'abcdefghij\'")
         {
@@ -509,12 +509,7 @@ namespace CIo::ConstexprStringTesting
         }
     }
 
-    TEMPLATE_TEST_CASE("[ConstexprString] : ", "[ConstexprString]", ConstexprStringTestedTypes)
-    {
-
-    }
-
-    TEST_CASE("[CIo::PromoteStringCharsTo] : PromoteStringCharsTo should convert compile time string of smaller char lenght to string of bigger char lenght", "[ConstexprString]")
+    TEST_CASE("[CIo::PromoteStringCharsTo] : PromoteStringCharsTo should convert compile time string of smaller char lenght to string of bigger char lenght", "[ConstexprString][PromoteStringCharsTo]")
     {
         WHEN("Converting from char8 to char16 the string should be converted as expected")
         {

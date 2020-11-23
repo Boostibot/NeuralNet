@@ -4,6 +4,9 @@
 #include "UnsafeFile.h"
 namespace CIo
 {
+    //Final class that should safely encapsulate all necessary c File
+    // functionality. All other classes should be provided as member types
+    // acessible through BasicFile::ClassName
     template<typename OsCharTypeArg>
     class BasicFile : public BasicUnsafeFile<OsCharTypeArg>
     {
@@ -12,11 +15,7 @@ namespace CIo
 
         public:
             using UnsafeFile        = BasicUnsafeFile<OsCharTypeArg>;
-            using CFileManager      = typename UnsafeFile::CFileManager;
-
-        protected:
-            using CharSupport       = typename UnsafeFile::CharSupport;
-            using StaticFunctions   = typename UnsafeFile::StaticFunctions;
+            using FileManager       = typename UnsafeFile::FileManager;
 
         public:
             using Size              = typename UnsafeFile::Size;
@@ -27,24 +26,27 @@ namespace CIo
             using FileDescriptor    = typename UnsafeFile::FileDescriptor;
             using Stats             = typename UnsafeFile::Stats;
 
-            using OpenMode          = typename UnsafeFile::OpenMode;
+            using OpenMode            = typename UnsafeFile::OpenMode;
+            using OpenModeFlag        = typename OpenMode::OpenModeFlag;
+            using WindowsOpenModeFlag = typename OpenMode::WindowsOpenModeFlag;
+            using COpenMode           = typename OpenMode::COpenMode;
 
             template<typename CharType>
-            using String        = typename StaticFunctions:: template String<CharType>;
+            using String        = typename UnsafeFile:: template String<CharType>;
             template<typename CharType>
-            using StringView    = typename StaticFunctions:: template StringView<CharType>;
+            using StringView    = typename UnsafeFile:: template StringView<CharType>;
             template<typename CharType>
-            using CStringRef    = typename StaticFunctions:: template CStringRef<CharType>;
+            using CStringRef    = typename UnsafeFile:: template CStringRef<CharType>;
 
-            using OsCharType    = typename StaticFunctions::OsCharType;
-            using OsString      = typename StaticFunctions::OsString;
-            using OsStringView  = typename StaticFunctions::OsStringView;
-            using OsCStringRef  = typename StaticFunctions::OsCStringRef;
+            using OsCharType    = typename UnsafeFile::OsCharType;
+            using OsString      = typename UnsafeFile::OsString;
+            using OsStringView  = typename UnsafeFile::OsStringView;
+            using OsCStringRef  = typename UnsafeFile::OsCStringRef;
 
-            static_assert (CharSupport::IsValid, "Invalid OsCharType; Only char and wchar_t allowed; (No posix function takes other char types)");
+            static_assert (CIo::CharSupport<OsCharType>::IsValid, "Invalid OsCharType; Only char and wchar_t allowed; (No posix function takes other char types)");
 
-        private:
-            using UnsafeFile::FilePtr;
+        public:
+            static constexpr Position ErrorPos = {-1};
 
         public:
             BasicFile() = default;
@@ -61,7 +63,7 @@ namespace CIo
             inline BasicFile(const OsStringView path, OpenModeTypes ... openModes) noexcept : UnsafeFile(path, openModes...)
             {}
 
-        protected:
+        private:
             inline UnsafeFile REF GetUnsafe() noexcept
             {
                 return static_cast<UnsafeFile REF>(PTR_VAL(this));
@@ -86,7 +88,7 @@ namespace CIo
             Position GetPosInFile() noexcept
             {
                 if(this->IsClosed())
-                    return static_cast<Position>(0);
+                    return ThisType::ErrorPos;
 
                 return this->GetUnsafe().GetPosInFile();
             }
@@ -98,12 +100,12 @@ namespace CIo
 
                 return this->GetUnsafe().SetPosInFile(pos, from);
             }
-            void MoveToBegging() noexcept
+            void MoveToBeggining() noexcept
             {
                 if(this->IsClosed())
                     return;
 
-                this->GetUnsafe().MoveToBegging();
+                this->GetUnsafe().MoveToBeggining();
             }
             void MoveToEnd() noexcept
             {
@@ -134,9 +136,18 @@ namespace CIo
             [[nodiscard]] Size ReadAndCount(PointerType PTR ptrToBuffer, Size count) noexcept
             {
                 if(this->IsClosed())
-                    return false;
+                    return 0;
 
                 return this->GetUnsafe().ReadAndCount(ptrToBuffer, count);
+            }
+
+            template<typename ObjectType>
+            [[nodiscard]] bool ReadObject(ObjectType RVALUE_REF object) noexcept
+            {
+                if(this->IsClosed())
+                    return false;
+
+                return this->GetUnsafe().ReadObject(object);
             }
 
             template<typename CharT>
@@ -148,23 +159,6 @@ namespace CIo
                 return this->GetUnsafe().ReadString(to);
             }
 
-            template<typename CharT>
-            [[nodiscard]] bool ReadString(CStringRef<CharT> to, const Size lenght) noexcept
-            {
-                if(this->IsClosed())
-                    return false;
-
-                return this->GetUnsafe().ReadString(to, lenght);
-            }
-
-            template<typename ObjectType>
-            [[nodiscard]] bool ReadObject(ObjectType RVALUE_REF object) noexcept
-            {
-                if(this->IsClosed())
-                    return false;
-
-                return this->GetUnsafe().ReadObject(object);
-            }
 
         public:
             template<typename PointerType>
@@ -179,7 +173,7 @@ namespace CIo
             [[nodiscard]] Size WriteAndCount(PointerType PTR ptrToData, Size count) noexcept
             {
                 if(this->IsClosed())
-                    return false;
+                    return 0;
 
                 return this->GetUnsafe().WriteAndCount(ptrToData, count);
             }
@@ -218,7 +212,7 @@ namespace CIo
 
                 return this->GetUnsafe().Flush();
             }
-            void SwitchReadAndWrite() noexcept
+            void SwitchBetweenReadAndWrite() noexcept
             {
                 if(this->IsClosed())
                     return;
@@ -227,7 +221,35 @@ namespace CIo
             }
 
         public:
-            FileDescriptor GetFileDescriptor() const noexcept
+            inline static bool GetFileStatics(Stats REF stats, const FileDescriptor descriptor) noexcept
+            {
+                if(descriptor == FileDescriptor::ErrorDescriptor)
+                    return false;
+
+                return UnsafeFile::GetFileStatics(stats, descriptor);
+            }
+
+            inline static bool GetFileStatics(Stats REF stats, const OsStringView filename)
+            {
+                return UnsafeFile::GetFileStatics(stats, filename);
+            }
+
+            static FileSize GetFileSize(const FileDescriptor descriptor) noexcept
+            {
+                if(descriptor == FileDescriptor::ErrorDescriptor)
+                    return UnsafeFile::ErrorSize;
+
+                return UnsafeFile::GetFileSize(descriptor);
+            }
+
+            static FileSize GetFileSize(const OsStringView filename) noexcept
+            {
+                return UnsafeFile::GetFileSize(filename);
+            }
+
+
+        public:
+            FileDescriptor GetFileDescriptor() noexcept
             {
                 if(this->IsClosed())
                     return FileDescriptor();
@@ -246,7 +268,7 @@ namespace CIo
             FileSize GetFileSize() const noexcept
             {
                 if(this->IsClosed())
-                    return 0;
+                    return UnsafeFile::ErrorSize;
 
                 return this->GetUnsafe().GetFileSize();
             }

@@ -59,7 +59,7 @@ namespace CIo
         //***************************************//
         //This is to not bother the user with the count option
     };
-
+    //These are all of the basic modes supported by fopen
     enum class COpenMode : OpenModeHelpers::OpenModeEnumsBaseType
     {
         ReadMustExist,      //Read && MustExist
@@ -314,13 +314,15 @@ namespace CIo
             };
     };
 
+    //Class responsible for transforming Open mode flags into
+    // a valid fopen openmode string at compile time
     template <typename OsCharT>
     class BasicOpenMode
     {
         public:
             using ThisType = BasicOpenMode;
 
-        protected:
+        private:
             using OpenModeConversionState = OpenModeHelpers::OpenModeConversionState<OsCharT>;
             using OpenModeValidity        = OpenModeHelpers::OpenModeValidity;
 
@@ -342,18 +344,22 @@ namespace CIo
             static_assert (std::is_same_v<OsCharType, char8> || std::is_same_v<OsCharType, charW>,
                            "Invalid OsCharType; Only char and wchar_t allowed; (No posix function takes other char types)");
 
+        private:
+            static constexpr COpenMode DefaultCOpenMode = COpenMode::ReadWrite;
+            static constexpr OpenModeValidity DefaultOpenModeValidity = OpenModeValidity::Invalid;
+
         public:
-            OpenModeString OpenModeStr;
-            COpenMode CMode;
+            OpenModeString   OpenModeStr;
+            COpenMode        CMode;
             OpenModeValidity Validity;
 
         public:
             constexpr BasicOpenMode() noexcept
-                : OpenModeStr(), CMode(), Validity(OpenModeValidity::Invalid)
+                : OpenModeStr(), CMode(DefaultCOpenMode), Validity(DefaultOpenModeValidity)
             {}
 
             constexpr BasicOpenMode(COpenMode openMode) noexcept
-                : OpenModeStr(), CMode(), Validity()
+                : OpenModeStr(), CMode(DefaultCOpenMode), Validity(DefaultOpenModeValidity)
             {
                 AssignCOpenMode(openMode);
             }
@@ -392,10 +398,6 @@ namespace CIo
                     return OpenModeString();
             }
 
-            inline constexpr auto REF GetBaseOpenModeString() const noexcept
-            {
-                return OpenModeStr;
-            }
             inline constexpr auto GetCOpenMode() const noexcept
             {
                 return this->CMode;
@@ -410,15 +412,6 @@ namespace CIo
             static constexpr bool IsValid(OpenModeValidity validity)        noexcept {return validity == OpenModeValidity::Valid;}
             static constexpr bool IsSupported(OpenModeValidity validity)    noexcept {return NOT(validity == OpenModeValidity::Unsupported);}
 
-            //Todo - try update
-            static constexpr ThisType OpenModeConstructor(OpenModeValidity validity, COpenMode cmode) noexcept
-            {
-                ThisType openMode;
-                openMode.Validity = validity;
-                openMode.CMode = cmode;
-                return openMode;
-            }
-
             template<typename ... FlagTypes>
             static constexpr ThisType CreateOpenMode(FlagTypes ... flags) noexcept
             {
@@ -426,7 +419,7 @@ namespace CIo
                         "BasicOpenMode::CreateOpenMode : All provided flags must be of type OpenModeFlag");
 
                 OpenModeConversionState state(flags...);
-                ThisType openMode = OpenModeConstructor(OpenModeValidity::Invalid, COpenMode::ReadWrite);
+                ThisType openMode;
 
                 if(state.AreFlagsConflicting())
                     return openMode;

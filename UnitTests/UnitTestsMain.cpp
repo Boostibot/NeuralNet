@@ -3,10 +3,12 @@
 
 //#include "DynamicLog.h"
 //#include "StaticLog.h"
-#include "ConstexprString.h"
-#include "OpenMode.h"
-#include "StaticFileFunctions.h"
-#include "CFileManager.h"
-#include "UnsafeFile.h"
-//#include "File.h"
+
+#include "CIo/ConstexprString.h"
+#include "CIo/UniversalString.h"
+#include "CIo/OpenMode.h"
+#include "CIo/FileManager.h"
+#include "CIo/UnsafeFile.h"
+#include "CIo/File.h"
+#include "CIo/UseExamples.h"
 

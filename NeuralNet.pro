@@ -27,16 +27,16 @@ HEADERS += \
     General/Common/MetaPrograming.h \
     General/Common/Typedefs.h \
     General/Common/Defines.h \
-    General/File/CFileManager.h \
-    General/File/CharSupport.h \
-    General/File/CompilerSupport.h \
-    General/File/ConstexprString.h \
-    General/File/File.h \
-    General/File/OpenMode.h \
-    General/File/UniversalString.h \
-    General/File/UnsafeFile.h \
-    General/File/UseExamples.h \
-    General/File/UtfConversion.h \
+    General/CIo/CharSupport.h \
+    General/CIo/CompilerSupport.h \
+    General/CIo/ConstexprString.h \
+    General/CIo/File.h \
+    General/CIo/FileManager.h \
+    General/CIo/OpenMode.h \
+    General/CIo/UniversalString.h \
+    General/CIo/UnsafeFile.h \
+    General/CIo/UseExamples.h \
+    General/UtfConversion/UtfConversion.h \
     \
     General/ConstexprNumConversion/ConstexprNumConversion.h \
     \
@@ -78,8 +78,7 @@ HEADERS += \
     Libraries/Fmt/fmt/ostream.h \
     Libraries/Fmt/fmt/posix.h \
     Libraries/Fmt/fmt/printf.h \
-    Libraries/Fmt/fmt/ranges.h \
-    Main/UnbufferedFile.h
+    Libraries/Fmt/fmt/ranges.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

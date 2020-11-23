@@ -552,8 +552,7 @@ HEADER_ONLY void PassingSupportTesting()
 }
 
 
-#include "General/File/File.h"
-#include "General/File/UseExamples.h"
+#include "General/CIo/File.h"
 
 HEADER_ONLY void FuncWithConstArgRef(const CIo::UnsafeFile::OsCStringRef REF ref)
 {
@@ -574,8 +573,9 @@ HEADER_ONLY void OpenModeConstructortesting()
 
     constexpr OpenMode openMode;
 
-    UnsafeFile file;
+    File file;
     file.IsOpen();
+
 }
 
 

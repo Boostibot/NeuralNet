@@ -9,13 +9,13 @@ namespace CIo
 {
     //Class responsible for safe management of the FILE pointer
     template<typename OsCharTypeArg>
-    class BasicCFileManager
+    class BasicFileManager
     {
         public:
-            using ThisType       = BasicCFileManager;
+            using ThisType       = BasicFileManager;
             using OsCharType     = OsCharTypeArg;
 
-        protected:
+        private:
             using CharSupport    = CharSupport<OsCharType>;
 
         public:
@@ -38,24 +38,24 @@ namespace CIo
             FILE PTR FilePtr;
 
         public:
-            BasicCFileManager() noexcept : FilePtr(nullptr)
+            BasicFileManager() noexcept : FilePtr(nullptr)
             {}
 
-            BasicCFileManager(const OsStringView path, const OpenMode REF openMode) noexcept : FilePtr(nullptr)
+            BasicFileManager(const OsStringView path, const OpenMode REF openMode) noexcept : FilePtr(nullptr)
             {
                 OpenNew(path, openMode);
             }
 
             template<typename ... OpenModeTypes,
                      std::enable_if_t<OpenModeHelpers::AreOpenModeFlags<OpenModeTypes...>(), i32> = 0>
-            BasicCFileManager(const OsStringView path, OpenModeTypes ... openModes) noexcept : FilePtr(nullptr)
+            BasicFileManager(const OsStringView path, OpenModeTypes ... openModes) noexcept : FilePtr(nullptr)
             {
                 OpenNew(path, openModes...);
             }
 
         public:
-            BasicCFileManager(const ThisType REF) = delete;
-            BasicCFileManager(ThisType RVALUE_REF other) noexcept
+            BasicFileManager(const ThisType REF) = delete;
+            BasicFileManager(ThisType RVALUE_REF other) noexcept
             {
                 this->FilePtr = other.FilePtr;
                 other.FilePtr = nullptr;
@@ -65,7 +65,7 @@ namespace CIo
             ThisType REF operator=(const ThisType REF) = delete;
             ThisType REF operator=(ThisType RVALUE_REF other) noexcept
             {
-                BasicCFileManager temp(std::move(other));
+                BasicFileManager temp(std::move(other));
                 this->Swap(temp);
 
                 return POINTER_VALUE(this);
@@ -77,7 +77,7 @@ namespace CIo
             }
 
         public:
-            ~BasicCFileManager() noexcept
+            ~BasicFileManager() noexcept
             {
                 Close();
             }
@@ -114,23 +114,12 @@ namespace CIo
             }
 
         private:
-            bool OpenNewInternal(const OsStringView path, const OsStringView REF openMode) noexcept
+            inline bool OpenNewInternal(const OsStringView path, const OsStringView REF openMode) noexcept
             {
-                //Slightly faster than calling this->Close() since it does not set the pointer
-                // would be a wastfull assignment since in most cases the function wont fail and the file will be
-                // set to the newly opened file
-
-                //if(NOT ThisType::CloseFile(this->FilePtr))
-                //{
-                //   //In case the function fails we need to assign the filePtr to nullptr
-                //   this->FilePtr = nullptr;
-                //   return false;
-                //}
-
                 if(path.empty())
                     return false;
 
-                //The checking as above for the return of the function can be considered redundant
+                //The checking for the return of the function can be considered redundant
                 // This function will not be used for checking if file was closed succesfully but rather for opening
                 // a new one. If such behaviour is desired one should assure that it was infact the closing that
                 // caused the error not the opening. Such checking can be done through the Close() function.
@@ -139,11 +128,6 @@ namespace CIo
 
                 //No need to check for return state - will be checked at the end through IsOpen
                 FilePtr = CharSupport::fopen(path.data(), openMode.data());
-
-                //if(this->IsOpen())
-                //    FilePtr = CharSupport::freopen(path.data(), arguments.data(), FilePtr);
-                //else
-                //    FilePtr = CharSupport::fopen(path.data(), arguments.data());
 
                 return IsOpen();
             }
@@ -178,8 +162,8 @@ namespace CIo
             {
                 bool returnStatus = ThisType::CloseFile(this->FilePtr);
 
-                //Sets the file to null
                 this->FilePtr = nullptr;
+
                 return returnStatus;
             }
 
@@ -188,14 +172,14 @@ namespace CIo
 namespace std
 {
     template <typename OsCharT>
-    HEADER_ONLY void swap (CIo::BasicCFileManager<OsCharT> REF file1, CIo::BasicCFileManager<OsCharT> REF file2) noexcept
+    HEADER_ONLY void swap (CIo::BasicFileManager<OsCharT> REF file1, CIo::BasicFileManager<OsCharT> REF file2) noexcept
     {
         file1.Swap(file2);
     }
 }
 namespace CIo
 {
-    using CFileManager  = BasicCFileManager<char8>;
-    using WCFileManager = BasicCFileManager<charW>;
+    using FileManager  = BasicFileManager<char8>;
+    using WFileManager = BasicFileManager<charW>;
 }
 #endif // CFILEMANAGER_H

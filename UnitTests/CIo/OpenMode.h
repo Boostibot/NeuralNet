@@ -2,7 +2,7 @@
 #define OPENMODETESTING_H
 
 #include "Catch2/Catch.hpp"
-#include "General/File/OpenMode.h"
+#include "General/CIo/OpenMode.h"
 
 namespace CIo::OpenModeTesting
 {
@@ -16,7 +16,7 @@ namespace CIo::OpenModeTesting
 {
     namespace FlagPresenceTesting
     {
-        TEST_CASE("[FlagPresence] : IsFlagPresent should return true if the looking for flag is present in the arguments", "[FlagPresence]")
+        TEST_CASE("[FlagPresence] : IsFlagPresent should return true if the looking for flag is present in the arguments", "[FlagPresence][IsFlagPresent]")
         {
 
             WHEN("Given arguments containing the lookignForFlag it should return true")
@@ -47,7 +47,7 @@ namespace CIo::OpenModeTesting
             }
         }
 
-        TEST_CASE("[FlagPresence] : the [] operator should return flag presence at index", "[FlagPresence]")
+        TEST_CASE("[FlagPresence] : operator [] should return flag presence at index", "[FlagPresence][operator []]")
         {
             GIVEN("A FlagPresence constructed with certain flags")
             {
@@ -69,7 +69,7 @@ namespace CIo::OpenModeTesting
             }
         }
 
-        TEST_CASE("[FlagPresence] : Constructing FlagPresence should fill the presence array accordingly", "[FlagPresence]")
+        TEST_CASE("[FlagPresence] : Constructing FlagPresence should fill the presence array accordingly", "[FlagPresence][Constructor]")
         {
             WHEN("Constructed with No flags")
             {
@@ -339,7 +339,7 @@ namespace CIo::OpenModeTesting
 
     namespace OpenModeConversionStateTesting
     {
-        TEMPLATE_TEST_CASE("[OpenModeConversionState] : Constructor should initialise the FlagPresence according to the given paarmeters", "[OpenModeConversionState]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenModeConversionState] : Constructor should initialise the FlagPresence according to the given paarmeters", "[OpenModeConversionState][Constructor]", OpenModeTestedTypes)
         {
             using ConversionState = OpenModeConversionState<TestType>;
 
@@ -381,7 +381,7 @@ namespace CIo::OpenModeTesting
             }
         }
 
-        TEMPLATE_TEST_CASE("[OpenModeConversionState] : AreFlagsConflicting should return true if the flags are logically conflicting", "[OpenModeConversionState]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenModeConversionState] : AreFlagsConflicting should return true if the flags are logically conflicting", "[OpenModeConversionState][AreFlagsConflicting]", OpenModeTestedTypes)
         {
             using ConversionState = OpenModeConversionState<TestType>;
 
@@ -450,7 +450,7 @@ namespace CIo::OpenModeTesting
             }
         }
 
-        TEMPLATE_TEST_CASE("[OpenModeConversionState] : SetCOpenModeAndValidty should match the given flags to a COpenMode or set invalid", "[OpenModeConversionState]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenModeConversionState] : SetCOpenModeAndValidty should match the given flags to a COpenMode or set invalid", "[OpenModeConversionState][SetCOpenModeAndValidty]", OpenModeTestedTypes)
         {
             using ConversionState = OpenModeConversionState<TestType>;
             COpenMode copenMode;
@@ -591,7 +591,7 @@ namespace CIo::OpenModeTesting
         }
 
         TEMPLATE_TEST_CASE("[OpenModeConversionState] : GetCOpenModeStr should return the COpenMode represented in compile time string"
-                           "such that if converted to const char * it can be passed into fopen", "[OpenModeConversionState]", OpenModeTestedTypes)
+                           "such that if converted to const char * it can be passed into fopen", "[OpenModeConversionState][GetCOpenModeStr]", OpenModeTestedTypes)
         {
             using ConversionState = OpenModeConversionState<TestType>;
             using OpenModeString = typename ConversionState::OpenModeString;
@@ -635,7 +635,7 @@ namespace CIo::OpenModeTesting
             }
         }
 
-        TEMPLATE_TEST_CASE("[OpenModeConversionState] : GetAdditionalModeStr should return additional mode string based on the flags passed into constructor", "[OpenModeConversionState]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenModeConversionState] : GetAdditionalModeStr should return additional mode string based on the flags passed into constructor", "[OpenModeConversionState][GetAdditionalModeStr]", OpenModeTestedTypes)
         {
             using ConversionState = OpenModeConversionState<TestType>;
             using OpenModeString = typename ConversionState::OpenModeString;
@@ -811,7 +811,7 @@ namespace CIo::OpenModeTesting
 
     namespace OpenModeClassTesting
     {
-        TEST_CASE("[OpenMode] : Only char and wchar_t specialisations should compile", "[OpenMode]")
+        TEST_CASE("[OpenMode] : Only char and wchar_t specialisations should compile", "[OpenMode][Compilation]")
         {
             [[maybe_unused]] BasicOpenMode<char8> mode8;
             [[maybe_unused]] BasicOpenMode<charW> modeW;
@@ -827,14 +827,14 @@ namespace CIo::OpenModeTesting
             #endif
         }
 
-        TEMPLATE_TEST_CASE("[OpenMode] : Default constructor should create an openmode with invalid Validty", "[OpenMode]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenMode] : Default constructor should create an openmode with invalid Validty", "[OpenMode][Default constructor]", OpenModeTestedTypes)
        {
             const OpenMode mode;
             REQUIRE(mode.IsValid() == false);
             REQUIRE(mode.IsSupported() == true);
         }
 
-        TEMPLATE_TEST_CASE("[OpenMode] : Constructor with COpenMode should crete always valid openmode with appropriate OpenModeString", "[OpenMode]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenMode] : Constructor with COpenMode should crete always valid openmode with appropriate OpenModeString", "[OpenMode][Constructor]", OpenModeTestedTypes)
         {
             using OpenMode = BasicOpenMode<TestType>;
             using OpenModeString = typename OpenMode::OpenModeString;
@@ -890,7 +890,7 @@ namespace CIo::OpenModeTesting
             }
         }
 
-        TEMPLATE_TEST_CASE("[OpenMode] : AssignCOpenMode should change the openmode to always valid openmode with appropriate OpenModeString", "[OpenMode]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenMode] : AssignCOpenMode should change the openmode to always valid openmode with appropriate OpenModeString", "[OpenMode][AssignCOpenMode]", OpenModeTestedTypes)
         {
             using OpenMode = BasicOpenMode<TestType>;
             using OpenModeString = typename OpenMode::OpenModeString;
@@ -948,7 +948,7 @@ namespace CIo::OpenModeTesting
             }
         }
 
-        TEMPLATE_TEST_CASE("[OpenMode] : Constructor called with opeindividual OpenModeFlags should create a open mode according to the flags passed", "[OpenMode]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenMode] : Constructor called with individual OpenModeFlags should create a open mode according to the flags passed", "[OpenMode][Constructor]", OpenModeTestedTypes)
         {
             using OpenMode = BasicOpenMode<TestType>;
             using OpenModeString = typename OpenMode::OpenModeString;
@@ -1114,7 +1114,7 @@ namespace CIo::OpenModeTesting
             }
         }
 
-        TEMPLATE_TEST_CASE("[OpenMode] : IsValid shoudl return true if the openmode is valid (fit to open a file)", "[OpenMode]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenMode] : IsValid shoudl return true if the openmode is valid (fit to open a file)", "[OpenMode][IsValid]", OpenModeTestedTypes)
         {
             WHEN("A constructed mode is valid IsValid returns true")
             {
@@ -1133,7 +1133,7 @@ namespace CIo::OpenModeTesting
             }
         }
 
-        TEMPLATE_TEST_CASE("[OpenMode] : IsSupported should return true if the openmode is supported (does not have to valid)", "[OpenMode]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenMode] : IsSupported should return true if the openmode is supported (does not have to valid)", "[OpenMode][IsSupported]", OpenModeTestedTypes)
         {
             WHEN("A constructed mode is valid IsSupported returns true")
             {
@@ -1152,7 +1152,7 @@ namespace CIo::OpenModeTesting
             }
         }
 
-        TEMPLATE_TEST_CASE("[OpenMode] : GetOpenModeString should return a copy of the constexpr openmode string", "[OpenMode]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenMode] : GetOpenModeString should return a copy of the constexpr openmode string", "[OpenMode][GetOpenModeString]", OpenModeTestedTypes)
         {
             using OpenMode = BasicOpenMode<TestType>;
             using OpenModeString = typename OpenMode::OpenModeString;
@@ -1165,7 +1165,7 @@ namespace CIo::OpenModeTesting
             REQUIRE(mode.GetOpenModeString() == expected);
         }
 
-        TEMPLATE_TEST_CASE("[OpenMode] : operator StringView<OsCharType> should return a stringview conatining just the openmode", "[OpenMode]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenMode] : operator StringView<OsCharType> should return a stringview conatining just the openmode", "[OpenMode][operator StringView<OsCharType>]", OpenModeTestedTypes)
         {
             using OpenMode = BasicOpenMode<TestType>;
             using OpenModeString = typename OpenMode::OpenModeString;
@@ -1181,7 +1181,7 @@ namespace CIo::OpenModeTesting
             REQUIRE(output == expectedView);
         }
 
-        TEMPLATE_TEST_CASE("[OpenMode] : Copy constructor should construct a copy of the provided open mode", "[OpenMode]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenMode] : Copy constructor should construct a copy of the provided open mode", "[OpenMode][Copy constructor]", OpenModeTestedTypes)
         {
             WHEN("Constructing from an empty invalid openmode the result should be empty and invalid aswell")
             {
@@ -1210,7 +1210,7 @@ namespace CIo::OpenModeTesting
             }
         }
 
-        TEMPLATE_TEST_CASE("[OpenMode] : Move constructor should construct a copy of the provided open mode", "[OpenMode]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenMode] : Move constructor should construct a copy of the provided open mode", "[OpenMode][Move constructor]", OpenModeTestedTypes)
         {
             WHEN("Constructing from an empty invalid openmode the result should be empty and invalid aswell")
             {
@@ -1257,7 +1257,7 @@ namespace CIo::OpenModeTesting
             }
         }
 
-        TEMPLATE_TEST_CASE("[OpenMode] : Copy assigning to OpenMode should copy the provided OpenMode", "[OpenMode]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenMode] : Copy assigning to OpenMode should copy the provided OpenMode", "[OpenMode][Copy assignment]", OpenModeTestedTypes)
         {
             WHEN("Assigning from an empty invalid openmode the result should be empty and invalid aswell")
             {
@@ -1292,7 +1292,7 @@ namespace CIo::OpenModeTesting
             }
         }
 
-        TEMPLATE_TEST_CASE("[OpenMode] : Move assigning to OpenMode should copy the provided OpenMode", "[OpenMode]", OpenModeTestedTypes)
+        TEMPLATE_TEST_CASE("[OpenMode] : Move assigning to OpenMode should copy the provided OpenMode", "[OpenMode][Move assignment]", OpenModeTestedTypes)
         {
             WHEN("Assigning from an empty invalid openmode the result should be empty and invalid aswell")
             {
@@ -1343,11 +1343,6 @@ namespace CIo::OpenModeTesting
                 REQUIRE(mode.IsValid() == false);
                 REQUIRE(mode.IsSupported() == false);
             }
-
-        }
-
-        TEMPLATE_TEST_CASE("[OpenMode] : ", "[OpenMode]", OpenModeTestedTypes)
-        {
 
         }
     }

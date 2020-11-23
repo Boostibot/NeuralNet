@@ -5,6 +5,7 @@
 #define _LARGEFILE_SOURCE
 #define __STDC_WANT_LIB_EXT1__ 1
 
+#include <io.h>
 #include <locale.h>
 #include <cstdio>
 #include <wchar.h>
@@ -20,7 +21,7 @@
 #include "General/Common/Common.h"
 namespace CIo
 {
-    namespace CompilerSpecific
+    namespace CompilerSupport
     {
         inline auto fopen(const char8 * fileName, const char8 * arguments) noexcept
         {
@@ -45,6 +46,18 @@ namespace CIo
         #else
         using OffsetType = off64_t;
         #endif
+
+        #if defined (_MSC_VER)
+        using StatType = struct ::_stat64;
+        #else
+        using StatType = struct _stat64;
+        #endif
+
+        #define MSVC_MAYBE_UNUSED \
+            #if defined (_MSC_VER) \
+            [[maybe_unused]] \
+            #endif
+
 
         inline OffsetType ftell(FILE POINTER stream) noexcept
         {
